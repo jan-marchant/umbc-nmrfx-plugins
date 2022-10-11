@@ -1,0 +1,15 @@
+# maven
+**/target/
+*.class
+
+# intellij
+.idea/
+*.iml
+
+# netbeans
+nbproject/
+build/
+nbbuild/
+dist/
+nbdist/
+nbactions.xml
