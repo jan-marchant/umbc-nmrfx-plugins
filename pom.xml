@@ -3,14 +3,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.nmrfx</groupId>
-        <artifactId>nmrfx</artifactId>
-        <version>11.3.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
-
-    <artifactId>umbc</artifactId>
+    <groupId>edu.umbc.hhmi</groupId>
+    <artifactId>nmrfx_atombrowser_plugin</artifactId>
     <packaging>jar</packaging>
     <version>0.1-SNAPSHOT</version>
 
@@ -25,6 +19,29 @@
             <artifactId>nmrfx-plugin-api</artifactId>
             <version>11.3.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.umbc.hhmi</groupId>
+            <artifactId>nmrfx_subproj_plugin</artifactId>
+            <version>0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.umbc.hhmi</groupId>
+            <artifactId>nmrfx_acq_plugin</artifactId>
+            <version>0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
 </project>

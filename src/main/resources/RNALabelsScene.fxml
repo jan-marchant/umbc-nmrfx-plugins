@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/10.0.2-internal" fx:controller="org.nmrfx.processor.gui.RNALabelsSceneController">
+    <stylesheets>
+        <URL value="@/styles/rnapeakgeneratorscene.css" />
+    </stylesheets>
+    <top>
+        <VBox>
+                <children>
+                    <HBox>
+                        <children>
+                            <Label alignment="center_left" minWidth="70" prefHeight="25.0" prefWidth="70.0" text="Sample" />
+                            <ComboBox fx:id="sampleField" editable="false" minWidth="100" prefHeight="27.0" prefWidth="130.0" HBox.hgrow="ALWAYS" />
+                            <Pane minWidth="0.0" prefHeight="27.0" prefWidth="10.0" />
+                            <Label alignment="center_left" minWidth="60" prefHeight="25.0" prefWidth="60.0" text="Entity" />
+                            <ChoiceBox fx:id="entityChoiceBox" minWidth="100" prefHeight="25.0" prefWidth="130.0" />
+                            <Pane minWidth="50" prefHeight="27.0" prefWidth="50.0" />
+                            <Button fx:id="loadSelGroupButton" minWidth="75" onAction="#loadSelGroup" text="Load" />
+                            <Button fx:id="applySelGroupButton" minWidth="75" onAction="#applySelGroup" text="Apply" />
+                            <Pane maxHeight="-Infinity" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                        </children>
+                    </HBox>
+                    <Separator />
+                    <ToolBar fx:id="toolBar" prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+                        <items>
+                            <CheckBox fx:id="d2oCheckBox" text="D2O" />
+                            <CheckBox fx:id="carbonCheckBox" text="C" />
+                            <CheckBox fx:id="nitrogenCheckBox" text="N" />
+                            <MenuButton text="Select">
+                                <items>
+                                    <MenuItem onAction="#setAllBasesOn" text="Bases On" />
+                                    <MenuItem onAction="#setAllBasesOff" text="Bases Off" />
+                                    <MenuItem onAction="#setAllRibosesOn" text="Riboses On" />
+                                    <MenuItem onAction="#setAllRibosesOff" text="Riboses Off" />
+                                </items>
+                            </MenuButton>
+                            <Pane maxHeight="-Infinity" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                            <Label text="QuickCode:" />
+                            <TextField fx:id="quickCodeField" />
+                        </items>
+                    </ToolBar>
+                </children>
+        </VBox>
+    </top>
+    <center>
+        <GridPane>
+            <TitledPane collapsible="false" text="Adenosine" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                <content>
+                    <GridPane fx:id="adenosinePane">
+                    
+                    </GridPane>
+                </content>
+            </TitledPane>
+            <TitledPane collapsible="false" text="Guanosine" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                <content>
+                    <GridPane fx:id="guanosinePane">
+                    
+                    </GridPane>
+                </content>
+
+            </TitledPane>
+            <TitledPane collapsible="false" text="Uridine" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                <content>
+                    <GridPane fx:id="uridinePane">
+                    
+                    </GridPane>
+                </content>
+
+            </TitledPane>
+            <TitledPane collapsible="false" text="Cytidine" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                <content>
+                    <GridPane fx:id="cytidinePane">
+                    
+                    </GridPane>
+                </content>
+
+            </TitledPane>
+         <columnConstraints>
+            <ColumnConstraints />
+            <ColumnConstraints />
+         </columnConstraints>
+         <rowConstraints>
+            <RowConstraints />
+            <RowConstraints />
+         </rowConstraints>
+        </GridPane>
+    </center>
+    <bottom>
+        <VBox>
+            <children>
+                <HBox>
+                    <children>
+                        <Label text="Labeling percentage" />
+                        <TextField fx:id="labelingPercentageField" maxWidth="60" />
+                        <Pane minWidth="50" />
+                        <Label text="Residues Start:" />
+                        <TextField fx:id="firstResidueField" maxWidth="60" />
+                        <Label text="End:" />
+                        <TextField fx:id="lastResidueField" maxWidth="60" />
+                    </children>
+                </HBox>
+                <HBox>
+                    <children>
+                        <Button fx:id="showSelGroupButton" onAction="#showSelGroup" text="Show" />
+                        <Button fx:id="clearSelGroupButton" onAction="#clearSelGroup" text="Clear" />
+                        <Button fx:id="clearAllSelGroupsButton" onAction="#clearAllSelGroups" text="Clear All" />
+                        <Button fx:id="addSelGroupButton" onAction="#addSelGroup" text="Add" />
+                        <Button fx:id="replaceSelGroupButton" onAction="#replaceSelGroup" text="Replace" />
+                    </children>
+                </HBox>
+                <ListView fx:id="selGroupListView" prefHeight="80" />
+            </children>
+        </VBox>
+    </bottom>
+</BorderPane>
