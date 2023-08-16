@@ -12,7 +12,10 @@ public class SampleSaveframeProcessor implements SaveframeProcessor {
     public void process(Saveframe saveframe) throws ParseException, IOException {
         String sampleName = saveframe.getValue("_Sample", "Name").replace("^'", "").replace("'$","");
         System.out.println("process sample");
-        Sample sample=new Sample(sampleName);
+        Sample sample = Sample.get(sampleName);
+        if (sample == null) {
+            sample = new Sample(sampleName);
+        }
         sample.readSTARSaveFrame(saveframe);
     }
 }

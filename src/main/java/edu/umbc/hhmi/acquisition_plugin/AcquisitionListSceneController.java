@@ -71,7 +71,7 @@ public class AcquisitionListSceneController implements Initializable {
         return controller;
 
     }
-
+    //todo:Dataset vs. DatasetBase - what's going on?!
     void initTable() {
         tableView.setEditable(true);
         TableColumn<Acquisition, Dataset> datasetCol = new TableColumn<>("Dataset");
@@ -80,13 +80,14 @@ public class AcquisitionListSceneController implements Initializable {
         //There's a lot of repetition below. The ViewableComboBoxTableCell above was an attempt to factor this out, but used a PropertyReference which caused issues, so all written out for now.
         //(The underlying aim is to have a combobox that's always visible in the Table)
         datasetCol.setCellFactory(col -> new TableCell<Acquisition, Dataset>() {
-            ComboBox<Dataset> combo = new ComboBox();
+            ComboBox<DatasetBase> combo = new ComboBox();
             {
+                combo.setItems((ObservableList<DatasetBase>) ProjectBase.getActive().getDatasets());
                 combo.prefWidthProperty().bind(this.widthProperty());
                 combo.valueProperty().addListener((obs,oldV,newV) -> {
                     Acquisition acq=getAcq();
                     if (acq != null) {
-                        acq.setDataset(combo.getValue());
+                        acq.setDataset((Dataset) combo.getValue());
                     }
                 });
 
@@ -110,10 +111,11 @@ public class AcquisitionListSceneController implements Initializable {
             }
             //TODO: is there a proper way to do this?
             private Acquisition getAcq() {
+                if (getTableView()==null) return null;
                 try {
                     return getTableView().getItems().get(getIndex());
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
                     return null;
                 }
             }
@@ -142,6 +144,7 @@ public class AcquisitionListSceneController implements Initializable {
         sampleCol.setCellFactory(col -> new TableCell<Acquisition, Sample>() {
             ComboBox<Sample> combo = new ComboBox();
             {
+                combo.setItems(Sample.getActiveSampleList());
                 combo.prefWidthProperty().bind(this.widthProperty());
                 combo.valueProperty().addListener((obs,oldV,newV) -> {
                     Acquisition acq=getAcq();
@@ -170,10 +173,11 @@ public class AcquisitionListSceneController implements Initializable {
             }
             //TODO: is there a proper way to do this?
             private Acquisition getAcq() {
+                if (getTableView()==null) return null;
                 try {
                     return getTableView().getItems().get(getIndex());
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
                     return null;
                 }
             }
@@ -209,6 +213,7 @@ public class AcquisitionListSceneController implements Initializable {
         conditionCol.setCellFactory(col -> new TableCell<Acquisition, Condition>() {
             ComboBox<Condition> combo = new ComboBox();
             {
+                combo.setItems(Condition.getActiveConditionList());
                 combo.prefWidthProperty().bind(this.widthProperty());
                 combo.valueProperty().addListener((obs,oldV,newV) -> {
                     Acquisition acq=getAcq();
@@ -237,10 +242,11 @@ public class AcquisitionListSceneController implements Initializable {
             }
             //TODO: is there a proper way to do this?
             private Acquisition getAcq() {
+                if (getTableView()==null) return null;
                 try {
                     return getTableView().getItems().get(getIndex());
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
                     return null;
                 }
             }
@@ -274,6 +280,11 @@ public class AcquisitionListSceneController implements Initializable {
         experimentCol.setCellFactory(col -> new TableCell<Acquisition, Experiment>() {
             ComboBox<Experiment> combo = new ComboBox();
             {
+                try {
+                    combo.setItems(getAcq().getValidExperimentList());
+                }
+                catch(Exception e) {
+                }
                 combo.prefWidthProperty().bind(this.widthProperty());
                 combo.valueProperty().addListener((obs,oldV,newV) -> {
                     Acquisition acq=getAcq();
@@ -302,10 +313,11 @@ public class AcquisitionListSceneController implements Initializable {
             }
             //TODO: is there a proper way to do this?
            private Acquisition getAcq() {
+               if (getTableView()==null) return null;
                 try {
                     return getTableView().getItems().get(getIndex());
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
                     return null;
                 }
             }

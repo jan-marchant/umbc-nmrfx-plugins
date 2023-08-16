@@ -18,6 +18,11 @@ public class ManagedListSaveframeProcessor implements SaveframeProcessor {
     static List<PeakDim> peakDimsWithoutRes = new ArrayList<>();
     @Override
     public void process(Saveframe saveframe) throws ParseException, IOException {
+        /*
+            Notes:
+                - Sample and Condition will not exist on read, as peaks are always written first. Needs to be handled later.
+         */
+
         //String name = saveframe.getName();
         //is this the same?
         //String name = saveframe.getValue("_Sample_condition_list", "Name").replace("^'", "").replace("'$","");
@@ -88,22 +93,26 @@ public class ManagedListSaveframeProcessor implements SaveframeProcessor {
             x++;
         }
 
-        //This fails if sample, condition etc. not already processed
         Acquisition acquisition=new Acquisition();
         acquisition.setDataset(Dataset.getDataset(datasetName));
-        acquisition.setSample(Sample.get(sampleLabel));
-        acquisition.setCondition(Condition.get(sampleConditionLabel));
+        Sample sample = Sample.get(sampleLabel);
+        if (sample == null) {
+            sample = new Sample(sampleLabel);
+        }
+        acquisition.setSample(sample);
+        Condition condition = Condition.get(sampleConditionLabel);
+        if (condition == null) {
+            condition = new Condition(sampleConditionLabel);
+        }
+        acquisition.setCondition(condition);
         acquisition.setExperiment(experiment);
         //do we need same list ID? Possible for links? Watch out!
         ManagedList peakList=new ManagedList(listName,nDim,acquisition,dimMap,id);
         acquisition.attachManagedList(peakList);
         acquisition.addSaveframe();
 
-        peakList.setSampleLabel(sampleLabel);
-        peakList.setSampleConditionLabel(sampleConditionLabel);
         peakList.setDatasetName(datasetName);
         peakList.setDetails(details);
-        peakList.setSlideable(slidable.equals("yes"));
 
         for (int i = 0; i < nSpectralDim; i++) {
             SpectralDim sDim = peakList.getSpectralDim(i);

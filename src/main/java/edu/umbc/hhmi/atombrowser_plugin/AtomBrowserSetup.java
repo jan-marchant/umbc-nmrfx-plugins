@@ -25,6 +25,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
 import javafx.util.converter.NumberStringConverter;
+import org.nmrfx.analyst.gui.tools.PeakSlider;
 import org.nmrfx.datasets.DatasetBase;
 import org.nmrfx.processor.gui.FXMLController;
 import org.nmrfx.processor.project.Project;
@@ -36,8 +37,10 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class AtomBrowserSetup {
+//import static org.nmrfx.analyst.gui.AnalystApp.getFXMLControllerManager;
 
+public class AtomBrowserSetup {
+/*
     Stage stage;
     BorderPane borderPane;
     double xOffset = 50;
@@ -88,7 +91,7 @@ public class AtomBrowserSetup {
 
         Label nameLabel=new Label("Window:");
 
-        ObservableList<FXMLController> controllerList = FXCollections.observableArrayList(FXMLController.getControllers().stream().filter(c -> c.containsTool(AtomBrowser.class)).collect(Collectors.toList()));
+        ObservableList<FXMLController> controllerList = FXCollections.observableArrayList(getFXMLControllerManager().getControllers().stream().filter(c -> c.containsTool(AtomBrowser.class)).collect(Collectors.toList()));
 
         atomBrowserChoice.setConverter(new StringConverter<FXMLController>() {
             @Override
@@ -416,5 +419,5 @@ public class AtomBrowserSetup {
         }
         return labelSet;
     }
-
+*/
 }

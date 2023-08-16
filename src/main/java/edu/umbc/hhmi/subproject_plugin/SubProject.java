@@ -112,7 +112,7 @@ public class SubProject {
 
             //All this just to write them in residue order...
             List<Entity> seen=new ArrayList<>();
-            for (Entity entity : activeMol.getEntities()) {
+            for (Entity entity : project.getActiveMolecule().getEntities()) {
                 if (entity instanceof Polymer) {
                     for (Residue residue : ((Polymer) entity).getResidues()) {
                         if (entityMap.containsKey(project)) {
@@ -154,7 +154,7 @@ public class SubProject {
             BidiMap<Entity, Entity> map = new DualHashBidiMap<>();
             entityMap.put(subProj, map);
             for (int i = 0; i < activeEntities.size(); i++) {
-                map.put(activeMol.getEntitiesAndResidues(activeEntities.get(i)), subProj.activeMol.getEntitiesAndResidues(subEntities.get(i)));
+                //map.put(activeMol.getEntitiesAndResidues(activeEntities.get(i)), subProj.activeMol.getEntitiesAndResidues(subEntities.get(i)));
             }
         }
     }

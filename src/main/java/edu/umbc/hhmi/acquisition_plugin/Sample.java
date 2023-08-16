@@ -311,11 +311,13 @@ public class Sample implements Comparable<Sample>, SaveframeWriter {
         Loop loop = saveframe.getLoop("_Sample_component");
         if (loop != null) {
             List<String> entityLabels = loop.getColumnAsList("Mol_common_name");
-            List<String> entityLabelString = loop.getColumnAsList("Isotopic_labeling");
+            List<String> starEntityLabelString = loop.getColumnAsList("Isotopic_labeling");
 
             for (int i = 0; i<entityLabels.size(); i++) {
                 Entity entity = (Entity) Molecule.getActive().entityLabels.get(entityLabels.get(i));
-                setEntityLabelString(entity,entityLabelString.get(i).replace("^'", "").replace("'$",""));
+                String labels = starEntityLabelString.get(i).replace("^'", "").replace("'$","");
+                entityLabelString.put(entity, labels.replace(entity.getName()+":",""));
+                updateLabelString();
             }
         }
     }

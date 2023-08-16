@@ -64,6 +64,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+//import static org.nmrfx.analyst.gui.AnalystApp.getFXMLControllerManager;
+public class AtomBrowser {
+
+/*
 public class AtomBrowser implements ControllerTool {
 
     ToolBar browserToolBar;
@@ -101,7 +105,7 @@ public class AtomBrowser implements ControllerTool {
         boolean seen;
         do {
             seen = false;
-            for (FXMLController test : FXMLController.getControllers()) {
+            for (FXMLController test : getFXMLControllerManager().getControllers()) {
                 if (test.getStage().getTitle().equalsIgnoreCase("Browser " + suffix)) {
                     suffix += 1;
                     seen = true;
@@ -493,7 +497,7 @@ public class AtomBrowser implements ControllerTool {
         }
 
          */
-
+/*
         PolyChart previousChart = null;
         for (DrawItem item : drawItems) {
             AtomicReference<Double> ppm = new AtomicReference<>(item.getShift());
@@ -1058,5 +1062,6 @@ public class AtomBrowser implements ControllerTool {
         }
 
     }
-
+*/
 }
+

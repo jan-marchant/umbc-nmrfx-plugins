@@ -29,7 +29,7 @@ public class ManagedList extends PeakList {
 
     //SNR required for picking peak - useful when adding breakthrough labeling percentages
     private double detectionLimit=3;
-    private Double noise;
+    private double noise;
     //private Double highestSignal;
     private double pickThreshold() {
         return detectionLimit*noise;//highestSignal;
@@ -43,28 +43,20 @@ public class ManagedList extends PeakList {
     public NoeSet2 noeSet=null;
     private Noe2 addedNoe=null;
     //private ManagedPeak addedPeak=null;
-    //private List<ManagedPeak> peaks;
+    //protected List<ManagedPeak> peaks;
 
     //initial creation
     public ManagedList(Acquisition acquisition, String name, int ppmSet, int rPpmset, NoeSet2 noeSet, HashMap<ExpDim,Integer> dimMap) {
         super(name, acquisition.getDataset().getNDim());
-        this.setSampleConditionLabel(acquisition.getCondition().toString());
-        this.setSampleLabel(acquisition.getSample().toString());
-        this.setSlideable(true);
         this.acquisition = acquisition;
         this.ppmSet = ppmSet;
         this.rPpmSet = rPpmset;
         this.noise = acquisition.getDataset().guessNoiseLevel();
-        this.noeSet=noeSet;
-        acquisition.getAcqTree().addNoeSet(noeSet);
         this.dimMap=dimMap;
         initializeList(acquisition.getDataset());
+        setNoeSet(noeSet);
         addPeaks();
-        acquisition.getAcqTree().getEdges().addListener((SetChangeListener.Change<? extends AcqTree.Edge> c) -> {
-            if (c.wasAdded()) {
-                addEdgeToList(c.getElementAdded(),true);
-            }
-        });
+        setupListener();
     }
 
     //Loading from star file
@@ -72,12 +64,18 @@ public class ManagedList extends PeakList {
     public ManagedList(String name, int nDim, Acquisition acquisition, HashMap<ExpDim,Integer> dimMap, int listNum) {
         super(name,nDim,listNum);
         this.acquisition=acquisition;
+        this.setSampleConditionLabel(acquisition.getCondition().toString());
+        this.setSampleLabel(acquisition.getSample().toString());
+        this.setSlideable(true);
         //fixme
-        this.rPpmSet=0;
+        //what about ppmSet?
+        this.rPpmSet = 0;
         this.noise = acquisition.getDataset().guessNoiseLevel();
         this.dimMap=dimMap;
         initializeList(acquisition.getDataset());
+        //noeSet, peaks and listener must follow as they may not be loaded yet
     }
+
     public void setNoeSet(NoeSet2 noeSet) {
         this.noeSet=noeSet;
         acquisition.getAcqTree().addNoeSet(noeSet);
@@ -314,12 +312,15 @@ public class ManagedList extends PeakList {
     }
 
     //better to not write peaklist during "normal" write - instead write at the end so that it can be processed correctly.
-    //Also, controversially(?), use a slightly different category so that it is not read in multiple times.
+    //This doesn't work because PeakWriter still adds all the peaks, just with missing header, and crashes on read
+    //@Override
+    //public void writeSTAR3Header(Writer chan) throws IOException {
+    //}
+
+    //Use a slightly different category so that it is not read in by the default reader.
+    //Is there a better way around this? Might be an issue for uploading to databases.
     @Override
     public void writeSTAR3Header(Writer chan) throws IOException {
-    }
-
-    public void writeManagedSTAR3Header(Writer chan) throws IOException {
         char stringQuote = '"';
         chan.write("save_" + getName() + "\n");
         chan.write("_Spectral_peak_list.Sf_category                   ");

@@ -96,8 +96,6 @@ public class Acquisition implements SaveframeWriter {
                 updateValidExperiments(c.getAddedSubList());
             }
         });
-        //For debugging
-        System.out.println(acquisitionListController.tableView.getItems());
     }
 
     public ProjectBase getProject() {
@@ -502,9 +500,7 @@ public class Acquisition implements SaveframeWriter {
     @Override
     public void write(Writer chan) throws ParseException, IOException {
         for (ManagedList managedList : getManagedLists()) {
-            //this waay the managedList saveframe should always be after the Condition and Sample saveframes (as required)
-            //because we only add the extra saveframe once a managedList has been created.
-            managedList.writeManagedSTAR3Header(chan);
+            //managedList.writeManagedSTAR3Header(chan);
             managedList.writePeakConstraintLinks(chan);
         }
     }

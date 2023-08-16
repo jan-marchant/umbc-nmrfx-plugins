@@ -116,6 +116,9 @@ public class AcqNodeChooser {
 
                     @Override
                     public String toString(AcqNode node) {
+                        if (node == null) {
+                            return "";
+                        }
                         if (finalShift==null) {
                             return String.format("%-10.10s",node.toString());
                         } else {

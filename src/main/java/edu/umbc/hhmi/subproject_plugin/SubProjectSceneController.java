@@ -139,6 +139,7 @@ public class SubProjectSceneController implements SubProjMenu {
         subProjectProperty().addListener(e->{
             list1.clear();
             list1.add(null);
+            /*
             if (subProject.get()==null) {
                 menuButton.setText(SubProject.findSubProject(ProjectBase.getActive()).subProjectList.size() + " project"+(UmbcProject.getActive().subProjectList.size()==1?"":"s"));
             } else {
@@ -154,6 +155,8 @@ public class SubProjectSceneController implements SubProjMenu {
                     combo1.setValue(null);
                 }
             }
+
+             */ //temporary comment to get it to compile!
             populateMenu();
             updateEntities();
         });
@@ -276,6 +279,7 @@ public class SubProjectSceneController implements SubProjMenu {
     }
 
     public void show(double x, double y) {
+        /*
         if (SubProject.findSubProject(ProjectBase.getActive()).activeMol!=null) {
             label.setText(SubProject.findSubProject(ProjectBase.getActive()).name());
             populateMenu();
@@ -289,6 +293,8 @@ public class SubProjectSceneController implements SubProjMenu {
         } else {
             label.setText("No active mol");
         }
+
+         */ //temporary comment to clear errors
         double screenWidth = Screen.getPrimary().getBounds().getWidth();
         if (x > (screenWidth / 2)) {
             x = x - stage.getWidth() - xOffset;
