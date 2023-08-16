@@ -5,65 +5,6 @@
  */
 package edu.umbc.hhmi.atombrowser_plugin;
 
-import de.jensd.fx.glyphs.GlyphsDude;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import edu.umbc.hhmi.subproject_plugin.SubProject;
-import edu.umbc.hhmi.acquisition_plugin.Acquisition;
-import edu.umbc.hhmi.acquisition_plugin.Experiment;
-import edu.umbc.hhmi.acquisition_plugin.Condition;
-import edu.umbc.hhmi.acquisition_plugin.Sample;
-import edu.umbc.hhmi.acquisition_plugin.ManagedList;
-import javafx.application.Platform;
-import javafx.beans.property.*;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.geometry.Pos;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.*;
-import javafx.scene.input.KeyCode;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.util.StringConverter;
-import org.apache.commons.collections4.BidiMap;
-import org.controlsfx.control.textfield.AutoCompletionBinding;
-import org.controlsfx.control.textfield.TextFields;
-import org.nmrfx.chemistry.Atom;
-import org.nmrfx.chemistry.Entity;
-import org.nmrfx.chemistry.InvalidMoleculeException;
-import org.nmrfx.chemistry.MolFilter;
-import org.nmrfx.datasets.Nuclei;
-import org.nmrfx.graphicsio.GraphicsContextInterface;
-import org.nmrfx.graphicsio.GraphicsContextProxy;
-import org.nmrfx.peaks.Peak;
-import org.nmrfx.peaks.PeakDim;
-import org.nmrfx.peaks.PeakList;
-import org.nmrfx.peaks.SpectralDim;
-import org.nmrfx.processor.datasets.Dataset;
-import org.nmrfx.processor.gui.CanvasAnnotation;
-import org.nmrfx.processor.gui.ControllerTool;
-import org.nmrfx.processor.gui.FXMLController;
-import org.nmrfx.processor.gui.PolyChart;
-import org.nmrfx.processor.gui.annotations.AnnoLine;
-import org.nmrfx.processor.gui.spectra.DatasetAttributes;
-import org.nmrfx.processor.gui.spectra.PeakListAttributes;
-import org.nmrfx.processor.project.Project;
-import org.nmrfx.project.ProjectBase;
-import org.nmrfx.structure.chemistry.Molecule;
-import org.nmrfx.utils.GUIUtils;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-
 //import static org.nmrfx.analyst.gui.AnalystApp.getFXMLControllerManager;
 public class AtomBrowser {
 

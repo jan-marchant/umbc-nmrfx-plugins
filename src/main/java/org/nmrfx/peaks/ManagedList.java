@@ -1,16 +1,15 @@
-package edu.umbc.hhmi.acquisition_plugin;
+package org.nmrfx.peaks;
 
+import edu.umbc.hhmi.acquisition_plugin.*;
 import javafx.collections.SetChangeListener;
 import org.nmrfx.chemistry.Atom;
-import org.nmrfx.chemistry.constraints.Noe;
-import org.nmrfx.chemistry.constraints.NoeSet;
 import org.nmrfx.datasets.Nuclei;
-import org.nmrfx.peaks.*;
 import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.project.ProjectBase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
@@ -18,13 +17,15 @@ import java.util.*;
 //todo set sample label
 public class ManagedList extends PeakList {
 
+    private static final Logger log = LoggerFactory.getLogger(ManagedList.class);
+
     /* Notes:
-    ManagedList does not need to implement SaveFrameWriter as it extends PeakList
-    and overrides PeakList.writeStar3Header
-     */
-    static void doStartup() {
+        ManagedList does not need to implement SaveFrameWriter as it extends PeakList
+        and overrides PeakList.writeStar3Header
+         */
+    public static void doStartup() {
         ManagedListSaveframeProcessor managedListSaveFrameProcessor = new ManagedListSaveframeProcessor();
-        ProjectBase.addSaveframeProcessor("spectral_managed_peak_list", managedListSaveFrameProcessor);
+        ProjectBase.addSaveframeProcessor("spectral_peak_list", managedListSaveFrameProcessor);
     }
 
     //SNR required for picking peak - useful when adding breakthrough labeling percentages
@@ -40,15 +41,18 @@ public class ManagedList extends PeakList {
     private int ppmSet;
     private int rPpmSet;
     //probably don't need this type - just the noeSet which can be passed by managedListSetup
-    public NoeSet2 noeSet=null;
-    private Noe2 addedNoe=null;
+    public ManagedNoeSet noeSet=null;
+    private ManagedNoe addedNoe=null;
     //private ManagedPeak addedPeak=null;
     //protected List<ManagedPeak> peaks;
 
     //initial creation
-    public ManagedList(Acquisition acquisition, String name, int ppmSet, int rPpmset, NoeSet2 noeSet, HashMap<ExpDim,Integer> dimMap) {
+    public ManagedList(Acquisition acquisition, String name, int ppmSet, int rPpmset, ManagedNoeSet noeSet, HashMap<ExpDim,Integer> dimMap) {
         super(name, acquisition.getDataset().getNDim());
         this.acquisition = acquisition;
+        this.setSampleConditionLabel(acquisition.getCondition().toString());
+        this.setSampleLabel(acquisition.getSample().toString());
+        this.setSlideable(true);
         this.ppmSet = ppmSet;
         this.rPpmSet = rPpmset;
         this.noise = acquisition.getDataset().guessNoiseLevel();
@@ -59,10 +63,13 @@ public class ManagedList extends PeakList {
         setupListener();
     }
 
-    //Loading from star file
+    // Promoting existing peakList - used only on project load
     // fixme: rPpmSet not set on reload
-    public ManagedList(String name, int nDim, Acquisition acquisition, HashMap<ExpDim,Integer> dimMap, int listNum) {
-        super(name,nDim,listNum);
+    public ManagedList(PeakList original, String name, String tempName, int nDim, Acquisition acquisition, HashMap<ExpDim,Integer> dimMap, int listNum) {
+        super(tempName,nDim,listNum);
+        copyFrom(original);
+        original.remove();
+        this.setName(name);
         this.acquisition=acquisition;
         this.setSampleConditionLabel(acquisition.getCondition().toString());
         this.setSampleLabel(acquisition.getSample().toString());
@@ -76,9 +83,12 @@ public class ManagedList extends PeakList {
         //noeSet, peaks and listener must follow as they may not be loaded yet
     }
 
-    public void setNoeSet(NoeSet2 noeSet) {
+    public void setNoeSet(ManagedNoeSet noeSet) {
         this.noeSet=noeSet;
-        acquisition.getAcqTree().addNoeSet(noeSet);
+        if (noeSet != null) {
+            noeSet.associatedLists.add(this);
+            acquisition.getAcqTree().addNoeSet(noeSet);
+        }
     }
 
     public void setupListener() {
@@ -129,6 +139,7 @@ public class ManagedList extends PeakList {
     @Override
     public ManagedPeak addPeak(Peak pickedPeak) {
 
+        log.info("Adding peak");
         //fixme: what about when getNewPeak called? need to be careful
 
         //TODO: repick from existing NOEs taking new detection limit into account
@@ -138,9 +149,13 @@ public class ManagedList extends PeakList {
 
         pickedPeak.initPeakDimContribs();
 
+        //log.info("Init chooser");
         AcqNodeChooser chooser = new AcqNodeChooser(this,pickedPeak);
+        //log.info("Create chooser");
         chooser.create();
+        //log.info("Show chooser");
         chooser.showAndWaitAtMouse();
+        //log.info("Chooser complete");
         List<ManagedPeak> addedPeaks=new ArrayList<>();
 
         if (noeSet!=null) {
@@ -174,7 +189,13 @@ public class ManagedList extends PeakList {
         }
     }
 
-
+    @Override
+    public void remove() {
+        super.remove();
+        if (noeSet != null) {
+            noeSet.associatedLists.remove(this);
+        }
+    }
 
     public Set<Peak> getMatchingPeaks(Peak searchPeak, Boolean includeSelf) {
         Set<Peak> matchingPeaks;
@@ -219,7 +240,7 @@ public class ManagedList extends PeakList {
         detailArray.add(peaks().size()+" peaks");
         detailArray.add("rPPM Set: "+rPpmSet);
         if (noeSet!=null) {
-            Optional<Map.Entry<String, NoeSet2>> optionalEntry = NoeSetup.getProjectNoeSets(acquisition.getProject()).entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
+            Optional<Map.Entry<String, ManagedNoeSet>> optionalEntry = NoeSetup.getProjectNoeSets(acquisition.getProject()).entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
             if (optionalEntry.isPresent()) {
             detailArray.add("NOE Set: "+optionalEntry.get().getKey());
             }
@@ -235,7 +256,7 @@ public class ManagedList extends PeakList {
         return;
     }
 
-    public List<ManagedPeak> addNoeToList(Noe2 noe) {
+    public List<ManagedPeak> addNoeToList(ManagedNoe noe) {
         List<ManagedPeak> addedPeaks = new ArrayList<>();
         for (AcqNode node : acquisition.getAcqTree().getNodes(noe.spg1.getAnAtom())) {
             for (AcqTree.Edge edge : node.getEdges(noeSet,noe)) {
@@ -268,7 +289,7 @@ public class ManagedList extends PeakList {
 
     private ManagedPeak addPeakFromPath(HashMap<ExpDim, AcqTree.Edge> path) {
         Double peakIntensity=1.0;
-        Set<Noe2> noes=new HashSet<>();
+        Set<ManagedNoe> noes=new HashSet<>();
         HashMap<Integer, Atom> atoms=new HashMap<>();
         for (ExpDim expDim : acquisition.getExperiment().expDims) {
             AcqTree.Edge edge=path.get(expDim);
@@ -291,7 +312,7 @@ public class ManagedList extends PeakList {
         return dimMap;
     }
 
-    public void setAddedNoe(Noe2 addedNoe) {
+    public void setAddedNoe(ManagedNoe addedNoe) {
         this.addedNoe = addedNoe;
     }
 
@@ -307,24 +328,45 @@ public class ManagedList extends PeakList {
         return acquisition;
     }
 
-    public Noe2 getAddedNoe() {
+    public ManagedNoe getAddedNoe() {
         return addedNoe;
     }
 
-    //better to not write peaklist during "normal" write - instead write at the end so that it can be processed correctly.
-    //This doesn't work because PeakWriter still adds all the peaks, just with missing header, and crashes on read
-    //@Override
-    //public void writeSTAR3Header(Writer chan) throws IOException {
-    //}
 
-    //Use a slightly different category so that it is not read in by the default reader.
-    //Is there a better way around this? Might be an issue for uploading to databases.
+    public void copyFrom(PeakList originalList) {
+
+        searchDims.addAll(originalList.searchDims);
+        fileName = originalList.fileName;
+        scale = originalList.scale;
+        setDetails(originalList.details);
+        sampleLabel = originalList.sampleLabel;
+        sampleConditionLabel = originalList.getSampleConditionLabel();
+
+        for (int i = 0; i < nDim; i++) {
+            spectralDims[i] = originalList.spectralDims[i].copy(this);
+        }
+
+        for (int i = 0; i < originalList.peaks.size(); i++) {
+            Peak originalPeak = (Peak) originalList.peaks.get(i);
+            ManagedPeak newPeak = ManagedPeak.copyFrom(originalPeak, this); //originalPeak.copy(originalList);
+
+            newPeak.setIdNum(originalPeak.getIdNum());
+
+            //!!!!!!!!!!!!!
+            peaks.add(newPeak);
+            newPeak.copyLabels(originalPeak);
+        }
+        peakListUpdated(peaks);
+        reIndex();
+    }
+
+
     @Override
     public void writeSTAR3Header(Writer chan) throws IOException {
         char stringQuote = '"';
         chan.write("save_" + getName() + "\n");
         chan.write("_Spectral_peak_list.Sf_category                   ");
-        chan.write("spectral_managed_peak_list\n");
+        chan.write("spectral_peak_list\n");
         chan.write("_Spectral_peak_list.Sf_framecode                  ");
         chan.write(getName() + "\n");
         chan.write("_Spectral_peak_list.ID                            ");
@@ -436,7 +478,7 @@ public class ManagedList extends PeakList {
             int ID = 0;
             for (Peak peak : peaks()) {
                 ManagedPeak peak2 = (ManagedPeak) peak;
-                for (Noe2 noe : peak2.getNoes()) {
+                for (ManagedNoe noe : peak2.getNoes()) {
                     //todo: investigate NoeSet.getID() replaced with NoeSet.ID
                     chan.write(String.format("%d %s %d %s %s %d %d %d %d spectral_peak_list %s\n", noe.starID, noeSet.getType(), noeSet.ID, noeSet.getCategory(), noeSet.getCategory() + noeSet.getName().replaceAll("\\W", ""), ID++, getId(), peak.getIdNum(), getId(), getName()));
                 }

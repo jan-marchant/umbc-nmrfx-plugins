@@ -2,8 +2,7 @@ package edu.umbc.hhmi.acquisition_plugin;
 
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
-import org.nmrfx.chemistry.constraints.Noe;
-import org.nmrfx.chemistry.constraints.NoeSet;
+import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakList;
 
@@ -123,15 +122,15 @@ public class AcqNode {
         edges.add(edge);
     }
 
-    public Collection<AcqTree.Edge> getEdges(NoeSet2 noeSet, Noe2 noe) {
+    public Collection<AcqTree.Edge> getEdges(ManagedNoeSet noeSet, ManagedNoe noe) {
         return getEdges(true, true, noeSet,noe);
     }
 
-    public Collection<AcqTree.Edge> getEdges(boolean forward, boolean backward, NoeSet2 noeSet) {
+    public Collection<AcqTree.Edge> getEdges(boolean forward, boolean backward, ManagedNoeSet noeSet) {
         return getEdges(forward, backward, noeSet, null);
     }
 
-    public Collection<AcqTree.Edge> getEdges(boolean forward, boolean backward, NoeSet2 noeSet, Noe2 noe) {
+    public Collection<AcqTree.Edge> getEdges(boolean forward, boolean backward, ManagedNoeSet noeSet, ManagedNoe noe) {
         ArrayList<AcqTree.Edge> toReturn = new ArrayList<>();
         for (AcqTree.Edge edge : edges) {
             if (noeSet==null || edge.noeSet==null || noeSet==edge.noeSet) {
@@ -148,11 +147,11 @@ public class AcqNode {
         return toReturn;
     }
 
-    public Collection<AcqTree.Edge> getEdges(boolean forward, NoeSet2 noeSet) {
+    public Collection<AcqTree.Edge> getEdges(boolean forward, ManagedNoeSet noeSet) {
         return getEdges(forward,!forward,noeSet);
     }
 
-    public Collection<AcqNode> getNodes(boolean forward,NoeSet2 noeSet) {
+    public Collection<AcqNode> getNodes(boolean forward, ManagedNoeSet noeSet) {
         return acqTree.getNodes(this,forward,noeSet);
     }
 

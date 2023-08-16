@@ -5,7 +5,6 @@
  */
 package edu.umbc.hhmi.acquisition_plugin;
 
-import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -20,6 +19,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.nmrfx.datasets.DatasetBase;
+import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.project.ProjectBase;
 import org.nmrfx.utils.GUIUtils;

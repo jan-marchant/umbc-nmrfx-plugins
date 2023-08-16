@@ -23,9 +23,14 @@ import javafx.collections.ObservableList;
 import org.nmrfx.chemistry.constraints.Constraint;
 import org.nmrfx.chemistry.constraints.ConstraintSet;
 import org.nmrfx.chemistry.constraints.MolecularConstraints;
+import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
-import org.nmrfx.structure.chemistry.Molecule;
+import org.nmrfx.project.ProjectBase;
+import org.nmrfx.star.ParseException;
+import org.nmrfx.star.SaveframeWriter;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -33,28 +38,30 @@ import java.util.Map.Entry;
  *
  * @author brucejohnson
  */
-public class NoeSet2 implements ConstraintSet, Iterable {
+public class ManagedNoeSet implements ConstraintSet, Iterable, SaveframeWriter {
 
     private final MolecularConstraints molecularConstraints;
 
-    private final ObservableList<Noe2> constraints = FXCollections.observableArrayList();
-    private final Map<Peak, List<Noe2>> peakMap = new TreeMap<>();
+    private final ObservableList<ManagedNoe> constraints = FXCollections.observableArrayList();
+    private final Map<Peak, List<ManagedNoe>> peakMap = new TreeMap<>();
     private final String name;
     public static Peak lastPeakWritten = null;
     public static int memberID = 0;
     public static int ID = 0;
     private boolean calibratable = true;
     private boolean dirty = true;
+    public List<ManagedList> associatedLists = new ArrayList<>();
 
-    private NoeSet2(MolecularConstraints molecularConstraints,
-                   String name) {
+    private ManagedNoeSet(MolecularConstraints molecularConstraints,
+                          String name) {
         this.name = name;
         this.molecularConstraints = molecularConstraints;
+        ProjectBase.getActive().addSaveframe(this);
     }
 
-    public static NoeSet2 newSet(MolecularConstraints molecularConstraints,
-                                                                String name) {
-        NoeSet2 noeSet = new NoeSet2(molecularConstraints,
+    public static ManagedNoeSet newSet(MolecularConstraints molecularConstraints,
+                                       String name) {
+        ManagedNoeSet noeSet = new ManagedNoeSet(molecularConstraints,
                 name);
         return noeSet;
     }
@@ -66,7 +73,7 @@ public class NoeSet2 implements ConstraintSet, Iterable {
 
     @Override
     public String getCategory() {
-        return "general_distance_constraints";
+        return "general_distance_constraints2";
     }
 
     @Override
@@ -92,20 +99,20 @@ public class NoeSet2 implements ConstraintSet, Iterable {
 
     @Override
     public void add(Constraint constraint) {
-        Noe2 noe = (Noe2) constraint;
+        ManagedNoe noe = (ManagedNoe) constraint;
         noe.setID(constraints.size());
         constraints.add(noe);
-        List<Noe2> noeList = getConstraintsForPeak(noe.getPeak());
+        List<ManagedNoe> noeList = getConstraintsForPeak(noe.getPeak());
         noeList.add(noe);
         dirty = true;
     }
 
-    public ObservableList<Noe2> getConstraints() {
+    public ObservableList<ManagedNoe> getConstraints() {
         return constraints;
     }
 
     @Override
-    public Noe2 get(int i) {
+    public ManagedNoe get(int i) {
         return constraints.get(i);
     }
 
@@ -119,8 +126,8 @@ public class NoeSet2 implements ConstraintSet, Iterable {
         return constraints.iterator();
     }
 
-    public List<Noe2> getConstraintsForPeak(Peak peak) {
-        List<Noe2> noeList = peakMap.get(peak);
+    public List<ManagedNoe> getConstraintsForPeak(Peak peak) {
+        List<ManagedNoe> noeList = peakMap.get(peak);
         if (noeList == null) {
             noeList = new ArrayList<>();
             peakMap.put(peak, noeList);
@@ -128,7 +135,7 @@ public class NoeSet2 implements ConstraintSet, Iterable {
         return noeList;
     }
 
-    public Set<Entry<Peak, List<Noe2>>> getPeakMapEntries() {
+    public Set<Entry<Peak, List<ManagedNoe>>> getPeakMapEntries() {
         return peakMap.entrySet();
     }
 
@@ -202,4 +209,50 @@ public class NoeSet2 implements ConstraintSet, Iterable {
     }
 
 
+    @Override
+    public void write(Writer chan) throws ParseException, IOException {
+        String saveFrameName = getName();
+        String saveFrameCategory = getCategory();
+        String thisCategory = getListType();
+        String constraintType = getType();
+
+        chan.write("save_" + saveFrameName + "\n");
+
+        chan.write(thisCategory + ".Sf_category    ");
+        chan.write(saveFrameCategory + "\n");
+
+        chan.write(thisCategory + ".Sf_framecode   ");
+        chan.write(saveFrameName + "\n");
+
+        chan.write(thisCategory + ".Constraint_type   ");
+        chan.write('\'' + constraintType + "\'\n");
+
+        chan.write(thisCategory + ".Details        ");
+        chan.write(".\n");
+
+        chan.write("\n");
+
+        String[] loopStrings = getLoopStrings();
+        chan.write("loop_\n");
+        for (String loopString : loopStrings) {
+            chan.write(loopString + "\n");
+        }
+        chan.write("\n");
+        Iterator iter = iterator();
+        while (iter.hasNext()) {
+            Constraint constraint = (Constraint) iter.next();
+            if (constraint == null) {
+                throw new ParseException("writeConstraints: constraint null at ");
+            }
+            chan.write(constraint.toSTARString() + "\n");
+        }
+        chan.write("stop_\n");
+        chan.write("\n");
+
+        chan.write("save_\n\n");
+
+        for (ManagedList managedList : associatedLists) {
+            managedList.writePeakConstraintLinks(chan);
+        }
+    }
 }

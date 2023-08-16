@@ -12,9 +12,8 @@ import javafx.fxml.FXML;
 import org.controlsfx.dialog.ExceptionDialog;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
-import org.nmrfx.chemistry.constraints.Noe;
-import org.nmrfx.chemistry.constraints.NoeSet;
 import org.nmrfx.datasets.Nuclei;
+import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakDim;
 import org.nmrfx.peaks.PeakList;
@@ -30,7 +29,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
-public class Acquisition implements SaveframeWriter {
+public class Acquisition {
     static HashMap<ProjectBase, ObservableList> projectAcquisitionsMap= new HashMap<>();
 
     static public ObservableList<Acquisition> getActiveAcquisitionList() {
@@ -307,7 +306,7 @@ public class Acquisition implements SaveframeWriter {
                         AcqNode node2 = acqTree.getNode(expDim.getNextExpDim(), atom2);
                         if (node1 != null && node2 != null) {
                             //Noe noe = new Noe(newPeak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction,resonance1,resonance2);
-                            Noe2 noe = new Noe2(newPeak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction);
+                            ManagedNoe noe = new ManagedNoe(newPeak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction);
                             noe.setIntensity(newPeak.getIntensity());
                             list.setAddedNoe(noe);
                             list.noeSet.add(noe);
@@ -326,10 +325,10 @@ public class Acquisition implements SaveframeWriter {
         return addedPeaks;
     }
 
-    public boolean noeExists(NoeSet2 noeSet, AtomResonance resonance1, AtomResonance resonance2) {
+    public boolean noeExists(ManagedNoeSet noeSet, AtomResonance resonance1, AtomResonance resonance2) {
         Atom atom1 = resonance1.getAtom();
         Atom atom2 = resonance2.getAtom();
-        for (Noe2 noe : noeSet.getConstraints()) {
+        for (ManagedNoe noe : noeSet.getConstraints()) {
             boolean seen1=false;
             boolean seen2=false;
             for (PeakDim testPeakDim : noe.getPeak().getPeakDims()) {
@@ -485,23 +484,6 @@ public class Acquisition implements SaveframeWriter {
             } catch ( IndexOutOfBoundsException e ) {
                 defaultPeakWidths.add(j,defaultWidth);
             }
-        }
-    }
-
-    //we do this to ensure that condition and sample already exist (i.e. are in extraSaveFrames) before the acquisition.
-    //need to make sure to run this when reading in the star file as well!
-    public void addSaveframe() {
-        if (!saveframeAdded) {
-            project.addSaveframe(this);
-            saveframeAdded = true;
-        }
-    }
-    //fixme: should this be done with a ManagedList saveframe writer?
-    @Override
-    public void write(Writer chan) throws ParseException, IOException {
-        for (ManagedList managedList : getManagedLists()) {
-            //managedList.writeManagedSTAR3Header(chan);
-            managedList.writePeakConstraintLinks(chan);
         }
     }
 }

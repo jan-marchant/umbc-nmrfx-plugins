@@ -13,6 +13,7 @@ import javafx.scene.control.ButtonType;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.Entity;
 import org.nmrfx.chemistry.Polymer;
+import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.PeakList;
 import org.nmrfx.project.ProjectBase;
 import org.nmrfx.star.Loop;
@@ -20,7 +21,6 @@ import org.nmrfx.star.ParseException;
 import org.nmrfx.star.Saveframe;
 import org.nmrfx.star.SaveframeWriter;
 import org.nmrfx.structure.chemistry.Molecule;
-import org.nmrfx.structure.rna.RNALabels;
 import org.nmrfx.utils.GUIUtils;
 
 import java.io.IOException;

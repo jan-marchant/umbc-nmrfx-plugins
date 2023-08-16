@@ -5,11 +5,7 @@ import javafx.collections.ListChangeListener;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
 import org.nmrfx.chemistry.PPMv;
-import org.nmrfx.chemistry.constraints.Noe;
-import org.nmrfx.peaks.Multiplet;
-import org.nmrfx.peaks.Peak;
-import org.nmrfx.peaks.PeakDim;
-import org.nmrfx.peaks.PeakList;
+import org.nmrfx.peaks.*;
 import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.utils.GUIUtils;
 
@@ -19,19 +15,19 @@ import java.util.List;
 import java.util.Set;
 
 public class ManagedPeak extends Peak {
-    private Set<Noe2> noes=new HashSet<>();
+    private Set<ManagedNoe> noes=new HashSet<>();
 
     public ManagedPeak(int nDim) {
         super(nDim);
     }
 
-    public ManagedPeak(PeakList peakList, int nDim, Set<Noe2> noes, HashMap<Integer, Atom> atoms) {
+    public ManagedPeak(PeakList peakList, int nDim, Set<ManagedNoe> noes, HashMap<Integer, Atom> atoms) {
         super(peakList, nDim);
         this.noes=noes;
 
         float scale=1f;
 
-        for (Noe2 noe : noes) {
+        for (ManagedNoe noe : noes) {
             if (noe.getPeak()==null || !PeakList.peakLists().contains(noe.getPeak().peakList)) {
                 for (int i = 0; i < nDim; i++) {
                     AtomResonance resonance=null;
@@ -64,7 +60,7 @@ public class ManagedPeak extends Peak {
         for (int i = 0; i < nDim; i++) {
             PeakDim peakDim0=null;
             AtomResonance resonance=null;
-            for (Noe2 noe : noes) {
+            for (ManagedNoe noe : noes) {
                 for (PeakDim peakDim : noe.getPeak().getPeakDims()) {
                     if (((AtomResonance) peakDim.getResonance()).getAtom()==atoms.get(i)) {
                         peakDim0=peakDim;
@@ -164,9 +160,9 @@ public class ManagedPeak extends Peak {
         }
 
         if (((ManagedList) peakList).noeSet!=null) {
-            ((ManagedList) peakList).noeSet.getConstraints().addListener((ListChangeListener.Change<? extends Noe2> c) -> {
+            ((ManagedList) peakList).noeSet.getConstraints().addListener((ListChangeListener.Change<? extends ManagedNoe> c) -> {
                 while (c.next()) {
-                    for (Noe2 removedNoe : c.getRemoved()) {
+                    for (ManagedNoe removedNoe : c.getRemoved()) {
                         if (this.noes.contains(removedNoe)) {
                             remove();
                         }
@@ -178,6 +174,18 @@ public class ManagedPeak extends Peak {
 
     public ManagedPeak(PeakList peakList, int nDim) {
         super(peakList, nDim);
+    }
+
+    public static ManagedPeak copyFrom(Peak originalPeak, ManagedList list) {
+        ManagedPeak peak = new ManagedPeak(list,originalPeak.getNDim());
+        originalPeak.copyTo(peak);
+        for (int i = 0; i < originalPeak.peakDims.length; i++) {
+            peak.peakDims[i].setResonance(originalPeak.peakDims[i].getResonance());
+            originalPeak.peakDims[i].getResonance().add(peak.peakDims[i]);
+            peak.peakDims[i].setFrozen(originalPeak.peakDims[i].isFrozen());
+        }
+        peak.updateFrozenColor();
+        return peak;
     }
 
     @Override
@@ -194,7 +202,7 @@ public class ManagedPeak extends Peak {
                 updateStatus=true;
             } else {
                 //popup if multiple NOE dims
-                for (Noe2 noe: noes) {
+                for (ManagedNoe noe: noes) {
                     //TODO: Will this fail for relabelled peaks? Need to watch and update. Are the spatial sets set up on loading?
                     // can add an NOE without a peak for the other NOE dims.
                     //fixme: better to have a single window with all possible suggestions
@@ -227,7 +235,8 @@ public class ManagedPeak extends Peak {
         });
     }
 
-    public Set<Noe2> getNoes() {
+    public Set<ManagedNoe> getNoes() {
         return noes;
     }
+
 }

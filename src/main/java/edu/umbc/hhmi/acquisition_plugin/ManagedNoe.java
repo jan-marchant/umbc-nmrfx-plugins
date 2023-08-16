@@ -23,7 +23,6 @@ import org.nmrfx.chemistry.*;
 import org.nmrfx.chemistry.constraints.DistanceConstraint;
 import org.nmrfx.chemistry.constraints.DistanceStat;
 import org.nmrfx.chemistry.constraints.Flags;
-import org.nmrfx.chemistry.constraints.NoeSet;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakDim;
 
@@ -34,25 +33,25 @@ enum DisTypes {
 
     MINIMUM("minimum") {
         @Override
-        public double getDistance(Noe2 noe) {
+        public double getDistance(ManagedNoe noe) {
             return noe.getDisStatAvg().getMin();
         }
     },
     MAXIMUM("maximum") {
         @Override
-        public double getDistance(Noe2 noe) {
+        public double getDistance(ManagedNoe noe) {
             return noe.getDisStatAvg().getMax();
         }
     },
     MEAN("mean") {
         @Override
-        public double getDistance(Noe2 noe) {
+        public double getDistance(ManagedNoe noe) {
             return noe.getDisStatAvg().getMean();
         }
     };
     private String description;
 
-    public abstract double getDistance(Noe2 noe);
+    public abstract double getDistance(ManagedNoe noe);
 
     DisTypes(String description) {
         this.description = description;
@@ -60,7 +59,7 @@ enum DisTypes {
 }
 
 
-public class Noe2 extends DistanceConstraint implements Serializable {
+public class ManagedNoe extends DistanceConstraint implements Serializable {
 
     private static boolean useDistances = false;
     private static int nStructures = 0;
@@ -129,7 +128,7 @@ public class Noe2 extends DistanceConstraint implements Serializable {
         }
     }
 
-    public Noe2(Peak p, SpatialSet sp1, SpatialSet sp2, double newScale) {
+    public ManagedNoe(Peak p, SpatialSet sp1, SpatialSet sp2, double newScale) {
         super(sp1, sp2);
         SpatialSetGroup spg1t = new SpatialSetGroup(sp1);
         SpatialSetGroup spg2t = new SpatialSetGroup(sp2);
@@ -145,7 +144,7 @@ public class Noe2 extends DistanceConstraint implements Serializable {
 
     }
 
-    public Noe2(Peak p, SpatialSetGroup spg1, SpatialSetGroup spg2, double newScale) {
+    public ManagedNoe(Peak p, SpatialSetGroup spg1, SpatialSetGroup spg2, double newScale) {
         super(spg1, spg2);
         this.spg1 = spg1;
         this.spg2 = spg2;
@@ -334,11 +333,11 @@ public class Noe2 extends DistanceConstraint implements Serializable {
         return disStat;
     }
 
-    public static int getSize(NoeSet noeSet) {
+    public static int getSize(ManagedNoeSet noeSet) {
         return noeSet.getSize();
     }
 
-    public static void resetConstraints(NoeSet noeSet) {
+    public static void resetConstraints(ManagedNoeSet noeSet) {
         noeSet.clear();
     }
 
@@ -470,12 +469,12 @@ public class Noe2 extends DistanceConstraint implements Serializable {
 
     @Override
     public String toSTARString() {
-        if (peak == null || peak != NoeSet.lastPeakWritten) {
-            NoeSet.ID++;
-            NoeSet.lastPeakWritten = peak;
-            NoeSet.memberID = 1;
+        if (peak == null || peak != ManagedNoeSet.lastPeakWritten) {
+            ManagedNoeSet.ID++;
+            ManagedNoeSet.lastPeakWritten = peak;
+            ManagedNoeSet.memberID = 1;
         } else {
-            NoeSet.memberID++;
+            ManagedNoeSet.memberID++;
         }
         String logic = ".";
         if (nPossible > 1) {
@@ -487,12 +486,12 @@ public class Noe2 extends DistanceConstraint implements Serializable {
         char stringQuote = '"';
 
         //        Gen_dist_constraint.ID
-        result.append(NoeSet.ID);
-        starID=NoeSet.ID;
+        result.append(ManagedNoeSet.ID);
+        starID= ManagedNoeSet.ID;
         result.append(sep);
         //_Gen_dist_constraint.Member_ID
-        result.append(NoeSet.memberID);
-        starMemberId=NoeSet.memberID;
+        result.append(ManagedNoeSet.memberID);
+        starMemberId= ManagedNoeSet.memberID;
         result.append(sep);
         //_Gen_dist_constraint.Member_logic_code
         result.append(logic);

@@ -1,6 +1,7 @@
 package edu.umbc.hhmi.acquisition_plugin;
 
 import com.google.auto.service.AutoService;
+import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.plugin.api.EntryPoint;
 import org.nmrfx.plugin.api.NMRFxPlugin;
 import javafx.scene.control.Menu;
@@ -21,12 +22,12 @@ public class AcquisitionPlugin implements NMRFxPlugin {
     @Override
     public void registerOnEntryPoint(EntryPoint entryPoint, Object object) {
         if (entryPoint == EntryPoint.STARTUP) {
+            ManagedList.doStartup();
             Condition.doStartup();
             Sample.doStartup();
             Experiment.doStartup();
-            Acquisition.doStartup();
             NoeSetup.doStartup();
-            ManagedList.doStartup();
+            Acquisition.doStartup();
         }
 
         if (entryPoint == EntryPoint.MENU_PLUGINS) {

@@ -15,10 +15,9 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
-import org.nmrfx.chemistry.constraints.NoeSet;
 import org.nmrfx.datasets.Nuclei;
+import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.PeakList;
-import org.nmrfx.project.ProjectBase;
 import org.nmrfx.utils.GUIUtils;
 
 import java.awt.*;
@@ -37,7 +36,7 @@ public class ManagedListSetup {
     ChoiceBox<Integer> ppmSetChoices = new ChoiceBox();
     ChoiceBox<Integer> rPpmSetChoices = new ChoiceBox();
     //all NOE dims must use same NoeSet
-    ComboBox<NoeSet2> noeSet = new ComboBox();
+    ComboBox<ManagedNoeSet> noeSet = new ComboBox();
     HashMap<ExpDim,ComboBox<Integer>> dimBoxes=new HashMap<>();
     boolean dimBoxesOk=true;
     boolean noesOk=true;
@@ -229,16 +228,16 @@ public class ManagedListSetup {
                         }
                         noeSet.getItems().setAll(NoeSetup.getProjectNoeSets(acquisition.getProject()).values());
                         noeSet.setPromptText("NOE Set:");
-                        noeSet.setConverter(new StringConverter<NoeSet2>() {
+                        noeSet.setConverter(new StringConverter<ManagedNoeSet>() {
 
                             @Override
-                            public String toString(NoeSet2 noeSet) {
-                                Optional<Map.Entry<String, NoeSet2>> optionalEntry = NoeSetup.getProjectNoeSets(acquisition.getProject()).entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
+                            public String toString(ManagedNoeSet noeSet) {
+                                Optional<Map.Entry<String, ManagedNoeSet>> optionalEntry = NoeSetup.getProjectNoeSets(acquisition.getProject()).entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
                                 return (optionalEntry.map(Map.Entry::getKey).orElse(null));
                             }
 
                             @Override
-                            public NoeSet2 fromString(String string) {
+                            public ManagedNoeSet fromString(String string) {
                                 return NoeSetup.getProjectNoeSets(acquisition.getProject()).get(string);
                             }
                         });
@@ -347,7 +346,6 @@ public class ManagedListSetup {
             }
             ManagedList managedList=new ManagedList(acquisition,nameField.getText(),0,rPpmSetChoices.getValue(),noeSet.getValue(),dimMap);
             acquisition.getManagedLists().add(managedList);
-            acquisition.addSaveframe();
         }
         stage.close();
     }

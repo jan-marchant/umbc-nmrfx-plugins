@@ -20,10 +20,8 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
 import javafx.util.converter.DefaultStringConverter;
-import org.apache.commons.collections4.BidiMap;
 import org.nmrfx.chemistry.*;
 import org.nmrfx.chemistry.constraints.MolecularConstraints;
-import org.nmrfx.chemistry.constraints.Noe;
 import org.nmrfx.chemistry.constraints.NoeSet;
 import org.nmrfx.peaks.PeakList;
 import org.nmrfx.project.ProjectBase;
@@ -42,8 +40,8 @@ public class NoeSetup implements SubProjMenu {
 
     static HashMap<ProjectBase, HashMap> projectNoeSetsMap= new HashMap<>();
 
-    static public HashMap<String,NoeSet2> getActiveNoeSetList() {
-        HashMap<String,NoeSet2> noeSetList = projectNoeSetsMap.get(ProjectBase.getActive());
+    static public HashMap<String, ManagedNoeSet> getActiveNoeSetList() {
+        HashMap<String, ManagedNoeSet> noeSetList = projectNoeSetsMap.get(ProjectBase.getActive());
         if (noeSetList == null) {
             noeSetList = new HashMap();
             projectNoeSetsMap.put(ProjectBase.getActive(),noeSetList);
@@ -51,8 +49,8 @@ public class NoeSetup implements SubProjMenu {
         return noeSetList;
     }
 
-    static public HashMap<String, NoeSet2> getProjectNoeSets(ProjectBase project) {
-        HashMap<String,NoeSet2> noeSetList = projectNoeSetsMap.get(project);
+    static public HashMap<String, ManagedNoeSet> getProjectNoeSets(ProjectBase project) {
+        HashMap<String, ManagedNoeSet> noeSetList = projectNoeSetsMap.get(project);
         if (noeSetList == null) {
             noeSetList = new HashMap();
             projectNoeSetsMap.put(project,noeSetList);
@@ -63,20 +61,23 @@ public class NoeSetup implements SubProjMenu {
     public static void doStartup() {
         //Can't add an noe set without an active molecule
         //NoeSetup.addSet("default");
+        ManagedNoeSetSaveframeProcessor managedNoeSetSaveframeProcessor = new ManagedNoeSetSaveframeProcessor();
+        ProjectBase.addSaveframeProcessor("general_distance_constraints2", managedNoeSetSaveframeProcessor);
+        ProjectBase.addSaveframeProcessor("peak_constraint_links", managedNoeSetSaveframeProcessor);
     }
 
-    public static NoeSet2 addSet(String name) {
+    public static ManagedNoeSet addSet(String name) {
         MolecularConstraints molConstr = Molecule.getActive().getMolecularConstraints();
-        NoeSet2 noeSet = NoeSet2.newSet(molConstr,name);
+        ManagedNoeSet noeSet = ManagedNoeSet.newSet(molConstr,name);
         getActiveNoeSetList().put(name, noeSet);
         //ACTIVE_SET = noeSet;
         return noeSet;
     }
 
-    public static NoeSet2 addSet(String name, ProjectBase project) {
+    public static ManagedNoeSet addSet(String name, ProjectBase project) {
         //fixme: Current molecule handling needs to change for this - currently molecules are "global"
         MolecularConstraints molConstr = Molecule.getActive().getMolecularConstraints();
-        NoeSet2 noeSet = NoeSet2.newSet(molConstr,name);
+        ManagedNoeSet noeSet = ManagedNoeSet.newSet(molConstr,name);
         getProjectNoeSets(project).put(name, noeSet);
         //ACTIVE_SET = noeSet;
         return noeSet;
@@ -107,7 +108,7 @@ public class NoeSetup implements SubProjMenu {
     Popup popup;
     MenuButton generate;
 
-    ComboBox<NoeSet2> noeSetCombo = new ComboBox<>();
+    ComboBox<ManagedNoeSet> noeSetCombo = new ComboBox<>();
 
     List<ResidueDistances> distances = new ArrayList<>();
 
@@ -256,16 +257,16 @@ public class NoeSetup implements SubProjMenu {
         noeSetCombo.setMaxWidth(Double.MAX_VALUE);
         noeSetCombo.getItems().setAll(getActiveNoeSetList().values());
         noeSetCombo.setPromptText("NOE Set:");
-        noeSetCombo.setConverter(new StringConverter<NoeSet2>() {
+        noeSetCombo.setConverter(new StringConverter<ManagedNoeSet>() {
 
             @Override
-            public String toString(NoeSet2 noeSet) {
-                Optional<Map.Entry<String, NoeSet2>> optionalEntry = getActiveNoeSetList().entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
+            public String toString(ManagedNoeSet noeSet) {
+                Optional<Map.Entry<String, ManagedNoeSet>> optionalEntry = getActiveNoeSetList().entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
                 return (optionalEntry.map(Map.Entry::getKey).orElse(null));
             }
 
             @Override
-            public NoeSet2 fromString(String string) {
+            public ManagedNoeSet fromString(String string) {
                 return getActiveNoeSetList().get(string);
             }
         });
@@ -342,7 +343,7 @@ public class NoeSetup implements SubProjMenu {
         if (NoeSetup.getActiveNoeSetList().get(name)!=null) {
             GUIUtils.warn("Error","NOE set "+name+" already exists. Please choose a new name.");
         } else {
-            NoeSet2 noeSet=NoeSetup.addSet(name);
+            ManagedNoeSet noeSet=NoeSetup.addSet(name);
             noeSetCombo.getItems().add(noeSet);
             noeSetCombo.setValue(noeSet);
         }
@@ -354,7 +355,7 @@ public class NoeSetup implements SubProjMenu {
         popup.show(bButton, popupLocation.getX(), popupLocation.getY());
     }
 
-    private void generateNOEsFromSubProject(ProjectBase project, NoeSet2 noeSet) {
+    private void generateNOEsFromSubProject(ProjectBase project, ManagedNoeSet noeSet) {
         //Should update this to prompt if more than one NOE Set
         if (SubProjMenu.isSubProjectPresent()) {
         /*
@@ -420,7 +421,7 @@ public class NoeSetup implements SubProjMenu {
         GUIUtils.warn("Sorry","Not yet implemented");
     }
 
-    private void generateNOEsByAttributes(NoeSet2 noeSet) {
+    private void generateNOEsByAttributes(ManagedNoeSet noeSet) {
         Molecule mol = (Molecule) noeSet.getMolecularConstraints().molecule;
         //looks like molecule can't be null?
         /*
@@ -476,7 +477,7 @@ public class NoeSetup implements SubProjMenu {
                                     if (atom2.getResonance() == null) {
                                         atom2.setResonance((AtomResonance) PeakList.resFactory().build());
                                     }
-                                    Noe2 noe = new Noe2(null, atom1.getSpatialSet(), atom2.getSpatialSet(), 1.0);
+                                    ManagedNoe noe = new ManagedNoe(null, atom1.getSpatialSet(), atom2.getSpatialSet(), 1.0);
                                     noe.setResonance1(atom1.getResonance());
                                     noe.setResonance2(atom2.getResonance());
                                     double scaleConst = 100.0/ math.pow(2.0,-6);
@@ -494,8 +495,8 @@ public class NoeSetup implements SubProjMenu {
 
     }
 
-    private boolean noeExists(NoeSet2 noeSet,Atom atom1,Atom atom2) {
-        for (Noe2 noe : noeSet.getConstraints()) {
+    private boolean noeExists(ManagedNoeSet noeSet, Atom atom1, Atom atom2) {
+        for (ManagedNoe noe : noeSet.getConstraints()) {
             if (atom1 == noe.spg1.getAnAtom() && atom2 == noe.spg2.getAnAtom() ||
                     atom2 == noe.spg1.getAnAtom() && atom1 == noe.spg2.getAnAtom()) {
                 return true;

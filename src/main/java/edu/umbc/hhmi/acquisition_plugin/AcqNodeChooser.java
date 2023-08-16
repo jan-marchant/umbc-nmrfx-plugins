@@ -23,8 +23,7 @@ import javafx.util.StringConverter;
 import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
-import org.nmrfx.chemistry.constraints.Noe;
-import org.nmrfx.chemistry.constraints.NoeSet;
+import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakDim;
 import org.nmrfx.peaks.PeakList;
@@ -359,7 +358,7 @@ public class AcqNodeChooser {
                 }
             }
         }
-        List<Noe2> noesToAdd = new ArrayList<>();
+        List<ManagedNoe> noesToAdd = new ArrayList<>();
         for (Map.Entry<ExpDim,AcqNode> picked : pickedSet.entrySet()) {
             ExpDim expDim = picked.getKey();
             Connectivity nextCon = expDim.getNextCon();
@@ -385,14 +384,14 @@ public class AcqNodeChooser {
                     }
                     //todo: why did we need to add resonances here?
                     //Noe noe = new Noe(peak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction, atom1.getResonance(), atom2.getResonance());
-                    Noe2 noe = new Noe2(peak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction);
+                    ManagedNoe noe = new ManagedNoe(peak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction);
                     //fixme: apportion intensity where multiple NOE dims
                     noe.setIntensity(peak.getIntensity());
                     noesToAdd.add(noe);
                 }
             }
         }
-        for (Noe2 noe: noesToAdd) {
+        for (ManagedNoe noe: noesToAdd) {
             if (list.getAddedNoe()==null) {
                 list.setAddedNoe(noe);
             }
@@ -400,8 +399,8 @@ public class AcqNodeChooser {
         }
     }
 
-    private boolean noeExists(NoeSet2 noeSet, Atom atom1, Atom atom2) {
-        for (Noe2 noe : noeSet.getConstraints()) {
+    private boolean noeExists(ManagedNoeSet noeSet, Atom atom1, Atom atom2) {
+        for (ManagedNoe noe : noeSet.getConstraints()) {
             if (atom1 == noe.spg1.getAnAtom() && atom2 == noe.spg2.getAnAtom() ||
                     atom2 == noe.spg1.getAnAtom() && atom1 == noe.spg2.getAnAtom()) {
                 return true;
