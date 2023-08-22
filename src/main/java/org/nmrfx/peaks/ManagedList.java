@@ -3,6 +3,7 @@ package org.nmrfx.peaks;
 import edu.umbc.hhmi.acquisition_plugin.*;
 import javafx.collections.SetChangeListener;
 import org.nmrfx.chemistry.Atom;
+import org.nmrfx.chemistry.PPMv;
 import org.nmrfx.datasets.Nuclei;
 import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.project.ProjectBase;
@@ -14,7 +15,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
-//todo set sample label
 public class ManagedList extends PeakList {
 
     private static final Logger log = LoggerFactory.getLogger(ManagedList.class);
@@ -45,6 +45,7 @@ public class ManagedList extends PeakList {
     private ManagedNoe addedNoe=null;
     //private ManagedPeak addedPeak=null;
     //protected List<ManagedPeak> peaks;
+    private Boolean listening = false;
 
     //initial creation
     public ManagedList(Acquisition acquisition, String name, int ppmSet, int rPpmset, ManagedNoeSet noeSet, HashMap<ExpDim,Integer> dimMap) {
@@ -88,15 +89,19 @@ public class ManagedList extends PeakList {
         if (noeSet != null) {
             noeSet.associatedLists.add(this);
             acquisition.getAcqTree().addNoeSet(noeSet);
+            acquisition.initDefaultPeakWidths();
         }
     }
 
     public void setupListener() {
-        acquisition.getAcqTree().getEdges().addListener((SetChangeListener.Change<? extends AcqTree.Edge> c) -> {
-            if (c.wasAdded()) {
-                addEdgeToList(c.getElementAdded(),true);
-            }
-        });
+        if (!listening) {
+            acquisition.getAcqTree().getEdges().addListener((SetChangeListener.Change<? extends AcqTree.Edge> c) -> {
+                if (c.wasAdded()) {
+                    addEdgeToList(c.getElementAdded(), true);
+                }
+            });
+            listening = true;
+        }
     }
 
     public void initializeList(Dataset dataset) {
@@ -240,7 +245,7 @@ public class ManagedList extends PeakList {
         detailArray.add(peaks().size()+" peaks");
         detailArray.add("rPPM Set: "+rPpmSet);
         if (noeSet!=null) {
-            Optional<Map.Entry<String, ManagedNoeSet>> optionalEntry = NoeSetup.getProjectNoeSets(acquisition.getProject()).entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
+            Optional<Map.Entry<String, ManagedNoeSet>> optionalEntry = ManagedNoeSetup.getProjectNoeSets(acquisition.getProject()).entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
             if (optionalEntry.isPresent()) {
             detailArray.add("NOE Set: "+optionalEntry.get().getKey());
             }
@@ -288,6 +293,7 @@ public class ManagedList extends PeakList {
     }
 
     private ManagedPeak addPeakFromPath(HashMap<ExpDim, AcqTree.Edge> path) {
+        //TODO: Only add peaks with ppm associated? But what if they are assigned later?
         Double peakIntensity=1.0;
         Set<ManagedNoe> noes=new HashSet<>();
         HashMap<Integer, Atom> atoms=new HashMap<>();
@@ -301,11 +307,31 @@ public class ManagedList extends PeakList {
                 noes.add(edge.noe);
             }
         }
-        ManagedPeak newPeak = new ManagedPeak(this, this.nDim, noes, atoms);
-        peaks().add(newPeak);
-        this.reIndex();
-        newPeak.setIntensity(peakIntensity.floatValue());
-        return newPeak;
+
+        boolean assigned = true;
+
+        for (int i = 0; i < nDim; i++) {
+            PPMv ppm;
+            ppm = atoms.get(i).getPPM(this.getPpmSet());
+            if (ppm == null) {
+                ppm = atoms.get(i).getRefPPM(this.getRPpmSet());
+            }
+            if (ppm == null) {
+                assigned = false;
+            }
+        }
+        //TODO: Keep track of when unassigned atoms get assigned - or don't allow NOE to something
+        //TODO: without at least RefPPM. At the moment, the NOE is there, but no peak if no assignment
+        //TODO: to use
+        if (assigned) {
+            ManagedPeak newPeak = new ManagedPeak(this, this.nDim, noes, atoms);
+            peaks().add(newPeak);
+            this.reIndex();
+            newPeak.setIntensity(peakIntensity.floatValue());
+            return newPeak;
+        } else {
+            return null;
+        }
     }
 
     public HashMap<ExpDim, Integer> getDimMap() {

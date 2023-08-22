@@ -227,6 +227,7 @@ public class RNALabelsSceneController implements Initializable {
     }
 
     void doQuickCode(KeyEvent e, String code) {
+        //fixme: entity is cleared here
         System.out.println("quick " + code);
         if (defaultBackground == null) {
             defaultBackground = quickCodeField.getBackground();
@@ -441,6 +442,7 @@ public class RNALabelsSceneController implements Initializable {
             }
             sample.setEntityLabelString(entity, sBuilder.toString());
         }
+        stage.close();
     }
 
     @FXML
@@ -652,9 +654,14 @@ public class RNALabelsSceneController implements Initializable {
                 if (selGroup.lastRes != null) {
                     lastResidueField.setText(String.valueOf(selGroup.lastRes));
                 }
+                if (selGroup.labelingPercent != 100) {
+                    labelingPercentageField.setText(String.valueOf(selGroup.labelingPercent));
+                }
+                //Entity not normally specified. Leave as is?
                 Entity entity = Molecule.getActive().entities.get(selGroup.entityStr);
-
-                entityChoiceBox.setValue(entity);
+                if (entity != null) {
+                    entityChoiceBox.setValue(entity);
+                }
                 for (int iBase = 0; iBase < 4; iBase++) {
                     if (RNALabels2.checkResType(baseChars[iBase], selGroup.resTypes)) {
                         for (int iType = 0; iType < 3; iType++) {

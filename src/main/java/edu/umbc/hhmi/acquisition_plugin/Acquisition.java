@@ -12,6 +12,7 @@ import javafx.fxml.FXML;
 import org.controlsfx.dialog.ExceptionDialog;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
+import org.nmrfx.datasets.DatasetBase;
 import org.nmrfx.datasets.Nuclei;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
@@ -20,6 +21,7 @@ import org.nmrfx.peaks.PeakList;
 import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.processor.datasets.peaks.PeakPickParameters;
 import org.nmrfx.processor.datasets.peaks.PeakPicker;
+import org.nmrfx.processor.gui.PolyChart;
 import org.nmrfx.project.ProjectBase;
 import org.nmrfx.star.ParseException;
 import org.nmrfx.star.SaveframeWriter;
@@ -30,13 +32,13 @@ import java.io.Writer;
 import java.util.*;
 
 public class Acquisition {
-    static HashMap<ProjectBase, ObservableList> projectAcquisitionsMap= new HashMap<>();
+    static HashMap<ProjectBase, ObservableList> projectAcquisitionsMap = new HashMap<>();
 
     static public ObservableList<Acquisition> getActiveAcquisitionList() {
         ObservableList<Acquisition> acquisitionList = projectAcquisitionsMap.get(ProjectBase.getActive());
         if (acquisitionList == null) {
             acquisitionList = FXCollections.observableArrayList();
-            projectAcquisitionsMap.put(ProjectBase.getActive(),acquisitionList);
+            projectAcquisitionsMap.put(ProjectBase.getActive(), acquisitionList);
         }
         return acquisitionList;
     }
@@ -77,6 +79,26 @@ public class Acquisition {
     private ArrayList<Float> defaultPeakWidths = new ArrayList<>();
     private ProjectBase project;
 
+    //Silly place for this but quick hack to fix freqDomain issue
+    public static void fixDataset(ActionEvent e) {
+        PolyChart chart = PolyChart.getActiveChart();
+        DatasetBase dataset = chart.getDataset();
+        if (dataset != null) {
+            int nDim = dataset.getNDim();
+            // fixme kluge as not all datasets that are freq domain have attribute set
+            for (int i = 0; (i < nDim) && (i < 2); i++) {
+                dataset.setFreqDomain(i, true);
+            }
+            dataset.writeParFile();
+        }
+    }
+
+    public void initDefaultPeakWidths() {
+        if (defaultPeakWidths.size() < getDataset().getNDim()) {
+            updateDefaultPeakWidths();
+        }
+    }
+
     public Float getDefaultPeakWidth(int i) {
         if (defaultPeakWidths.size() < getDataset().getNDim()) {
             updateDefaultPeakWidths();
@@ -102,21 +124,21 @@ public class Acquisition {
     }
 
     private void parseValidExperiments() {
-        Dataset theDataset=getDataset();
+        Dataset theDataset = getDataset();
         validExperimentList.clear();
-        if (theDataset==null) {
+        if (theDataset == null) {
             setExperiment(null);
             return;
         }
         ArrayList<Nuclei> nuclei = new ArrayList<>();
         int nDim = theDataset.getNDim();
-        for (int i=0;i<nDim;i++) {
+        for (int i = 0; i < nDim; i++) {
             nuclei.add(theDataset.getNucleus(i));
         }
 
         for (Experiment experiment : Experiment.getActiveExperimentList()) {
             ArrayList<Nuclei> experimentNuc = (ArrayList) nuclei.clone();
-            if (experiment.getNumObsDims()==nDim) {
+            if (experiment.getNumObsDims() == nDim) {
                 for (ExpDim expDim : experiment.obsDims) {
                     experimentNuc.remove(expDim.getNucleus());
                 }
@@ -131,21 +153,21 @@ public class Acquisition {
     }
 
     private void updateValidExperiments(List<? extends Experiment> added) {
-        Dataset theDataset=getDataset();
+        Dataset theDataset = getDataset();
         //validExperimentList.clear();
-        if (theDataset==null) {
+        if (theDataset == null) {
             setExperiment(null);
             return;
         }
         ArrayList<Nuclei> nuclei = new ArrayList<>();
         int nDim = theDataset.getNDim();
-        for (int i=0;i<nDim;i++) {
+        for (int i = 0; i < nDim; i++) {
             nuclei.add(theDataset.getNucleus(i));
         }
 
         for (Experiment experiment : added) {
             ArrayList<Nuclei> experimentNuc = (ArrayList) nuclei.clone();
-            if (experiment.getNumObsDims()==nDim) {
+            if (experiment.getNumObsDims() == nDim) {
                 for (ExpDim expDim : experiment.obsDims) {
                     experimentNuc.remove(expDim.getNucleus());
                 }
@@ -161,15 +183,15 @@ public class Acquisition {
     }
 
     public void addNewManagedList() {
-        if (getDataset()==null || getSample()==null || getExperiment()==null) {
-            GUIUtils.warn("Cannot add list","You must define all acquisition parameters before adding any lists.");
+        if (getDataset() == null || getSample() == null || getExperiment() == null) {
+            GUIUtils.warn("Cannot add list", "You must define all acquisition parameters before adding any lists.");
             return;
         }
         ManagedListSetup managedListSetup = new ManagedListSetup(this);
     }
 
-    public void deleteManagedList(ManagedList managedList,boolean prompt) {
-        boolean delete=true;
+    public void deleteManagedList(ManagedList managedList, boolean prompt) {
+        boolean delete = true;
         if (prompt) {
             delete = GUIUtils.affirm("Are you sure? This cannot be undone.");
         }
@@ -180,7 +202,7 @@ public class Acquisition {
     }
 
     public void remove(boolean prompt) {
-        boolean delete=true;
+        boolean delete = true;
         if (prompt) {
             delete = GUIUtils.affirm("Are you sure you want to delete? This cannot be undone.");
         }
@@ -189,7 +211,7 @@ public class Acquisition {
         }
     }
 
-    private double getDatasetSensitivity () {
+    private double getDatasetSensitivity() {
         return 0.0;
     }
 
@@ -278,11 +300,11 @@ public class Acquisition {
                 AtomResonance resonance1 = null;
                 AtomResonance resonance2 = null;
                 if (expDim.isObserved()) {
-                    resonance1=(AtomResonance) newPeak.getPeakDim(list.getDimMap().get(expDim)).getResonance();
+                    resonance1 = (AtomResonance) newPeak.getPeakDim(list.getDimMap().get(expDim)).getResonance();
                     atom1 = resonance1.getAtom();
                 }
                 if (expDim.getNextExpDim().isObserved()) {
-                    resonance2=(AtomResonance) newPeak.getPeakDim(list.getDimMap().get(expDim.getNextExpDim())).getResonance();
+                    resonance2 = (AtomResonance) newPeak.getPeakDim(list.getDimMap().get(expDim.getNextExpDim())).getResonance();
                     atom2 = resonance2.getAtom();
                 }
                 boolean add = true;
@@ -296,11 +318,11 @@ public class Acquisition {
                 if (noeFraction <= 0) {
                     add = false;
                 }
-                if (!expDim.resPatMatches(atom1,atom2)) {
-                    add=false;
+                if (!expDim.resPatMatches(atom1, atom2)) {
+                    add = false;
                 }
                 if (add) {
-                    if (!noeExists(list.noeSet, resonance1,resonance2)) {
+                    if (!noeExists(list.noeSet, resonance1, resonance2)) {
                         //fixme: is this an OK use of newScale?
                         AcqNode node1 = acqTree.getNode(expDim, atom1);
                         AcqNode node2 = acqTree.getNode(expDim.getNextExpDim(), atom2);
@@ -329,18 +351,18 @@ public class Acquisition {
         Atom atom1 = resonance1.getAtom();
         Atom atom2 = resonance2.getAtom();
         for (ManagedNoe noe : noeSet.getConstraints()) {
-            boolean seen1=false;
-            boolean seen2=false;
+            boolean seen1 = false;
+            boolean seen2 = false;
             for (PeakDim testPeakDim : noe.getPeak().getPeakDims()) {
-                Atom testAtom=((AtomResonance) testPeakDim.getResonance()).getAtom();
+                Atom testAtom = ((AtomResonance) testPeakDim.getResonance()).getAtom();
                 //if (testAtom==atom1 && testPeakDim.getChemShiftSet()==resonance1.getChemShiftSet()) {
                 //TODO: implement chemical shift sets
-                if (testAtom==atom1) {
-                    seen1=true;
+                if (testAtom == atom1) {
+                    seen1 = true;
                 }
                 //if (testAtom==atom2 && testPeakDim.getChemShiftSet()==resonance2.getChemShiftSet()) {
-                if (testAtom==atom2) {
-                    seen2=true;
+                if (testAtom == atom2) {
+                    seen2 = true;
                 }
             }
             if (seen1 && seen2) {
@@ -351,7 +373,7 @@ public class Acquisition {
     }
 
     public void resetAcquisitionTree() {
-        acqTree =null;
+        acqTree = null;
     }
 
     public AcqTree getAcqTree() {
@@ -359,37 +381,37 @@ public class Acquisition {
         //in the preceding (backward) and following (forward) generations. The weight of each edge is given by the
         //labeling fraction of the first node in the forward direction. If the weight is 0 then the node is not added.
         //
-        if (acqTree !=null) {
+        if (acqTree != null) {
             return acqTree;
         }
-        acqTree =new AcqTree(this);
+        acqTree = new AcqTree(this);
 
-        boolean firstDim=true;
+        boolean firstDim = true;
         //populate generations
         for (ExpDim expDim : getExperiment().expDims) {
             HashMap<Atom, AcqNode> atomNode = new HashMap<>();
             Set<AcqNode> nodeSet = new HashSet<>();
             for (Atom atom : expDim.getActiveAtoms(getSample().getMolecule())) {
-                double fraction=getSample().getAtomFraction(atom);
-                if (fraction>0) {
-                    AcqNode node = acqTree.addNode(atom,expDim);
+                double fraction = getSample().getAtomFraction(atom);
+                if (fraction > 0) {
+                    AcqNode node = acqTree.addNode(atom, expDim);
                     node.setAtom(atom);
                     atomNode.put(atom, node);
                     nodeSet.add(node);
                     if (firstDim) {
                         acqTree.addLeadingEdge(node);
                     }
-                    if (expDim.getNextExpDim()==null) {
-                        acqTree.addTrailingEdge(node,fraction);
+                    if (expDim.getNextExpDim() == null) {
+                        acqTree.addTrailingEdge(node, fraction);
                     }
                 }
             }
-            firstDim=false;
+            firstDim = false;
         }
         //populate edges
         for (AcqNode node : acqTree.getNodes()) {
-            Atom atom=node.getAtom();
-            if (atom!=null) {
+            Atom atom = node.getAtom();
+            if (atom != null) {
                 for (Atom connectedAtom : node.getExpDim().getConnected(atom)) {
                     AcqNode connectedNode = acqTree.getNode(node.getNextExpDim(), connectedAtom);
                     if (connectedNode != null) {
@@ -401,7 +423,7 @@ public class Acquisition {
         }
         //prune nodes with no possible paths
         for (AcqNode node : acqTree.getNodes()) {
-            if (acqTree.getPossiblePaths(node, node, true, new HashMap<>(), new ArrayList<>()).size()==0) {
+            if (acqTree.getPossiblePaths(node, node, true, new HashMap<>(), new ArrayList<>()).size() == 0) {
                 acqTree.removeNode(node);
             }
         }
@@ -415,74 +437,90 @@ public class Acquisition {
     }
 
     public void updateDefaultPeakWidths() {
-        Dataset theDataset=getDataset();
-        if (theDataset==null) {
+        //fixme: this is still too slow for large datasets
+        //getPercentile only used for autoscale, one plane at a time.
+        Dataset theDataset = getDataset();
+        if (theDataset == null) {
             defaultPeakWidths.clear();
             return;
         }
-        int nDim = getDataset().getNDim();
-        int[][] pt = new int[nDim][2];
-        int[] cpt = new int[nDim];
-        int[] dim = new int[nDim];
-        double[] width = new double[nDim];
-        for (int i = 0; i < nDim; i++) {
-            dim[i] = i;
-            pt[i][0] = 0;
-            pt[i][1] = theDataset.getSizeTotal(i)-1;
-            cpt[i] = (pt[i][0] + pt[i][1]) / 2;
-            width[i] = (double) Math.abs(pt[i][0] - pt[i][1]);
-        }
-        //RegionData rData;
-        double[] percentile = null;
-        try {
-            //rData = dataset.analyzeRegion(pt, cpt, width, dim);
-            percentile = theDataset.getPercentile(90.0, pt, dim);
-        } catch (IOException e) {
-            ExceptionDialog dialog = new ExceptionDialog(e);
-            dialog.showAndWait();
-        }
+        Float defaultWidth = 0.1f;
 
-        double value = theDataset.guessNoiseLevel() * 5.0;
-        if (percentile != null) {
-            if (value < percentile[0]) {
-                value = percentile[0];
+        int nDim = getDataset().getNDim();
+        if (nDim < 3) {
+            int[][] pt = new int[nDim][2];
+            int[] cpt = new int[nDim];
+            int[] dim = new int[nDim];
+            double[] width = new double[nDim];
+            for (int i = 0; i < nDim; i++) {
+                dim[i] = i;
+                pt[i][0] = 0;
+                pt[i][1] = theDataset.getSizeTotal(i) - 1;
+                cpt[i] = (pt[i][0] + pt[i][1]) / 2;
+                width[i] = (double) Math.abs(pt[i][0] - pt[i][1]);
             }
-        }
-        //value is the result we would get for an auto level on the whole dataset.
-        //n.b. currently only picking positive peaks
-        PeakPickParameters peakPickPar = (new PeakPickParameters(theDataset, "temp_for_measure")).level(value).mode("appendregion");
-        for (int i = 0; i < nDim; i++) {
-            peakPickPar = peakPickPar.limit(i,pt[i][0],pt[i][1]);
-        }
-        PeakPicker picker = new PeakPicker(peakPickPar);
-        PeakList tempPeakList = null;
-        try {
-            tempPeakList = picker.peakPick();
-        } catch (IOException e) {
-            ExceptionDialog dialog = new ExceptionDialog(e);
-            dialog.showAndWait();
-        }
-        ArrayList<Float>[] widths = new ArrayList[nDim];
-        for (int j = 0; j < nDim; j++) {
-            widths[j]=new ArrayList<>();
-        }
-        if (tempPeakList != null) {
-            for (int i = 0; i < tempPeakList.peaks().size(); i++) {
-                Peak peak = tempPeakList.peaks().get(i);
-                for (int j = 0; j < nDim; j++) {
-                    widths[j].add(peak.getPeakDim(j).getLineWidthValue());
+            //RegionData rData;
+
+            double[] percentile = null;
+            //fixme: this is too slow. Just use guessNoiseLevel?
+            try {
+                //rData = dataset.analyzeRegion(pt, cpt, width, dim);
+                percentile = theDataset.getPercentile(90.0, pt, dim);
+            } catch (IOException e) {
+                ExceptionDialog dialog = new ExceptionDialog(e);
+                dialog.showAndWait();
+            }
+
+            double value = theDataset.guessNoiseLevel() * 5.0;
+            if (percentile != null) {
+                if (value < percentile[0]) {
+                    value = percentile[0];
                 }
             }
-        }
-        PeakList.remove("temp_for_measure");
-        //(approximate) median
-        for (int j = 0; j < nDim; j++) {
-            Collections.sort(widths[j]);
-            Float defaultWidth=widths[j].get(widths[j].size()/2);
+            //value is the result we would get for an auto level on the whole dataset.
+            //n.b. currently only picking positive peaks
+            PeakPickParameters peakPickPar = (new PeakPickParameters(theDataset, "temp_for_measure")).level(value).mode("appendregion");
+            for (int i = 0; i < nDim; i++) {
+                peakPickPar = peakPickPar.limit(i, pt[i][0], pt[i][1]);
+            }
+            PeakPicker picker = new PeakPicker(peakPickPar);
+            PeakList tempPeakList = null;
             try {
-                defaultPeakWidths.set(j,defaultWidth);
-            } catch ( IndexOutOfBoundsException e ) {
-                defaultPeakWidths.add(j,defaultWidth);
+                tempPeakList = picker.peakPick();
+            } catch (IOException e) {
+                ExceptionDialog dialog = new ExceptionDialog(e);
+                dialog.showAndWait();
+            }
+            ArrayList<Float>[] widths = new ArrayList[nDim];
+            for (int j = 0; j < nDim; j++) {
+                widths[j] = new ArrayList<>();
+            }
+            if (tempPeakList != null) {
+                for (int i = 0; i < tempPeakList.peaks().size(); i++) {
+                    Peak peak = tempPeakList.peaks().get(i);
+                    for (int j = 0; j < nDim; j++) {
+                        widths[j].add(peak.getPeakDim(j).getLineWidthValue());
+                    }
+                }
+            }
+            PeakList.remove("temp_for_measure");
+            //(approximate) median
+            for (int j = 0; j < nDim; j++) {
+                //Collections.sort(widths[j]);
+                defaultWidth = widths[j].get(widths[j].size() / 2);
+                try {
+                    defaultPeakWidths.set(j, defaultWidth);
+                } catch (IndexOutOfBoundsException e) {
+                    defaultPeakWidths.add(j, defaultWidth);
+                }
+            }
+        } else {
+            for (int j = 0; j < nDim; j++) {
+                try {
+                    defaultPeakWidths.set(j, defaultWidth);
+                } catch (IndexOutOfBoundsException e) {
+                    defaultPeakWidths.add(j, defaultWidth);
+                }
             }
         }
     }

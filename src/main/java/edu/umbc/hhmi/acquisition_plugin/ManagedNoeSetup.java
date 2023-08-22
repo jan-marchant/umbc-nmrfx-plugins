@@ -36,7 +36,7 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.function.UnaryOperator;
 
-public class NoeSetup implements SubProjMenu {
+public class ManagedNoeSetup implements SubProjMenu {
 
     static HashMap<ProjectBase, HashMap> projectNoeSetsMap= new HashMap<>();
 
@@ -56,6 +56,10 @@ public class NoeSetup implements SubProjMenu {
             projectNoeSetsMap.put(project,noeSetList);
         }
         return noeSetList;
+    }
+
+    static public ManagedNoeSet getNoeSet(String name) {
+        return getActiveNoeSetList().get(name);
     }
 
     public static void doStartup() {
@@ -83,7 +87,7 @@ public class NoeSetup implements SubProjMenu {
         return noeSet;
     }
 
-    public static NoeSetup noeSetController;
+    public static ManagedNoeSetup noeSetController;
 
     @FXML
     static public void showNoeSetup(ActionEvent event) {
@@ -91,7 +95,7 @@ public class NoeSetup implements SubProjMenu {
             noeSetController.getStage().close();
         }
         //if (noeSetController == null) {
-        noeSetController = new NoeSetup();
+        noeSetController = new ManagedNoeSetup();
         //}
         if (noeSetController != null) {
             noeSetController.show(300,300);
@@ -196,7 +200,7 @@ public class NoeSetup implements SubProjMenu {
         }
     }
 
-    public NoeSetup() {
+    public ManagedNoeSetup() {
         stage = new Stage(StageStyle.DECORATED);
         borderPane = new BorderPane();
         Scene scene = new Scene(borderPane);
@@ -276,12 +280,14 @@ public class NoeSetup implements SubProjMenu {
         Menu struct = new Menu("From Structure");
         Menu sub = new Menu("From SubProject NOEs");
 
-        MenuItem setVienna = new MenuItem("Setup Vienna");
-        MenuItem setShifts = new MenuItem("Predict shifts");
+        //MenuItem setVienna = new MenuItem("Setup Vienna");
+        //MenuItem setShifts = new MenuItem("Predict shifts");
         MenuItem gen = new MenuItem("Generate");
+        //setVienna.setOnAction(e -> updateDotBracket(Molecule.getActive()));
         gen.setOnAction(e -> generateNOEsByAttributes(noeSetCombo.getValue()));
 
-        attr.getItems().addAll(setVienna,setShifts,gen);
+        //attr.getItems().addAll(setVienna,setShifts,gen);
+        attr.getItems().addAll(gen);
 
         MenuItem notYet = new MenuItem("Not Implemented Yet");
         struct.getItems().add(notYet);
@@ -318,6 +324,28 @@ public class NoeSetup implements SubProjMenu {
         stage.setOnCloseRequest(e -> cancel());
     }
 
+    private void updateDotBracket(Molecule molecule) {
+        String db = molecule.getDotBracket();
+        String defaultDb;
+        if (db.equals("")) {
+            defaultDb = "Enter dot-bracket sequence";
+        } else {
+            defaultDb = db;
+        }
+        TextInputDialog textDialog = new TextInputDialog(defaultDb);
+        Optional<String> result = textDialog.showAndWait();
+        if (result.isPresent()) {
+            String dotBracket = result.get().trim();
+            if (dotBracket.equals("")) {
+                return;
+            }
+            molecule.setDotBracket(dotBracket);
+        } else {
+            return;
+        }
+        return;
+    }
+
     @Override
     public void setSubProject(ProjectBase subProject) {
             generateNOEsFromSubProject(subProject,noeSetCombo.getValue());
@@ -340,10 +368,10 @@ public class NoeSetup implements SubProjMenu {
     }
 
     private void addNoeSet(String name) {
-        if (NoeSetup.getActiveNoeSetList().get(name)!=null) {
+        if (ManagedNoeSetup.getActiveNoeSetList().get(name)!=null) {
             GUIUtils.warn("Error","NOE set "+name+" already exists. Please choose a new name.");
         } else {
-            ManagedNoeSet noeSet=NoeSetup.addSet(name);
+            ManagedNoeSet noeSet= ManagedNoeSetup.addSet(name);
             noeSetCombo.getItems().add(noeSet);
             noeSetCombo.setValue(noeSet);
         }
@@ -477,6 +505,7 @@ public class NoeSetup implements SubProjMenu {
                                     if (atom2.getResonance() == null) {
                                         atom2.setResonance((AtomResonance) PeakList.resFactory().build());
                                     }
+                                    //TODO: set scale based on dist ?
                                     ManagedNoe noe = new ManagedNoe(null, atom1.getSpatialSet(), atom2.getSpatialSet(), 1.0);
                                     noe.setResonance1(atom1.getResonance());
                                     noe.setResonance2(atom2.getResonance());

@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
+import org.nmrfx.chemistry.MoleculeBase;
 import org.nmrfx.chemistry.PPMv;
 import org.nmrfx.peaks.*;
 import org.nmrfx.processor.datasets.Dataset;
@@ -17,6 +18,10 @@ import java.util.Set;
 public class ManagedPeak extends Peak {
     private Set<ManagedNoe> noes=new HashSet<>();
 
+    public void addNoe (ManagedNoe noe) {
+        noes.add(noe);
+    }
+
     public ManagedPeak(int nDim) {
         super(nDim);
     }
@@ -26,9 +31,10 @@ public class ManagedPeak extends Peak {
         this.noes=noes;
 
         float scale=1f;
-
+        //peak may have multiple associated NOEs if two NOE transfers in experiment. Unlikely but still...
         for (ManagedNoe noe : noes) {
             if (noe.getPeak()==null || !PeakList.peakLists().contains(noe.getPeak().peakList)) {
+                //this is needlessly repetitious, but doesn't hurt. Unlikely to have multiple NOEs anyway
                 for (int i = 0; i < nDim; i++) {
                     AtomResonance resonance=null;
                     if (resonance==null && atoms.get(i).getResonance()!=null) {
@@ -216,6 +222,26 @@ public class ManagedPeak extends Peak {
         }
         if (updateStatus) {
             super.setStatus(status);
+        }
+    }
+
+    @Override
+    public void setFrozen(boolean state, boolean allConditions) {
+        //it's my peakList and I'll freeze if I want to
+        super.setFrozen(state, allConditions);
+        String conditionString;
+        if (allConditions) {
+            conditionString = null;
+        } else {
+            conditionString = getPeakList().getSampleConditionLabel();
+        }
+        for (PeakDim peakDim : getPeakDims()) {
+            Double ppmAvg = ((AtomResonance) peakDim.getResonance()).getPPMAvg(conditionString);
+            //just use atomresonance atom better?
+            Atom atom = MoleculeBase.getAtomByName(peakDim.getLabel());
+            if (atom != null) {
+                atom.setPPM(ppmAvg);
+            }
         }
     }
 

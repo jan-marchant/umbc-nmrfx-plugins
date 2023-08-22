@@ -223,22 +223,22 @@ public class ManagedListSetup {
                         //labString += " using NOE set: ";
                         //noeType.getItems().setAll(Connectivity.NOETYPE.values());
                         noeSet.setMaxWidth(Double.MAX_VALUE);
-                        if (NoeSetup.getProjectNoeSets(acquisition.getProject()).values().size()<1) {
-                            NoeSetup.addSet("default",acquisition.getProject());
+                        if (ManagedNoeSetup.getProjectNoeSets(acquisition.getProject()).values().size()<1) {
+                            ManagedNoeSetup.addSet("default",acquisition.getProject());
                         }
-                        noeSet.getItems().setAll(NoeSetup.getProjectNoeSets(acquisition.getProject()).values());
+                        noeSet.getItems().setAll(ManagedNoeSetup.getProjectNoeSets(acquisition.getProject()).values());
                         noeSet.setPromptText("NOE Set:");
                         noeSet.setConverter(new StringConverter<ManagedNoeSet>() {
 
                             @Override
                             public String toString(ManagedNoeSet noeSet) {
-                                Optional<Map.Entry<String, ManagedNoeSet>> optionalEntry = NoeSetup.getProjectNoeSets(acquisition.getProject()).entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
+                                Optional<Map.Entry<String, ManagedNoeSet>> optionalEntry = ManagedNoeSetup.getProjectNoeSets(acquisition.getProject()).entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
                                 return (optionalEntry.map(Map.Entry::getKey).orElse(null));
                             }
 
                             @Override
                             public ManagedNoeSet fromString(String string) {
-                                return NoeSetup.getProjectNoeSets(acquisition.getProject()).get(string);
+                                return ManagedNoeSetup.getProjectNoeSets(acquisition.getProject()).get(string);
                             }
                         });
 

@@ -530,6 +530,10 @@ public class ManagedNoe extends DistanceConstraint implements Serializable {
         //_Gen_dist_constraint.Contribution_fractional_val
         result.append('.');
         result.append(sep);
+        //NEW
+        //_Gen_dist_constraint.Weight
+        result.append(scale);
+        result.append(sep);
         //_Gen_dist_constraint.Spectral_peak_ID
         if (peak == null) {
             result.append('.');

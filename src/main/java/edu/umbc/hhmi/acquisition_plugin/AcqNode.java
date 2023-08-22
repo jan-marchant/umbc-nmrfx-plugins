@@ -74,7 +74,7 @@ public class AcqNode {
         for (int i = 0; i < peakList.getNDim(); i++) {
             for (Peak sPeak : peakList.peaks()) {
                 if (((AtomResonance) sPeak.getPeakDim(i).getResonance()).getAtom()==getAtom()) {
-                    ppms.add(new Double(sPeak.getPeakDim(i).getChemShift()));
+                    ppms.add((double) sPeak.getPeakDim(i).getChemShift());
                 }
             }
         }

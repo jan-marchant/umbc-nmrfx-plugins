@@ -50,7 +50,7 @@ public class ManagedNoeSet implements ConstraintSet, Iterable, SaveframeWriter {
     public static int ID = 0;
     private boolean calibratable = true;
     private boolean dirty = true;
-    public List<ManagedList> associatedLists = new ArrayList<>();
+    public Set<ManagedList> associatedLists = new HashSet<>();
 
     private ManagedNoeSet(MolecularConstraints molecularConstraints,
                           String name) {
@@ -102,8 +102,10 @@ public class ManagedNoeSet implements ConstraintSet, Iterable, SaveframeWriter {
         ManagedNoe noe = (ManagedNoe) constraint;
         noe.setID(constraints.size());
         constraints.add(noe);
-        List<ManagedNoe> noeList = getConstraintsForPeak(noe.getPeak());
-        noeList.add(noe);
+        if (noe.getPeak() != null) {
+            List<ManagedNoe> noeList = getConstraintsForPeak(noe.getPeak());
+            noeList.add(noe);
+        }
         dirty = true;
     }
 
@@ -127,10 +129,13 @@ public class ManagedNoeSet implements ConstraintSet, Iterable, SaveframeWriter {
     }
 
     public List<ManagedNoe> getConstraintsForPeak(Peak peak) {
-        List<ManagedNoe> noeList = peakMap.get(peak);
-        if (noeList == null) {
-            noeList = new ArrayList<>();
-            peakMap.put(peak, noeList);
+        List<ManagedNoe> noeList = new ArrayList<>();
+        if (peak != null) {
+            noeList = peakMap.get(peak);
+            if (noeList == null) {
+                noeList = new ArrayList<>();
+                peakMap.put(peak, noeList);
+            }
         }
         return noeList;
     }
@@ -160,6 +165,7 @@ public class ManagedNoeSet implements ConstraintSet, Iterable, SaveframeWriter {
         calibratable = state;
     }
 
+    //NB: Added Weight
     static String[] noeLoopStrings = {
             "_Gen_dist_constraint.ID",
             "_Gen_dist_constraint.Member_ID",
@@ -191,6 +197,7 @@ public class ManagedNoeSet implements ConstraintSet, Iterable, SaveframeWriter {
             "_Gen_dist_constraint.Distance_lower_bound_val",
             "_Gen_dist_constraint.Distance_upper_bound_val",
             "_Gen_dist_constraint.Contribution_fractional_val",
+            "_Gen_dist_constraint.Weight",
             "_Gen_dist_constraint.Spectral_peak_ID",
             "_Gen_dist_constraint.Spectral_peak_list_ID",
             "_Gen_dist_constraint.Entry_ID",

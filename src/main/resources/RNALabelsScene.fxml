@@ -11,20 +11,6 @@
     <top>
         <VBox>
                 <children>
-                    <HBox>
-                        <children>
-                            <Label alignment="center_left" minWidth="70" prefHeight="25.0" prefWidth="70.0" text="Sample" />
-                            <ComboBox fx:id="sampleField" editable="false" minWidth="100" prefHeight="27.0" prefWidth="130.0" HBox.hgrow="ALWAYS" />
-                            <Pane minWidth="0.0" prefHeight="27.0" prefWidth="10.0" />
-                            <Label alignment="center_left" minWidth="60" prefHeight="25.0" prefWidth="60.0" text="Entity" />
-                            <ChoiceBox fx:id="entityChoiceBox" minWidth="100" prefHeight="25.0" prefWidth="130.0" />
-                            <Pane minWidth="50" prefHeight="27.0" prefWidth="50.0" />
-                            <Button fx:id="loadSelGroupButton" minWidth="75" onAction="#loadSelGroup" text="Load" />
-                            <Button fx:id="applySelGroupButton" minWidth="75" onAction="#applySelGroup" text="Apply" />
-                            <Pane maxHeight="-Infinity" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
-                        </children>
-                    </HBox>
-                    <Separator />
                     <ToolBar fx:id="toolBar" prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
                         <items>
                             <CheckBox fx:id="d2oCheckBox" text="D2O" />
@@ -113,6 +99,20 @@
                     </children>
                 </HBox>
                 <ListView fx:id="selGroupListView" prefHeight="80" />
+                <Separator />
+                <HBox>
+                    <children>
+                        <Label alignment="center_left" minWidth="70" prefHeight="25.0" prefWidth="70.0" text="Sample" />
+                        <ComboBox fx:id="sampleField" editable="false" minWidth="100" prefHeight="27.0" prefWidth="130.0" HBox.hgrow="ALWAYS" />
+                        <Pane minWidth="0.0" prefHeight="27.0" prefWidth="10.0" />
+                        <Label alignment="center_left" minWidth="60" prefHeight="25.0" prefWidth="60.0" text="Entity" />
+                        <ChoiceBox fx:id="entityChoiceBox" minWidth="100" prefHeight="25.0" prefWidth="130.0" />
+                        <Pane minWidth="50" prefHeight="27.0" prefWidth="50.0" />
+                        <Button fx:id="loadSelGroupButton" minWidth="75" onAction="#loadSelGroup" text="Load" />
+                        <Button fx:id="applySelGroupButton" minWidth="75" onAction="#applySelGroup" text="Apply" />
+                        <Pane maxHeight="-Infinity" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                    </children>
+                </HBox>
             </children>
         </VBox>
     </bottom>

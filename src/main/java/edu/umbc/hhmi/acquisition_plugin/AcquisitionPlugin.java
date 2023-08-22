@@ -26,7 +26,7 @@ public class AcquisitionPlugin implements NMRFxPlugin {
             Condition.doStartup();
             Sample.doStartup();
             Experiment.doStartup();
-            NoeSetup.doStartup();
+            ManagedNoeSetup.doStartup();
             Acquisition.doStartup();
         }
 
@@ -43,9 +43,11 @@ public class AcquisitionPlugin implements NMRFxPlugin {
             MenuItem experimentMenuItem = new MenuItem("Experiments");
             experimentMenuItem.setOnAction(e -> Experiment.showExperimentList(e));
             MenuItem noeSetupMenuItem = new MenuItem("NOE Sets");
-            noeSetupMenuItem.setOnAction(e -> NoeSetup.showNoeSetup(e));
+            noeSetupMenuItem.setOnAction(e -> ManagedNoeSetup.showNoeSetup(e));
+            MenuItem fixDatasetMenuItem = new MenuItem("Fix dataset");
+            fixDatasetMenuItem.setOnAction(e -> Acquisition.fixDataset(e));
 
-            acqMenu.getItems().addAll(acqMenuItem,sampleMenuItem,conditionMenuItem,experimentMenuItem,noeSetupMenuItem);
+            acqMenu.getItems().addAll(acqMenuItem,sampleMenuItem,conditionMenuItem,experimentMenuItem,noeSetupMenuItem,fixDatasetMenuItem);
             ((Menu) object).getItems().addAll(acqMenu);
         }
     }
