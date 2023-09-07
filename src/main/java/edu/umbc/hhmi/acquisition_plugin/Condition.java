@@ -9,6 +9,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import org.nmrfx.project.ProjectBase;
+import org.nmrfx.project.ProjectUtilities;
 import org.nmrfx.star.*;
 
 import java.io.IOException;
@@ -16,7 +17,7 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.List;
 
-public class Condition implements SaveframeWriter {
+public class Condition implements SaveframeWriter, Comparable<Condition> {
 
     static void doStartup() {
         ConditionSaveframeProcessor conditionSaveFrameProcessor = new ConditionSaveframeProcessor();
@@ -43,6 +44,7 @@ public class Condition implements SaveframeWriter {
         setName(name);
         getActiveConditionList().add(this);
         ProjectBase.getActive().addSaveframe(this);
+        ProjectUtilities.sortExtraSaveFrames();
         count++;
         id=count;
     }
@@ -262,5 +264,10 @@ public class Condition implements SaveframeWriter {
             }
         }
 
+    }
+
+    @Override
+    public int compareTo(Condition o) {
+        return getId()-o.getId();
     }
 }

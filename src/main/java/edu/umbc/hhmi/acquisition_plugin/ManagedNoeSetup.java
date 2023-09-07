@@ -25,6 +25,7 @@ import org.nmrfx.chemistry.constraints.MolecularConstraints;
 import org.nmrfx.chemistry.constraints.NoeSet;
 import org.nmrfx.peaks.PeakList;
 import org.nmrfx.project.ProjectBase;
+import org.nmrfx.project.SubProject;
 import org.nmrfx.structure.chemistry.Molecule;
 import org.nmrfx.structure.rna.InteractionType;
 import org.nmrfx.structure.rna.SSGen;
@@ -500,10 +501,10 @@ public class ManagedNoeSetup implements SubProjMenu {
                                 if (atom1==null || atom2 == null) {continue;}
                                 if (!noeExists(noeSet, atom1, atom2)) {
                                     if (atom1.getResonance() == null) {
-                                        atom1.setResonance((AtomResonance) PeakList.resFactory().build());
+                                        atom1.setResonance((AtomResonance) SubProject.resFactory().build());
                                     }
                                     if (atom2.getResonance() == null) {
-                                        atom2.setResonance((AtomResonance) PeakList.resFactory().build());
+                                        atom2.setResonance((AtomResonance) SubProject.resFactory().build());
                                     }
                                     //TODO: set scale based on dist ?
                                     ManagedNoe noe = new ManagedNoe(null, atom1.getSpatialSet(), atom2.getSpatialSet(), 1.0);

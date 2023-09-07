@@ -7,11 +7,10 @@ public interface SubProjMenu {
 
     public static boolean isSubProjectPresent() {
         try {
-            Class.forName("edu.umbc.hhmi.subproject_plugin.SubProject");
+            Class.forName("edu.umbc.hhmi.subproject_plugin.ProjectRelations");
             return true;
         } catch (ClassNotFoundException ex) {
             return false;
         }
     }
-
 }

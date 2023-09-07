@@ -318,7 +318,6 @@ public class Experiment {
         }
     }
 
-
     public static void readPar(String resourceName) {
         try {
             ClassLoader cl = ClassLoader.getSystemClassLoader();

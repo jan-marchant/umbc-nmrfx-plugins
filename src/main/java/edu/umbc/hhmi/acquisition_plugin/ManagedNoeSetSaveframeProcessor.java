@@ -134,11 +134,12 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
             Peak peak;
             if (peakList != null) {
                 if (peakID.equals(".")) {
-                    peakID = constraintID;
-                    int idNum = Integer.parseInt(peakID);
-                    while ((peak = peakList.getPeak(idNum)) == null) {
-                        peakList.addPeak();
-                    }
+                    peak = null;
+                    //peakID = constraintID;
+                    //int idNum = Integer.parseInt(peakID);
+                    //while ((peak = peakList.getPeak(idNum)) == null) {
+                    //    peakList.addPeak();
+                    //}
                 } else {
                     int idNum = Integer.parseInt(peakID);
                     peak = peakList.getPeakByID(idNum);
@@ -152,6 +153,9 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
                 }
                 //NB: Resonances should be set correctly during construction
                 ManagedNoe noe = new ManagedNoe(peak, spSets[0], spSets[1], weight);
+                //Maybe only do this if peak is null?
+                noe.setResonance1(spSets[0].getAnAtom().getResonance());
+                noe.setResonance2(spSets[1].getAnAtom().getResonance());
                 double upper = 1000000.0;
                 if (upperValue.equals(".")) {
                     log.warn("Upper value is a \".\" at line {}", i);

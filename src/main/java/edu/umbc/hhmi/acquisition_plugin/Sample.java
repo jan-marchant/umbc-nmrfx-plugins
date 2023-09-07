@@ -16,6 +16,7 @@ import org.nmrfx.chemistry.Polymer;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.PeakList;
 import org.nmrfx.project.ProjectBase;
+import org.nmrfx.project.ProjectUtilities;
 import org.nmrfx.star.Loop;
 import org.nmrfx.star.ParseException;
 import org.nmrfx.star.Saveframe;
@@ -59,6 +60,7 @@ public class Sample implements Comparable<Sample>, SaveframeWriter {
         setMolecule(Molecule.getActive());
         getActiveSampleList().add(this);
         ProjectBase.getActive().addSaveframe(this);
+        ProjectUtilities.sortExtraSaveFrames();
     }
 
     @Override

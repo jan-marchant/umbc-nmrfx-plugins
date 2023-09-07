@@ -1,11 +1,14 @@
 package edu.umbc.hhmi.acquisition_plugin;
 
 import com.google.auto.service.AutoService;
+import org.nmrfx.analyst.gui.tools.PeakSlider;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.plugin.api.EntryPoint;
 import org.nmrfx.plugin.api.NMRFxPlugin;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import org.nmrfx.processor.gui.PolyChart;
+import org.nmrfx.processor.gui.spectra.KeyBindings;
 
 import java.util.Set;
 
@@ -49,6 +52,8 @@ public class AcquisitionPlugin implements NMRFxPlugin {
 
             acqMenu.getItems().addAll(acqMenuItem,sampleMenuItem,conditionMenuItem,experimentMenuItem,noeSetupMenuItem,fixDatasetMenuItem);
             ((Menu) object).getItems().addAll(acqMenu);
+
+            //KeyBindings.registerGlobalKeyAction("ds", this::tweakPeaks);
         }
     }
 }

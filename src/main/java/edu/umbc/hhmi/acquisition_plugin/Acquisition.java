@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
+import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -33,6 +34,7 @@ import java.util.*;
 
 public class Acquisition {
     static HashMap<ProjectBase, ObservableList> projectAcquisitionsMap = new HashMap<>();
+    static HashMap<ProjectBase, ObservableList> projectDatasetMap = new HashMap<>();
 
     static public ObservableList<Acquisition> getActiveAcquisitionList() {
         ObservableList<Acquisition> acquisitionList = projectAcquisitionsMap.get(ProjectBase.getActive());
@@ -41,6 +43,34 @@ public class Acquisition {
             projectAcquisitionsMap.put(ProjectBase.getActive(), acquisitionList);
         }
         return acquisitionList;
+    }
+
+    static public ObservableList<DatasetBase> getActiveDatasetList() {
+        ObservableList<DatasetBase> datasetList = projectDatasetMap.get(ProjectBase.getActive());
+        if (datasetList == null) {
+            datasetList = FXCollections.observableArrayList();
+            projectDatasetMap.put(ProjectBase.getActive(), datasetList);
+            initDatasetList(ProjectBase.getActive());
+        }
+        return datasetList;
+    }
+
+    private static void initDatasetList(ProjectBase project) {
+        ObservableList<DatasetBase> datasetList = projectDatasetMap.get(project);
+        if (datasetList == null) {
+            return;
+        }
+        datasetList.addAll(project.getDatasets());
+
+        MapChangeListener<String,DatasetBase> datasetChangeListener = c -> {
+            if (c.wasRemoved()) {
+                datasetList.remove(c.getValueRemoved());
+            }
+            if (c.wasAdded()) {
+                datasetList.add(c.getValueAdded());
+            }
+        };
+        project.addDatasetListListener(datasetChangeListener);
     }
 
     public static void doStartup() {
@@ -64,7 +94,6 @@ public class Acquisition {
         }
     }
 
-    private boolean saveframeAdded = false;
     private ObservableList<ManagedList> managedListsList = FXCollections.observableArrayList();
     private ObservableList<Experiment> validExperimentList = FXCollections.observableArrayList();
     private ObjectProperty<Dataset> dataset = new SimpleObjectProperty<>();
@@ -73,7 +102,6 @@ public class Acquisition {
     private ObjectProperty<Condition> condition = new SimpleObjectProperty<>();
 
     private ListProperty<ManagedList> managedLists = new SimpleListProperty<>(managedListsList);
-    private ListProperty<Experiment> validExperiments = new SimpleListProperty<>(validExperimentList);
     private Double sensitivity;
     private AcqTree acqTree;
     private ArrayList<Float> defaultPeakWidths = new ArrayList<>();

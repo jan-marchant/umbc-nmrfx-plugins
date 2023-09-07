@@ -375,7 +375,7 @@ public class ManagedList extends PeakList {
         for (int i = 0; i < originalList.peaks.size(); i++) {
             Peak originalPeak = (Peak) originalList.peaks.get(i);
             ManagedPeak newPeak = ManagedPeak.copyFrom(originalPeak, this); //originalPeak.copy(originalList);
-
+            newPeak.setResonanceAtoms();
             newPeak.setIdNum(originalPeak.getIdNum());
 
             //!!!!!!!!!!!!!
@@ -506,7 +506,7 @@ public class ManagedList extends PeakList {
                 ManagedPeak peak2 = (ManagedPeak) peak;
                 for (ManagedNoe noe : peak2.getNoes()) {
                     //todo: investigate NoeSet.getID() replaced with NoeSet.ID
-                    chan.write(String.format("%d %s %d %s %s %d %d %d %d spectral_peak_list %s\n", noe.starID, noeSet.getType(), noeSet.ID, noeSet.getCategory(), noeSet.getCategory() + noeSet.getName().replaceAll("\\W", ""), ID++, getId(), peak.getIdNum(), getId(), getName()));
+                    chan.write(String.format("%d %s %d %s %s %d %d %d %d spectral_peak_list %s\n", noe.starID, noeSet.getType(), noeSet.getSetId(), noeSet.getCategory(), noeSet.getCategory() + noeSet.getName().replaceAll("\\W", ""), ID++, getId(), peak.getIdNum(), getId(), getName()));
                 }
             }
             //a bit hacky to ensure peaklist read in OK.

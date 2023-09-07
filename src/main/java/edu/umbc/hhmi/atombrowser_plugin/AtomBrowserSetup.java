@@ -4,7 +4,6 @@ import edu.umbc.hhmi.acquisition_plugin.Acquisition;
 import edu.umbc.hhmi.acquisition_plugin.Condition;
 import edu.umbc.hhmi.acquisition_plugin.Experiment;
 import edu.umbc.hhmi.acquisition_plugin.Sample;
-import edu.umbc.hhmi.subproject_plugin.SubProject;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;

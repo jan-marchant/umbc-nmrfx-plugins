@@ -16,7 +16,6 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
 import org.apache.commons.collections4.BidiMap;
-import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.nmrfx.chemistry.Entity;
 import org.nmrfx.chemistry.Polymer;
 import org.nmrfx.chemistry.Residue;
@@ -26,9 +25,7 @@ import org.nmrfx.utils.GUIUtils;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class SubProjectSceneController implements SubProjMenu {
 
@@ -37,7 +34,7 @@ public class SubProjectSceneController implements SubProjMenu {
     private AlignmentViewer alignmentViewer;
     private GridPane grid;
     private MenuButton menuButton;
-    private ObjectProperty<ProjectBase> subProject = new SimpleObjectProperty();
+    private ObjectProperty<ProjectBase> subProject = new SimpleObjectProperty<>();
     ChoiceBox<Entity> combo1=new ChoiceBox<>();
     ChoiceBox<Entity> combo2=new ChoiceBox<>();
     Button linkButton=new Button("Link");
@@ -63,14 +60,13 @@ public class SubProjectSceneController implements SubProjMenu {
     }
     private void initialize() {
         menuButton=new MenuButton();
-        menuButton.setText(SubProject.findSubProject(ProjectBase.getActive()).subProjectList.size() + " project"+(SubProject.findSubProject(ProjectBase.getActive()).subProjectList.size()==1?"":"s"));
+        menuButton.setText(ProjectRelations.getProjectRelations().size() + " project"+(ProjectRelations.getProjectRelations().size()==1?"":"s"));
         //populateMenu();
         label=new Label("No active mol");
         Button removeButton = new Button("Remove");
         removeButton.setDisable(true);
         removeButton.setOnAction(e->{
-            SubProject.findSubProject(ProjectBase.getActive()).subProjectList.remove(subProject.get());
-            SubProject.findSubProject(ProjectBase.getActive()).entityMap.remove(subProject.get());
+            ProjectRelations.findProjectRelations(subProject.get()).remove();
             setSubProject(null);
         });
         Label arrow1 = GlyphsDude.createIconLabel(FontAwesomeIcon.ARROW_CIRCLE_ALT_RIGHT,"","16px", "0pt", ContentDisplay.TOP);
@@ -100,7 +96,7 @@ public class SubProjectSceneController implements SubProjMenu {
         combo1.disableProperty().bind(subProjectProperty().isNull());
         combo2.disableProperty().bind(subProjectProperty().isNull());
         alignmentViewer.disableProperty().bind(entitesLinked);
-        combo1.setConverter(new StringConverter<Entity>() {
+        combo1.setConverter(new StringConverter<>() {
             @Override
             public String toString(Entity object) {
                 if (object==null) {
@@ -114,7 +110,7 @@ public class SubProjectSceneController implements SubProjMenu {
                 return null;
             }
         });
-        combo2.setConverter(new StringConverter<Entity>() {
+        combo2.setConverter(new StringConverter<>() {
             @Override
             public String toString(Entity object) {
                 if (object==null) {
@@ -139,15 +135,15 @@ public class SubProjectSceneController implements SubProjMenu {
         subProjectProperty().addListener(e->{
             list1.clear();
             list1.add(null);
-            /*
+
             if (subProject.get()==null) {
-                menuButton.setText(SubProject.findSubProject(ProjectBase.getActive()).subProjectList.size() + " project"+(UmbcProject.getActive().subProjectList.size()==1?"":"s"));
+                menuButton.setText(ProjectRelations.getProjectRelations().size() + " project"+(ProjectRelations.getProjectRelations().size()==1?"":"s"));
             } else {
                 menuButton.setText(subProject.get().getName());
-                if (subProject.get().activeMol!=null) {
-                    list1.addAll(subProject.get().activeMol.getEntities());
-                    if (subProject.get().activeMol.getEntities().size() == 1) {
-                        combo1.setValue(subProject.get().activeMol.getEntities().get(0));
+                if (subProject.get().getActiveMolecule()!=null) {
+                    list1.addAll(subProject.get().getActiveMolecule().getEntities());
+                    if (subProject.get().getActiveMolecule().getEntities().size() == 1) {
+                        combo1.setValue(subProject.get().getActiveMolecule().getEntities().get(0));
                     } else {
                         combo1.setValue(null);
                     }
@@ -155,8 +151,6 @@ public class SubProjectSceneController implements SubProjMenu {
                     combo1.setValue(null);
                 }
             }
-
-             */ //temporary comment to get it to compile!
             populateMenu();
             updateEntities();
         });
@@ -165,7 +159,7 @@ public class SubProjectSceneController implements SubProjMenu {
     }
 
     private void updateEntities() {
-        BidiMap<Entity, Entity> map = SubProject.findSubProject(ProjectBase.getActive()).entityMap.get(subProject.get());
+        BidiMap<Entity, Entity> map = ProjectRelations.getEntityMap(subProject.get());
         if (map==null) {
             setEntitesLinked(false);
             alignmentViewer.alignSW(combo1.getValue(), combo2.getValue());
@@ -199,8 +193,8 @@ public class SubProjectSceneController implements SubProjMenu {
             if (!subEntity.getClass().equals(mainEntity.getClass())) {
                 GUIUtils.warn("Error","Entities are not of the same type");
             } else {
-                SubProject.findSubProject(ProjectBase.getActive()).entityMap.putIfAbsent(subProject.get(), new DualHashBidiMap<>());
-                BidiMap<Entity,Entity> map = SubProject.findSubProject(ProjectBase.getActive()).entityMap.get(subProject.get());
+                //SubProjRelations.findSubProjRelations(subProject.get()).entityMap.putIfAbsent(subProject.get(), new DualHashBidiMap<>());
+                BidiMap<Entity,Entity> map = ProjectRelations.getEntityMap(subProject.get());
                 map.put(mainEntity, subEntity);
                 int subIndex=0;
                 int mainIndex=0;
@@ -220,10 +214,10 @@ public class SubProjectSceneController implements SubProjMenu {
                 }
             }
         } else {
-            SubProject.findSubProject(ProjectBase.getActive()).entityMap.get(subProject.get()).remove(combo2.getValue());
+            ProjectRelations.getEntityMap(subProject.get()).remove(combo2.getValue());
             if (combo2.getValue() instanceof Polymer) {
                 for (Residue residue : ((Polymer) combo2.getValue()).getResidues()) {
-                    SubProject.findSubProject(ProjectBase.getActive()).entityMap.get(subProject.get()).remove(residue);
+                    ProjectRelations.getEntityMap(subProject.get()).remove(residue);
                 }
             }
         }
@@ -232,7 +226,9 @@ public class SubProjectSceneController implements SubProjMenu {
 
     private void populateMenu() {
         menuButton.getItems().clear();
-        for (Object menu : SubProject.findSubProject(ProjectBase.getActive()).getSubProjMenus(this)) {
+        List<Path> seen = new ArrayList<>();
+        seen.add(ProjectBase.getActive().getDirectory());
+        for (Object menu : ProjectRelations.getSubProjMenus(ProjectBase.getActive(),this, seen)) {
             if (menu instanceof Menu) {
                 menuButton.getItems().add((Menu) menu);
             } else {
@@ -245,16 +241,16 @@ public class SubProjectSceneController implements SubProjMenu {
         List<Path> recentProjects= PreferencesController.getRecentProjects();
 
         for (Path path : recentProjects) {
-            if (SubProject.findSubProject(ProjectBase.getActive()).containsSubProjectPath(path)) {
+            if (ProjectRelations.containsSubProjectPath(ProjectBase.getActive(),path)) {
                 continue;
             }
             int count = path.getNameCount();
             int first = count - 3;
-            first = first >= 0 ? first : 0;
+            first = Math.max(first, 0);
             Path subPath = path.subpath(first, count);
             MenuItem projectMenuItem = new MenuItem(subPath.toString());
             projectMenuItem.setOnAction(e -> {
-                setSubProject(SubProject.findSubProject(ProjectBase.getActive()).addSubProject(path));
+                setSubProject(ProjectRelations.addSubProject(ProjectBase.getActive(), path));
                 //menuButton.disarm();
              });
             subProjMenu.getItems().add(projectMenuItem);
@@ -272,29 +268,27 @@ public class SubProjectSceneController implements SubProjMenu {
         chooser.setTitle("Project Chooser");
         File directoryFile = chooser.showDialog(null);
         if (directoryFile != null) {
-            setSubProject(SubProject.findSubProject(ProjectBase.getActive()).addSubProject(directoryFile.toPath()));
+            setSubProject(ProjectRelations.addSubProject(ProjectBase.getActive(), directoryFile.toPath()));
         } else {
             setSubProject(null);
         }
     }
 
     public void show(double x, double y) {
-        /*
-        if (SubProject.findSubProject(ProjectBase.getActive()).activeMol!=null) {
-            label.setText(SubProject.findSubProject(ProjectBase.getActive()).name());
-            populateMenu();
-            list2.clear();
-            list2.addAll(SubProject.findSubProject(ProjectBase.getActive()).activeMol.getEntities());
-            if (SubProject.findSubProject(ProjectBase.getActive()).activeMol.getEntities().size()==1) {
-                combo2.setValue(SubProject.findSubProject(ProjectBase.getActive()).activeMol.getEntities().get(0));
-            } else {
-                combo2.setValue(null);
-            }
+        populateMenu();
+        //if (SubProjRelations.getSubProjRelations().size()>0) {
+        label.setText(ProjectBase.getActive().getName());
+        list2.clear();
+        list2.addAll(ProjectBase.getActive().getActiveMolecule().getEntities());
+        if (ProjectBase.getActive().getActiveMolecule().getEntities().size()==1) {
+            combo2.setValue(ProjectBase.getActive().getActiveMolecule().getEntities().get(0));
         } else {
-            label.setText("No active mol");
+            combo2.setValue(null);
         }
+        //} else {
+        //    label.setText("No active mol");
+        //}
 
-         */ //temporary comment to clear errors
         double screenWidth = Screen.getPrimary().getBounds().getWidth();
         if (x > (screenWidth / 2)) {
             x = x - stage.getWidth() - xOffset;

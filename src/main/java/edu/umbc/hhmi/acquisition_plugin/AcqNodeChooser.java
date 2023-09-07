@@ -27,6 +27,7 @@ import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakDim;
 import org.nmrfx.peaks.PeakList;
+import org.nmrfx.project.SubProject;
 
 import java.awt.*;
 import java.util.List;
@@ -377,10 +378,10 @@ public class AcqNodeChooser {
                 //todo: add ppm set support
                 if (!noeExists(list.noeSet,atom1,atom2)) {
                     if (atom1.getResonance()==null) {
-                        atom1.setResonance((AtomResonance) PeakList.resFactory().build());
+                        atom1.setResonance((AtomResonance) SubProject.resFactory().build());
                     }
                     if (atom2.getResonance()==null) {
-                        atom2.setResonance((AtomResonance) PeakList.resFactory().build());
+                        atom2.setResonance((AtomResonance) SubProject.resFactory().build());
                     }
                     //todo: why did we need to add resonances here?
                     //Noe noe = new Noe(peak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction, atom1.getResonance(), atom2.getResonance());

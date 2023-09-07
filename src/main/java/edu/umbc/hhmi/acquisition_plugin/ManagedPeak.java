@@ -8,6 +8,7 @@ import org.nmrfx.chemistry.MoleculeBase;
 import org.nmrfx.chemistry.PPMv;
 import org.nmrfx.peaks.*;
 import org.nmrfx.processor.datasets.Dataset;
+import org.nmrfx.project.SubProject;
 import org.nmrfx.utils.GUIUtils;
 
 import java.util.HashMap;
@@ -31,102 +32,51 @@ public class ManagedPeak extends Peak {
         this.noes=noes;
 
         float scale=1f;
-        //peak may have multiple associated NOEs if two NOE transfers in experiment. Unlikely but still...
         for (ManagedNoe noe : noes) {
             if (noe.getPeak()==null || !PeakList.peakLists().contains(noe.getPeak().peakList)) {
-                //this is needlessly repetitious, but doesn't hurt. Unlikely to have multiple NOEs anyway
-                for (int i = 0; i < nDim; i++) {
-                    AtomResonance resonance=null;
-                    if (resonance==null && atoms.get(i).getResonance()!=null) {
-                        resonance=atoms.get(i).getResonance();
-                    }
-                    if (resonance==null) {
-                        resonance = (AtomResonance) PeakList.resFactory().build();
-                    }
-                    if (resonance.getPeakDims().size()>0 && resonance.getPeakDims().get(0).isFrozen()) {
-                        this.getPeakDim(i).setFrozen(true);
-                    }
-                    resonance.add(this.getPeakDim(i));
-                    this.getPeakDim(i).setLabel(atoms.get(i).getShortName());
-                    atoms.get(i).setResonance(resonance);
-
-                    PPMv ppm;
-                    ppm = atoms.get(i).getPPM(((ManagedList) getPeakList()).getPpmSet());
-                    if (ppm == null) {
-                        ppm = atoms.get(i).getRefPPM(((ManagedList) getPeakList()).getRPpmSet());
-                    }
-                    if (ppm != null) {
-                        this.getPeakDim(i).setChemShift((float) ppm.getValue());
-                        this.getPeakDim(i).setChemShiftErrorValue((float) ppm.getError());
-                    }
-                }
-                noe.setPeak(this);
+                initializeNoe(nDim, noe, atoms);
             }
         }
+
         for (int i = 0; i < nDim; i++) {
-            PeakDim peakDim0=null;
-            AtomResonance resonance=null;
+            //foundResonance = findResonance(i);
+            //foundPeakDim - the matching peakDim from the noe peak field. Used as a proxy for the picked peak
+            //foundResonance - the resonance for this atom
+
+            PeakDim foundPeakDim=null;
+            AtomResonance foundResonance=null;
             for (ManagedNoe noe : noes) {
                 for (PeakDim peakDim : noe.getPeak().getPeakDims()) {
                     if (((AtomResonance) peakDim.getResonance()).getAtom()==atoms.get(i)) {
-                        peakDim0=peakDim;
-                        resonance=(AtomResonance) peakDim.getResonance();
+                        foundPeakDim=peakDim;
+                        foundResonance=(AtomResonance) peakDim.getResonance();
                     }
                 }
             }
-            if (resonance==null && atoms.get(i).getResonance()!=null) {
-                resonance=atoms.get(i).getResonance();
+            if (foundResonance==null) {
+                foundResonance = getAtomResonance(atoms.get(i));
             }
-            if (resonance==null) {
-                resonance = (AtomResonance) PeakList.resFactory().build();
-            }
-            if (resonance.getPeakDims().size()>0 && resonance.getPeakDims().get(0).isFrozen()) {
-                this.getPeakDim(i).setFrozen(true);
-            }
-            resonance.add(this.getPeakDim(i));
-            this.getPeakDim(i).setLabel(atoms.get(i).getShortName());
-            atoms.get(i).setResonance(resonance);
 
+            if (foundResonance.getPeakDims().size()>0 && foundResonance.getPeakDims().get(0).isFrozen()) {
+                getPeakDim(i).setFrozen(true);
+            }
+            foundResonance.add(getPeakDim(i));
+            getPeakDim(i).setLabel(atoms.get(i).getShortName());
+            atoms.get(i).setResonance(foundResonance);
 
-            Dataset dataset=((ManagedList) peakList).getAcquisition().getDataset();
-            /*float width=(float) dataset.ptWidthToPPM(i,2);
-            if (width<0.01f) {width=0.01f;}
-            */
             float width = ((ManagedList) peakList).getAcquisition().getDefaultPeakWidth(i);
-            /*
-            float width;
-            switch (atoms.get(i).getElementName()) {
-                case "C":
-                    width= 0.4f;
-                    //scale=3f;
-                    break;
-                case "N":
-                    width= 0.9f;
-                    //scale=3f;
-                    break;
-                default:
-                    width= 0.01f;
-            }
-             */
 
+            if (foundPeakDim!=null) {
+                PeakDim thisPeakDim=getPeakDim(i);
+                Float pickedShift = foundPeakDim.getChemShift();
 
-            if (peakDim0!=null) {
-                PeakDim thisPeakDim=this.getPeakDim(i);
-                if (thisPeakDim.getSpectralDim()==peakDim0.getSpectralDim()) {
-                    Dataset dataset0=Dataset.getDataset(peakDim0.getPeakList().getDatasetName());
-                    if (dataset0!=null) {
-                        //width = (float) (peakDim0.getLineWidthValue()*dataset.ptWidthToPPM(i,2)/dataset0.ptWidthToPPM(peakDim0.getSpectralDim(),2));
-                    }
-                }
-                Float pickedShift = peakDim0.getChemShift();
-
-                List<PeakDim> peakDims = peakDim0.getResonance().getPeakDims();
+                List<PeakDim> peakDims = foundPeakDim.getResonance().getPeakDims();
                 Set<PeakDim> updateMe = new HashSet<>();
                 updateMe.add(thisPeakDim);
                 Boolean freezeMe = false;
 
                 for (PeakDim peakDim : peakDims) {
-                    if (peakDim == peakDim0 || peakDim==thisPeakDim) {
+                    if (peakDim == foundPeakDim || peakDim==thisPeakDim) {
                         continue;
                     }
                     if (peakDim.getSampleConditionLabel().equals(thisPeakDim.getSampleConditionLabel())
@@ -147,34 +97,58 @@ public class ManagedPeak extends Peak {
                 }
                 thisPeakDim.setFrozen(freezeMe);
             } else {
-                PPMv ppm;
-                ppm = atoms.get(i).getPPM(((ManagedList) getPeakList()).getPpmSet());
-                if (ppm == null) {
-                    ppm = atoms.get(i).getRefPPM(((ManagedList) getPeakList()).getRPpmSet());
-                }
-                if (ppm != null) {
-                    this.getPeakDim(i).setChemShift((float) ppm.getValue());
-                    this.getPeakDim(i).setChemShiftErrorValue((float) ppm.getError());
-                }
+                setShiftFromAtom(atoms.get(i),getPeakDim(i));
             }
-
-            this.getPeakDim(i).setLineWidthValue(width);
+            getPeakDim(i).setLineWidthValue(width);
         }
         for (PeakDim peakDim : getPeakDims()) {
             peakDim.setLineWidthValue(peakDim.getLineWidthValue()*scale);
             peakDim.setBoundsValue(peakDim.getLineWidthValue()*1.5f);
         }
 
-        if (((ManagedList) peakList).noeSet!=null) {
-            ((ManagedList) peakList).noeSet.getConstraints().addListener((ListChangeListener.Change<? extends ManagedNoe> c) -> {
+        setupManagedNoeListener(((ManagedList) peakList).noeSet);
+    }
+
+    private void setupManagedNoeListener(ManagedNoeSet noeSet) {
+        if (noeSet!=null) {
+            noeSet.getConstraints().addListener((ListChangeListener.Change<? extends ManagedNoe> c) -> {
                 while (c.next()) {
                     for (ManagedNoe removedNoe : c.getRemoved()) {
-                        if (this.noes.contains(removedNoe)) {
+                        if (noes.contains(removedNoe)) {
                             remove();
                         }
                     }
                 }
             });
+        }
+    }
+
+    private void initializeNoe(int nDim, ManagedNoe noe, HashMap<Integer, Atom> atoms) {
+        for (int i = 0; i < nDim; i++) {
+            AtomResonance resonance=getAtomResonance(atoms.get(i));
+
+            if (resonance.getPeakDims().size()>0 && resonance.getPeakDims().get(0).isFrozen()) {
+                this.getPeakDim(i).setFrozen(true);
+            }
+
+            resonance.add(this.getPeakDim(i));
+            this.getPeakDim(i).setLabel(atoms.get(i).getShortName());
+            atoms.get(i).setResonance(resonance);
+
+            setShiftFromAtom(atoms.get(i),getPeakDim(i));
+        }
+        noe.setPeak(this);
+    }
+
+    private void setShiftFromAtom(Atom atom,PeakDim peakDim) {
+        PPMv ppm;
+        ppm = atom.getPPM(((ManagedList) getPeakList()).getPpmSet());
+        if (ppm == null) {
+            ppm = atom.getRefPPM(((ManagedList) getPeakList()).getRPpmSet());
+        }
+        if (ppm != null) {
+            peakDim.setChemShift((float) ppm.getValue());
+            peakDim.setChemShiftErrorValue((float) ppm.getError());
         }
     }
 
@@ -192,6 +166,17 @@ public class ManagedPeak extends Peak {
         }
         peak.updateFrozenColor();
         return peak;
+    }
+
+    private AtomResonance getAtomResonance(Atom atom) {
+        AtomResonance resonance=null;
+        if (atom.getResonance()!=null) {
+            resonance=atom.getResonance();
+        }
+        if (resonance==null) {
+            resonance = (AtomResonance) SubProject.resFactory().build();
+        }
+        return resonance;
     }
 
     @Override
@@ -265,4 +250,13 @@ public class ManagedPeak extends Peak {
         return noes;
     }
 
+    //fixme: consider alternative using getPossibleAtom throughout?
+    public void setResonanceAtoms() {
+        for (PeakDim peakDim : getPeakDims()) {
+            AtomResonance res = (AtomResonance) peakDim.getResonance();
+            if (res.getAtom() == null) {
+                res.setAtom(res.getPossibleAtom());
+            }
+        }
+    }
 }

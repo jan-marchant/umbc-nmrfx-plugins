@@ -26,6 +26,7 @@ import org.nmrfx.chemistry.constraints.MolecularConstraints;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.project.ProjectBase;
+import org.nmrfx.project.ProjectUtilities;
 import org.nmrfx.star.ParseException;
 import org.nmrfx.star.SaveframeWriter;
 
@@ -38,7 +39,8 @@ import java.util.Map.Entry;
  *
  * @author brucejohnson
  */
-public class ManagedNoeSet implements ConstraintSet, Iterable, SaveframeWriter {
+
+public class ManagedNoeSet implements ConstraintSet, Iterable, SaveframeWriter, Comparable<ManagedNoeSet> {
 
     private final MolecularConstraints molecularConstraints;
 
@@ -51,12 +53,46 @@ public class ManagedNoeSet implements ConstraintSet, Iterable, SaveframeWriter {
     private boolean calibratable = true;
     private boolean dirty = true;
     public Set<ManagedList> associatedLists = new HashSet<>();
+    private int setId;
+
+    private static HashMap<ProjectBase,Integer> projectSaveFramesAdded = new HashMap<>();
+    private static HashMap<ProjectBase,Integer> projectSaveFramesWritten = new HashMap<>();
+
+    static public Integer getSaveFramesAdded() {
+        return getSaveFramesAdded(ProjectBase.getActive());
+    }
+
+    static public Integer getSaveFramesWritten() {
+        return getSaveFramesWritten(ProjectBase.getActive());
+    }
+
+    static public Integer getSaveFramesAdded(ProjectBase project) {
+        Integer saveFramesAdded = projectSaveFramesAdded.get(project);
+        if (saveFramesAdded == null) {
+            saveFramesAdded = 0;
+            projectSaveFramesAdded.put(project,saveFramesAdded);
+        }
+        return saveFramesAdded;
+    }
+
+    static public Integer getSaveFramesWritten(ProjectBase project) {
+        Integer saveFramesWritten = projectSaveFramesWritten.get(project);
+        if (saveFramesWritten == null) {
+            saveFramesWritten = 0;
+            projectSaveFramesAdded.put(project,saveFramesWritten);
+        }
+        return saveFramesWritten;
+    }
+
 
     private ManagedNoeSet(MolecularConstraints molecularConstraints,
                           String name) {
         this.name = name;
         this.molecularConstraints = molecularConstraints;
         ProjectBase.getActive().addSaveframe(this);
+        ProjectUtilities.sortExtraSaveFrames();
+        setId = getSaveFramesAdded()+1;
+        projectSaveFramesAdded.put(ProjectBase.getActive(),setId);
     }
 
     public static ManagedNoeSet newSet(MolecularConstraints molecularConstraints,
@@ -102,6 +138,7 @@ public class ManagedNoeSet implements ConstraintSet, Iterable, SaveframeWriter {
         ManagedNoe noe = (ManagedNoe) constraint;
         noe.setID(constraints.size());
         constraints.add(noe);
+        noe.setNoeSet(this);
         if (noe.getPeak() != null) {
             List<ManagedNoe> noeList = getConstraintsForPeak(noe.getPeak());
             noeList.add(noe);
@@ -218,6 +255,16 @@ public class ManagedNoeSet implements ConstraintSet, Iterable, SaveframeWriter {
 
     @Override
     public void write(Writer chan) throws ParseException, IOException {
+
+        if (getSaveFramesWritten() == 0) {
+            chan.write("\n\n");
+            chan.write("    ####################################\n");
+            chan.write("    #         Managed NOE Sets         #\n");
+            chan.write("    ####################################\n");
+            chan.write("\n\n");
+        }
+
+
         String saveFrameName = getName();
         String saveFrameCategory = getCategory();
         String thisCategory = getListType();
@@ -261,5 +308,26 @@ public class ManagedNoeSet implements ConstraintSet, Iterable, SaveframeWriter {
         for (ManagedList managedList : associatedLists) {
             managedList.writePeakConstraintLinks(chan);
         }
+
+        Integer count = getSaveFramesWritten();
+        projectSaveFramesWritten.put(ProjectBase.getActive(),count+1);
+
+        if (getSaveFramesWritten() == getSaveFramesAdded()) {
+            chan.write("\n\n");
+            projectSaveFramesWritten.put(ProjectBase.getActive(),0);
+            resetWriting();
+        }
+    }
+
+    public int getId() {
+        return ID;
+    }
+    @Override
+    public int compareTo(ManagedNoeSet o) {
+        return getId() - o.getId();
+    }
+
+    public int getSetId() {
+        return setId;
     }
 }

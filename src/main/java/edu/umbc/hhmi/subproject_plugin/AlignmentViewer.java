@@ -134,7 +134,7 @@ public class AlignmentViewer extends TextArea {
         //SmithWaterman aligner = new SmithWaterman(polymer1.getOneLetterCode(), polymer2.getOneLetterCode(),-20);
         SmithWaterman aligner = new SmithWaterman(polymer1.getOneLetterCode(), polymer2.getOneLetterCode());
         aligner.buildMatrix();
-        aligner.dumpH();
+        //aligner.dumpH();
         aligner.processMatrix();
         List<List<Integer>> lists = new ArrayList<List<Integer>>(2);
         lists.add(aligner.getA());

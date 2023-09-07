@@ -3,6 +3,7 @@ package edu.umbc.hhmi.acquisition_plugin;
 import org.nmrfx.chemistry.utilities.NvUtil;
 import org.nmrfx.peaks.*;
 import org.nmrfx.processor.datasets.Dataset;
+import org.nmrfx.project.SubProject;
 import org.nmrfx.star.ParseException;
 import org.nmrfx.star.Saveframe;
 import org.nmrfx.star.SaveframeProcessor;
@@ -26,7 +27,7 @@ public class ManagedListSaveframeProcessor implements SaveframeProcessor {
 
         System.out.println("process managed list");
         String listName = saveframe.getValue("_Spectral_peak_list", "Sf_framecode");
-        ResonanceFactory resFactory = PeakList.resFactory();
+        ResonanceFactory resFactory = SubProject.resFactory();
         String id = saveframe.getLabelValue("_Spectral_peak_list", "ID");
         String sampleLabel = saveframe.getLabelValue("_Spectral_peak_list", "Sample_label");
         String sampleConditionLabel = saveframe.getOptionalValue("_Spectral_peak_list", "Sample_condition_list_label").replace("^'", "").replace("'$", "");

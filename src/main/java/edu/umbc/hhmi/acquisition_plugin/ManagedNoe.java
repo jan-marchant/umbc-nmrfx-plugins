@@ -95,6 +95,7 @@ public class ManagedNoe extends DistanceConstraint implements Serializable {
     private AtomResonance resonance2 =null;
     public int starID;
     public int starMemberId;
+    public ManagedNoeSet noeSet = null;
 
     public AtomResonance getResonance1() {
         return resonance1;
@@ -499,12 +500,20 @@ public class ManagedNoe extends DistanceConstraint implements Serializable {
         spg1.addToSTARString(result);
         result.append(sep);
         //_Gen_dist_constraint.Resonance_ID_1
-        result.append(resonance1.getID());
+        if (resonance1 == null) {
+            result.append(".");
+        } else {
+            result.append(resonance1.getID());
+        }
         result.append(sep);
         spg2.addToSTARString(result);
         result.append(sep);
         //_Gen_dist_constraint.Resonance_ID_2
-        result.append(resonance2.getID());
+        if (resonance2 == null) {
+            result.append(".");
+        } else {
+            result.append(resonance2.getID());
+        }
         result.append(sep);
         //_Gen_dist_constraint.Intensity_val
         result.append(intensity);
@@ -550,7 +559,12 @@ public class ManagedNoe extends DistanceConstraint implements Serializable {
         result.append("."); // fixme do we need to save ssid here
 
         result.append(sep);
-        result.append("1");
+        //Constraint set ID
+        if (noeSet == null) {
+            result.append(".");
+        } else {
+            result.append(noeSet.getSetId());
+        }
         return result.toString();
     }
 
@@ -589,6 +603,10 @@ public class ManagedNoe extends DistanceConstraint implements Serializable {
         }
 
         return atoms;
+    }
+
+    public void setNoeSet(ManagedNoeSet set) {
+        noeSet = set;
     }
 
     public static class NoeMatch {

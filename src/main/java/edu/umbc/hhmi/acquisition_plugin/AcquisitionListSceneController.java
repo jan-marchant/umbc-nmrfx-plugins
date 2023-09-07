@@ -26,6 +26,7 @@ import org.nmrfx.utils.GUIUtils;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Comparator;
 import java.util.ResourceBundle;
 
 public class AcquisitionListSceneController implements Initializable {
@@ -82,7 +83,7 @@ public class AcquisitionListSceneController implements Initializable {
         datasetCol.setCellFactory(col -> new TableCell<Acquisition, Dataset>() {
             ComboBox<DatasetBase> combo = new ComboBox();
             {
-                combo.setItems((ObservableList<DatasetBase>) ProjectBase.getActive().getDatasets());
+                combo.setItems(Acquisition.getActiveDatasetList());
                 combo.prefWidthProperty().bind(this.widthProperty());
                 combo.valueProperty().addListener((obs,oldV,newV) -> {
                     Acquisition acq=getAcq();
@@ -428,5 +429,4 @@ public class AcquisitionListSceneController implements Initializable {
     void refresh() {
         tableView.refresh();
     }
-
 }
