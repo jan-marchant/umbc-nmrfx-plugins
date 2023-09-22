@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 import javafx.event.Event;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import org.nmrfx.analyst.gui.AnalystApp;
 import org.nmrfx.plugin.api.EntryPoint;
 import org.nmrfx.plugin.api.NMRFxPlugin;
 import org.nmrfx.processor.gui.FXMLController;
@@ -37,7 +38,7 @@ public class AtomBrowserPlugin implements NMRFxPlugin {
     }
 
     public void showAtomBrowser(Event e) {
-        FXMLController controller = FXMLController.getActiveController();
+        FXMLController controller = AnalystApp.getFXMLControllerManager().getOrCreateActiveController();
         if (!controller.containsTool(AtomBrowser.class)) {
             AtomBrowser atomBrowser = new AtomBrowser(controller, this::removeAtomBrowser);
             atomBrowser.initialize();
@@ -46,7 +47,7 @@ public class AtomBrowserPlugin implements NMRFxPlugin {
     }
 
     public void removeAtomBrowser(AtomBrowser atomBrowser) {
-        FXMLController controller = FXMLController.getActiveController();
+        FXMLController controller = AnalystApp.getFXMLControllerManager().getOrCreateActiveController();
         controller.removeTool(AtomBrowser.class);
         controller.getBottomBox().getChildren().remove(atomBrowser.getToolBar());
     }

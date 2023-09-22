@@ -23,26 +23,19 @@ import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.processor.datasets.peaks.PeakPickParameters;
 import org.nmrfx.processor.datasets.peaks.PeakPicker;
 import org.nmrfx.processor.gui.PolyChart;
+import org.nmrfx.processor.gui.PolyChartManager;
 import org.nmrfx.project.ProjectBase;
-import org.nmrfx.star.ParseException;
-import org.nmrfx.star.SaveframeWriter;
 import org.nmrfx.utils.GUIUtils;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.*;
 
 public class Acquisition {
-    static HashMap<ProjectBase, ObservableList> projectAcquisitionsMap = new HashMap<>();
-    static HashMap<ProjectBase, ObservableList> projectDatasetMap = new HashMap<>();
+    static HashMap<ProjectBase, ObservableList<Acquisition>> projectAcquisitionsMap = new HashMap<>();
+    static HashMap<ProjectBase, ObservableList<DatasetBase>> projectDatasetMap = new HashMap<>();
 
     static public ObservableList<Acquisition> getActiveAcquisitionList() {
-        ObservableList<Acquisition> acquisitionList = projectAcquisitionsMap.get(ProjectBase.getActive());
-        if (acquisitionList == null) {
-            acquisitionList = FXCollections.observableArrayList();
-            projectAcquisitionsMap.put(ProjectBase.getActive(), acquisitionList);
-        }
-        return acquisitionList;
+        return projectAcquisitionsMap.computeIfAbsent(ProjectBase.getActive(), k -> FXCollections.observableArrayList());
     }
 
     static public ObservableList<DatasetBase> getActiveDatasetList() {
@@ -94,22 +87,22 @@ public class Acquisition {
         }
     }
 
-    private ObservableList<ManagedList> managedListsList = FXCollections.observableArrayList();
-    private ObservableList<Experiment> validExperimentList = FXCollections.observableArrayList();
-    private ObjectProperty<Dataset> dataset = new SimpleObjectProperty<>();
-    private ObjectProperty<Experiment> experiment = new SimpleObjectProperty<>();
-    private ObjectProperty<Sample> sample = new SimpleObjectProperty<>();
-    private ObjectProperty<Condition> condition = new SimpleObjectProperty<>();
+    private final ObservableList<ManagedList> managedListsList = FXCollections.observableArrayList();
+    private final ObservableList<Experiment> validExperimentList = FXCollections.observableArrayList();
+    private final ObjectProperty<Dataset> dataset = new SimpleObjectProperty<>();
+    private final ObjectProperty<Experiment> experiment = new SimpleObjectProperty<>();
+    private final ObjectProperty<Sample> sample = new SimpleObjectProperty<>();
+    private final ObjectProperty<Condition> condition = new SimpleObjectProperty<>();
 
-    private ListProperty<ManagedList> managedLists = new SimpleListProperty<>(managedListsList);
+    private final ListProperty<ManagedList> managedLists = new SimpleListProperty<>(managedListsList);
     private Double sensitivity;
     private AcqTree acqTree;
-    private ArrayList<Float> defaultPeakWidths = new ArrayList<>();
-    private ProjectBase project;
+    private final ArrayList<Float> defaultPeakWidths = new ArrayList<>();
+    private final ProjectBase project;
 
     //Silly place for this but quick hack to fix freqDomain issue
     public static void fixDataset(ActionEvent e) {
-        PolyChart chart = PolyChart.getActiveChart();
+        PolyChart chart = PolyChartManager.getInstance().getActiveChart();
         DatasetBase dataset = chart.getDataset();
         if (dataset != null) {
             int nDim = dataset.getNDim();
@@ -137,9 +130,7 @@ public class Acquisition {
     public Acquisition() {
         project = ProjectBase.getActive();
         getActiveAcquisitionList().add(this);
-        dataset.addListener((observableValue, oldValue, newValue) -> {
-            parseValidExperiments();
-        });
+        dataset.addListener((observableValue, oldValue, newValue) -> parseValidExperiments());
         Experiment.getActiveExperimentList().addListener((ListChangeListener.Change<? extends Experiment> c) -> {
             while (c.next()) {
                 updateValidExperiments(c.getAddedSubList());
@@ -335,13 +326,10 @@ public class Acquisition {
                     resonance2 = (AtomResonance) newPeak.getPeakDim(list.getDimMap().get(expDim.getNextExpDim())).getResonance();
                     atom2 = resonance2.getAtom();
                 }
-                boolean add = true;
-                if (atom1 == null || atom2 == null) {
-                    add = false;
-                    //TODO: popup window asking for assignments and parse them
-                    // might be useful to implement backwards link to give context (/ limit choices?)
-                    //add=response from popup
-                }
+                boolean add = atom1 != null && atom2 != null;
+                //TODO: popup window asking for assignments and parse them
+                // might be useful to implement backwards link to give context (/ limit choices?)
+                //add=response from popup
                 double noeFraction = getSample().getAtomFraction(atom1) * getSample().getAtomFraction(atom2);
                 if (noeFraction <= 0) {
                     add = false;
@@ -485,7 +473,7 @@ public class Acquisition {
                 pt[i][0] = 0;
                 pt[i][1] = theDataset.getSizeTotal(i) - 1;
                 cpt[i] = (pt[i][0] + pt[i][1]) / 2;
-                width[i] = (double) Math.abs(pt[i][0] - pt[i][1]);
+                width[i] = Math.abs(pt[i][0] - pt[i][1]);
             }
             //RegionData rData;
 

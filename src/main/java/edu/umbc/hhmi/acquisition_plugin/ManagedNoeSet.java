@@ -18,7 +18,6 @@
  */
 package edu.umbc.hhmi.acquisition_plugin;
 
-import edu.umbc.hhmi.subproject_plugin.SubProjMenu;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.apache.commons.collections4.BidiMap;

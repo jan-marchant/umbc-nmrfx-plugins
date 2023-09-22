@@ -77,11 +77,7 @@ public class ExperimentSetup {
                         invalidExpDimSetups.add(this);
                     }
                 }
-                if (invalidExpDimSetups.size()==0) {
-                    allExpDimSetupsValid.set(true);
-                } else {
-                    allExpDimSetupsValid.set(false);
-                }
+                allExpDimSetupsValid.set(invalidExpDimSetups.size() == 0);
             });
             this.first=first;
 
@@ -123,9 +119,7 @@ public class ExperimentSetup {
                     .when(patternParses)
                     .then("")
                     .otherwise("-fx-background-color: yellow"));
-            patternField.textProperty().addListener(c -> {
-                patternUpdated();
-            });
+            patternField.textProperty().addListener(c -> patternUpdated());
             patternField.setPrefWidth(100);
             observed = new CheckBox("Observed");
             observed.setSelected(true);
@@ -224,11 +218,7 @@ public class ExperimentSetup {
         public void patternUpdated() {
             for (String group : patternField.getText().split(",")) {
                 Matcher matcher = ExpDim.matchPattern.matcher(group.trim());
-                if (!matcher.matches()) {
-                    patternParses.setValue(false);
-                } else {
-                    patternParses.setValue(true);
-                }
+                patternParses.setValue(matcher.matches());
             }
          }
 
@@ -314,18 +304,10 @@ public class ExperimentSetup {
         allValid=allValid.and(numDims.greaterThan(0));
         allValid = allValid.and(allExpDimSetupsValid);
 
-        allValid.addListener(e-> {
-            if (allValid.get()==true) {
-                ok.setDisable(false);
-            } else {
-                ok.setDisable(true);
-            }
-        });
+        allValid.addListener(e-> ok.setDisable(!allValid.get()));
 
         //ok.disableProperty().bind(allValid);
-        cancel.setOnAction((event) -> {
-            stage.close();
-        });
+        cancel.setOnAction((event) -> stage.close());
 
         ButtonBar buttonBar = new ButtonBar();
         ButtonBar.setButtonData(ok, ButtonBar.ButtonData.OK_DONE);
@@ -350,11 +332,7 @@ public class ExperimentSetup {
     }
 
     public void nameUpdated() {
-        if (Experiment.get(nameField.getText())!=null || nameField.getText().isEmpty()) {
-            nameValid.set(false);
-        } else {
-            nameValid.set(true);
-        }
+        nameValid.set(Experiment.get(nameField.getText()) == null && !nameField.getText().isEmpty());
     }
     public void addExpDim(boolean first) {
         ExpDimSetup expDimSetup = new ExpDimSetup(first);

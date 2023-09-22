@@ -15,7 +15,7 @@ public class JCouplingPath extends JCoupling {
 
     public JCouplingPath(ArrayList<Atom> atoms, LinkedList<MNode> path) {
         super(atomsToSpatialSet(atoms), path.size());
-        LinkedList pathCopy = (LinkedList) path.clone();
+        LinkedList<MNode> pathCopy = (LinkedList<MNode>) path.clone();
         pathCopy.removeFirst();
         pathCopy.removeLast();
         for (MNode node : path) {
@@ -24,7 +24,7 @@ public class JCouplingPath extends JCoupling {
     }
 
     static ArrayList<SpatialSet> atomsToSpatialSet (ArrayList<Atom> atoms) {
-        ArrayList<SpatialSet> localSets = new ArrayList<SpatialSet>();
+        ArrayList<SpatialSet> localSets = new ArrayList<>();
 
         for (Atom atom : atoms) {
             localSets.add(atom.spatialSet);

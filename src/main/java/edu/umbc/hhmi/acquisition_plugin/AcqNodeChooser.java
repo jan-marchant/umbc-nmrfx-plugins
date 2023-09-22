@@ -26,7 +26,6 @@ import org.nmrfx.chemistry.AtomResonance;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakDim;
-import org.nmrfx.peaks.PeakList;
 import org.nmrfx.project.SubProject;
 
 import java.awt.*;

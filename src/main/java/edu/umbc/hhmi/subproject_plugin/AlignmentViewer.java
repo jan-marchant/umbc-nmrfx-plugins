@@ -136,7 +136,7 @@ public class AlignmentViewer extends TextArea {
         aligner.buildMatrix();
         //aligner.dumpH();
         aligner.processMatrix();
-        List<List<Integer>> lists = new ArrayList<List<Integer>>(2);
+        List<List<Integer>> lists = new ArrayList<>(2);
         lists.add(aligner.getA());
         lists.add(aligner.getB());
         layoutStrings(lists);

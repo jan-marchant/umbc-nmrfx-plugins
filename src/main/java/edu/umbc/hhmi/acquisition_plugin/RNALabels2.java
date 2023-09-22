@@ -106,11 +106,7 @@ public class RNALabels2 {
                                     ribose = true;
                                 } else if (atom.getElementName().equals("H") && atom.getParent().getElementName().equals("C")) {
                                     exchangable = false;
-                                } else if (atom.getElementName().equals("C")) {
-                                    exchangable = false;
-                                } else {
-                                    exchangable = true;
-                                }
+                                } else exchangable = !atom.getElementName().equals("C");
                                 boolean ok = false;
                                 for (String gAtomName : gAtomNames) {
                                     if (ribose && atom.getElementName().equals("H") && gAtomName.equals("Hr")) {

@@ -10,7 +10,7 @@ import java.util.*;
 
 public class AcqTree {
 
-    public class Edge {
+    public static class Edge {
         public AcqNode node1;
         public AcqNode node2;
         public double weight;
@@ -61,15 +61,15 @@ public class AcqTree {
             return node1.getId()*node2.getId();
         }
     }
-    private ObservableSet<Edge> edges= FXCollections.observableSet(new HashSet<>());
+    private final ObservableSet<Edge> edges= FXCollections.observableSet(new HashSet<>());
 
     public ArrayList<AcqNode> nodes = new ArrayList<>();
-    private HashMap<Atom, List<AcqNode>> atomNodeMap = new HashMap<>();
-    private HashMap<ExpDim, ObservableList<AcqNode>> expDimNodeMap = new HashMap<>();
-    private Set<ManagedNoeSet> noeSets = new HashSet<>();
-    private AcqNode firstNode;
-    private AcqNode lastNode;
-    private Acquisition acquisition;
+    private final HashMap<Atom, List<AcqNode>> atomNodeMap = new HashMap<>();
+    private final HashMap<ExpDim, ObservableList<AcqNode>> expDimNodeMap = new HashMap<>();
+    private final Set<ManagedNoeSet> noeSets = new HashSet<>();
+    private final AcqNode firstNode;
+    private final AcqNode lastNode;
+    private final Acquisition acquisition;
 
     public AcqTree(Acquisition acquisition) {
         firstNode=addNode();
@@ -127,7 +127,7 @@ public class AcqTree {
 
     public ExpDim smallestExpDim() {
         try {
-            return (ExpDim) expDimNodeMap.entrySet().stream()
+            return expDimNodeMap.entrySet().stream()
                     .min((entry1, entry2) -> entry1.getValue().size() > entry2.getValue().size() ? 1 : -1).get().getKey();
         } catch (Exception e) {
             System.out.println("Error getting smallest expDim");
@@ -178,7 +178,7 @@ public class AcqTree {
                     return node;
                 }
             }
-        } catch (Exception e) {}
+        } catch (Exception ignore) {}
         return null;
     }
 
@@ -204,7 +204,7 @@ public class AcqTree {
     }
 
     public void addEdge(AcqNode iNode, AcqNode jNode, double weight, ManagedNoeSet noeSet, ManagedNoe noe) {
-        edges.add(new Edge(iNode,jNode,weight,noeSet,noe));
+        edges.add(new Edge(iNode, jNode, weight, noeSet, noe));
     }
 
     public void addLeadingEdge (AcqNode iNode) {

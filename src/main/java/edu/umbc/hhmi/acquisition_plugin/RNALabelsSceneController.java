@@ -37,8 +37,7 @@ public class RNALabelsSceneController implements Initializable {
     Pattern quickPat2 = Pattern.compile("(n|r|H|[1-5]'|[2-8])");
     Pattern quickPatA = Pattern.compile("([1-5]'|[28])");
     Pattern quickPatG = Pattern.compile("([1-5]'|[8])");
-    Pattern quickPatC = Pattern.compile("([1-5]'|[56])");
-    Pattern quickPatU = Pattern.compile("([1-5]'|[56])");
+    Pattern quickPatCU = Pattern.compile("([1-5]'|[56])");
     Background defaultBackground = null;
     Background errorBackground = new Background(new BackgroundFill(Color.YELLOW, null, null));
 
@@ -121,13 +120,9 @@ public class RNALabelsSceneController implements Initializable {
             Label label = new Label("Base");
             Button allButton = new Button("All");
             final int baseIndex = iBase;
-            allButton.setOnAction(e -> {
-                setAll(true, baseIndex, true);
-            });
+            allButton.setOnAction(e -> setAll(true, baseIndex, true));
             Button noneButton = new Button("None");
-            noneButton.setOnAction(e -> {
-                setAll(true, baseIndex, false);
-            });
+            noneButton.setOnAction(e -> setAll(true, baseIndex, false));
             gridPanes[iBase].addRow(row, label, allButton, noneButton);
             row++;
             for (int iType = 0; iType < 2; iType++) {
@@ -157,13 +152,9 @@ public class RNALabelsSceneController implements Initializable {
             }
             Label riboLabel = new Label("Ribose");
             Button riboAllButton = new Button("All");
-            riboAllButton.setOnAction(e -> {
-                setAll(false, baseIndex, true);
-            });
+            riboAllButton.setOnAction(e -> setAll(false, baseIndex, true));
             Button riboNoneButton = new Button("None");
-            riboNoneButton.setOnAction(e -> {
-                setAll(false, baseIndex, false);
-            });
+            riboNoneButton.setOnAction(e -> setAll(false, baseIndex, false));
             gridPanes[iBase].addRow(row, riboLabel, riboAllButton, riboNoneButton);
             row++;
             int col = 0;
@@ -197,17 +188,14 @@ public class RNALabelsSceneController implements Initializable {
         loadSelGroupButton.disableProperty().bind(entityChoiceBox.getSelectionModel().selectedItemProperty().isNull());
         sampleField.setOnShowing(e -> updateSample());
         entityChoiceBox.setOnShowing(e -> updateMolecule());
-        quickCodeField.setOnKeyReleased(e -> {
-            doQuickCode(e, quickCodeField.getText());
-
-        });
+        quickCodeField.setOnKeyReleased(e -> doQuickCode(e, quickCodeField.getText()));
         updateSample();
         updateMolecule();
         //entityChoiceBox.setValue("*");
-        entityChoiceBox.setConverter(new StringConverter<Entity>() {
+        entityChoiceBox.setConverter(new StringConverter<>() {
                                          @Override
                                          public String toString(Entity object) {
-                                             return object!=null?object.getName():"Null";
+                                             return object != null ? object.getName() : "Null";
                                          }
 
             @Override
@@ -217,13 +205,9 @@ public class RNALabelsSceneController implements Initializable {
                                      }
         );
 
-        sampleField.setOnAction(e -> {
-            this.loadSelGroup();
-        });
+        sampleField.setOnAction(e -> this.loadSelGroup());
 
-        entityChoiceBox.setOnAction(e -> {
-            this.loadSelGroup();
-        });
+        entityChoiceBox.setOnAction(e -> this.loadSelGroup());
     }
 
     void doQuickCode(KeyEvent e, String code) {
@@ -273,19 +257,10 @@ public class RNALabelsSceneController implements Initializable {
                     if (atomType.length() != 2) {
                         Pattern basePat = null;
                         switch (base) {
-                            case "A":
-                                basePat = quickPatA;
-                                break;
-                            case "G":
-                                basePat = quickPatG;
-                                break;
-                            case "C":
-                            case "U":
-                                basePat = quickPatC;
-                                break;
-                            default:
-                                ok = false;
-                                break;
+                            case "A" -> basePat = quickPatA;
+                            case "G" -> basePat = quickPatG;
+                            case "C", "U" -> basePat = quickPatCU;
+                            default -> ok = false;
                         }
                         if (!basePat.matcher(atomType).matches()) {
                             ok = false;
@@ -299,7 +274,7 @@ public class RNALabelsSceneController implements Initializable {
             }
             sBuilder.append(" ");
         }
-        System.out.println(sBuilder.toString());
+        System.out.println(sBuilder);
         if (ok) {
             if (e.getCode() == KeyCode.ENTER) {
                 updateButtons(sBuilder.toString());
@@ -313,9 +288,7 @@ public class RNALabelsSceneController implements Initializable {
 
     public void updateSample() {
         sampleField.getItems().clear();
-        Sample.getActiveSampleList().stream().sorted().forEach(sample -> {
-            sampleField.getItems().add(sample);
-        });
+        Sample.getActiveSampleList().stream().sorted().forEach(sample -> sampleField.getItems().add(sample));
     }
 
     public void setSampleAndEntity(Sample sample, Entity entity) {
@@ -540,12 +513,11 @@ public class RNALabelsSceneController implements Initializable {
                 prefix[iBase] = sAtoms.toString();
                 suffix[iBase] = sBuilder.substring(1);
                 try {
-                    Integer labelingPercentage = Integer.parseInt(labelingPercentageField.getText());
-                    if (labelingPercentage < 100 && labelingPercentage > 0) {
-                        suffix[iBase] += ":" + labelingPercentage.toString();
+                    int labelingPercentage = Integer.parseInt(labelingPercentageField.getText());
+                    if ((labelingPercentage < 100) && (labelingPercentage > 0)) {
+                        suffix[iBase] += ":" + labelingPercentage;
                     }
-                } catch (Exception e) {
-                }
+                } catch (Exception ignore) {}
             } else {
                 prefix[iBase] = "";
                 suffix[iBase] = "";
@@ -584,7 +556,7 @@ public class RNALabelsSceneController implements Initializable {
                                 result.append(' ');
                             }
                             //result.append(entityStr).append(baseValue.toString()).append(suffix[iBase]);
-                            result.append(baseValue.toString()).append(suffix[iBase]);
+                            result.append(baseValue).append(suffix[iBase]);
                         }
                     }
                 }
@@ -595,7 +567,7 @@ public class RNALabelsSceneController implements Initializable {
                 result.append(suffix[0]);
             }
         }
-        System.out.println("selAtoms: " + result.toString());
+        System.out.println("selAtoms: " + result);
         return result.toString().trim();
     }
 
@@ -690,12 +662,12 @@ public class RNALabelsSceneController implements Initializable {
         RNALabelsSceneController controller = null;
         Stage stage = new Stage(StageStyle.DECORATED);
         try {
-            Scene scene = new Scene((Pane) loader.load());
+            Scene scene = new Scene(loader.load());
             stage.setScene(scene);
             scene.getStylesheets().add("/styles/Styles.css");
             scene.getStylesheets().add("/styles/rnapeakgeneratorscene.css");
 
-            controller = loader.<RNALabelsSceneController>getController();
+            controller = loader.getController();
             controller.stage = stage;
             stage.setTitle("RNA Label Schemes");
             stage.show();

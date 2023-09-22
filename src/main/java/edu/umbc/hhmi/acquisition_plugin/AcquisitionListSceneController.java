@@ -21,12 +21,10 @@ import javafx.stage.StageStyle;
 import org.nmrfx.datasets.DatasetBase;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.processor.datasets.Dataset;
-import org.nmrfx.project.ProjectBase;
 import org.nmrfx.utils.GUIUtils;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Comparator;
 import java.util.ResourceBundle;
 
 public class AcquisitionListSceneController implements Initializable {
@@ -80,13 +78,14 @@ public class AcquisitionListSceneController implements Initializable {
         //datasetCol.setCellFactory(ViewableComboBoxTableCell.getForCellFactory(Acquisition.class,"dataset", (ObservableList<DatasetBase>) ProjectBase.getActive().getDatasets()));
         //There's a lot of repetition below. The ViewableComboBoxTableCell above was an attempt to factor this out, but used a PropertyReference which caused issues, so all written out for now.
         //(The underlying aim is to have a combobox that's always visible in the Table)
-        datasetCol.setCellFactory(col -> new TableCell<Acquisition, Dataset>() {
-            ComboBox<DatasetBase> combo = new ComboBox();
+        datasetCol.setCellFactory(col -> new TableCell<>() {
+            final ComboBox<DatasetBase> combo = new ComboBox<>();
+
             {
                 combo.setItems(Acquisition.getActiveDatasetList());
                 combo.prefWidthProperty().bind(this.widthProperty());
-                combo.valueProperty().addListener((obs,oldV,newV) -> {
-                    Acquisition acq=getAcq();
+                combo.valueProperty().addListener((obs, oldV, newV) -> {
+                    Acquisition acq = getAcq();
                     if (acq != null) {
                         acq.setDataset((Dataset) combo.getValue());
                     }
@@ -110,9 +109,10 @@ public class AcquisitionListSceneController implements Initializable {
                     }
                 });
             }
+
             //TODO: is there a proper way to do this?
             private Acquisition getAcq() {
-                if (getTableView()==null) return null;
+                if (getTableView() == null) return null;
                 try {
                     return getTableView().getItems().get(getIndex());
                 } catch (Exception e) {
@@ -127,7 +127,7 @@ public class AcquisitionListSceneController implements Initializable {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    Acquisition acq=getAcq();
+                    Acquisition acq = getAcq();
                     //TODO: should only need to set this once really
                     combo.setValue(t);
                     setGraphic(combo);
@@ -142,13 +142,14 @@ public class AcquisitionListSceneController implements Initializable {
         sampleCol.setCellValueFactory(cellData -> cellData.getValue().sampleProperty());
         //fixme: Issues when project / list changed
         //sampleCol.setCellFactory(ViewableComboBoxTableCell.getForCellFactory(Acquisition.class,"sample",Sample.getActiveSampleList()));
-        sampleCol.setCellFactory(col -> new TableCell<Acquisition, Sample>() {
-            ComboBox<Sample> combo = new ComboBox();
+        sampleCol.setCellFactory(col -> new TableCell<>() {
+            final ComboBox<Sample> combo = new ComboBox<>();
+
             {
                 combo.setItems(Sample.getActiveSampleList());
                 combo.prefWidthProperty().bind(this.widthProperty());
-                combo.valueProperty().addListener((obs,oldV,newV) -> {
-                    Acquisition acq=getAcq();
+                combo.valueProperty().addListener((obs, oldV, newV) -> {
+                    Acquisition acq = getAcq();
                     if (acq != null) {
                         acq.setSample(combo.getValue());
                     }
@@ -172,9 +173,10 @@ public class AcquisitionListSceneController implements Initializable {
                     }
                 });
             }
+
             //TODO: is there a proper way to do this?
             private Acquisition getAcq() {
-                if (getTableView()==null) return null;
+                if (getTableView() == null) return null;
                 try {
                     return getTableView().getItems().get(getIndex());
                 } catch (Exception e) {
@@ -189,7 +191,7 @@ public class AcquisitionListSceneController implements Initializable {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    Acquisition acq=getAcq();
+                    Acquisition acq = getAcq();
                     //TODO: should only need to set this once really
                     combo.setValue(t);
                     setGraphic(combo);
@@ -201,9 +203,9 @@ public class AcquisitionListSceneController implements Initializable {
         Label sampleLabel = new Label(sampleCol.getText());
         BorderPane samplePane = new BorderPane();
         samplePane.setLeft(sampleLabel);
-        samplePane.setAlignment(sampleLabel, Pos.CENTER_LEFT);
+        BorderPane.setAlignment(sampleLabel, Pos.CENTER_LEFT);
         samplePane.setRight(addSampleButton);
-        samplePane.setAlignment(sampleLabel, Pos.CENTER_RIGHT);
+        BorderPane.setAlignment(sampleLabel, Pos.CENTER_RIGHT);
         sampleCol.setText(null);
         sampleCol.setGraphic(samplePane);
 
@@ -211,13 +213,14 @@ public class AcquisitionListSceneController implements Initializable {
         conditionCol.setCellValueFactory(cellData -> cellData.getValue().conditionProperty());
         //fixme: Issues when project / list changed
         //conditionCol.setCellFactory(ViewableComboBoxTableCell.getForCellFactory(Acquisition.class,"condition",Condition.getActiveConditionList()));
-        conditionCol.setCellFactory(col -> new TableCell<Acquisition, Condition>() {
-            ComboBox<Condition> combo = new ComboBox();
+        conditionCol.setCellFactory(col -> new TableCell<>() {
+            final ComboBox<Condition> combo = new ComboBox<>();
+
             {
                 combo.setItems(Condition.getActiveConditionList());
                 combo.prefWidthProperty().bind(this.widthProperty());
-                combo.valueProperty().addListener((obs,oldV,newV) -> {
-                    Acquisition acq=getAcq();
+                combo.valueProperty().addListener((obs, oldV, newV) -> {
+                    Acquisition acq = getAcq();
                     if (acq != null) {
                         acq.setCondition(combo.getValue());
                     }
@@ -241,9 +244,10 @@ public class AcquisitionListSceneController implements Initializable {
                     }
                 });
             }
+
             //TODO: is there a proper way to do this?
             private Acquisition getAcq() {
-                if (getTableView()==null) return null;
+                if (getTableView() == null) return null;
                 try {
                     return getTableView().getItems().get(getIndex());
                 } catch (Exception e) {
@@ -258,7 +262,7 @@ public class AcquisitionListSceneController implements Initializable {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    Acquisition acq=getAcq();
+                    Acquisition acq = getAcq();
                     //TODO: should only need to set this once really
                     combo.setValue(t);
                     setGraphic(combo);
@@ -270,25 +274,24 @@ public class AcquisitionListSceneController implements Initializable {
         Label conditionLabel = new Label(conditionCol.getText());
         BorderPane conditionPane = new BorderPane();
         conditionPane.setLeft(conditionLabel);
-        conditionPane.setAlignment(conditionLabel, Pos.CENTER_LEFT);
+        BorderPane.setAlignment(conditionLabel, Pos.CENTER_LEFT);
         conditionPane.setRight(addConditionButton);
-        conditionPane.setAlignment(conditionLabel, Pos.CENTER_RIGHT);
+        BorderPane.setAlignment(conditionLabel, Pos.CENTER_RIGHT);
         conditionCol.setText(null);
         conditionCol.setGraphic(conditionPane);
 
         TableColumn<Acquisition, Experiment> experimentCol = new TableColumn<>("Experiment");
         experimentCol.setCellValueFactory(cellData -> cellData.getValue().experimentProperty());
-        experimentCol.setCellFactory(col -> new TableCell<Acquisition, Experiment>() {
-            ComboBox<Experiment> combo = new ComboBox();
+        experimentCol.setCellFactory(col -> new TableCell<>() {
+            final ComboBox<Experiment> combo = new ComboBox<>();
+
             {
                 try {
                     combo.setItems(getAcq().getValidExperimentList());
-                }
-                catch(Exception e) {
-                }
+                } catch (Exception ignore) {}
                 combo.prefWidthProperty().bind(this.widthProperty());
-                combo.valueProperty().addListener((obs,oldV,newV) -> {
-                    Acquisition acq=getAcq();
+                combo.valueProperty().addListener((obs, oldV, newV) -> {
+                    Acquisition acq = getAcq();
                     if (acq != null) {
                         acq.setExperiment(combo.getValue());
                     }
@@ -312,9 +315,10 @@ public class AcquisitionListSceneController implements Initializable {
                     }
                 });
             }
+
             //TODO: is there a proper way to do this?
-           private Acquisition getAcq() {
-               if (getTableView()==null) return null;
+            private Acquisition getAcq() {
+                if (getTableView() == null) return null;
                 try {
                     return getTableView().getItems().get(getIndex());
                 } catch (Exception e) {
@@ -329,9 +333,9 @@ public class AcquisitionListSceneController implements Initializable {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    Acquisition acq=getAcq();
+                    Acquisition acq = getAcq();
                     //TODO: should only need to set this once really
-                    combo.setItems(acq.getValidExperimentList());
+                    if (acq!=null) {combo.setItems(acq.getValidExperimentList());}
                     combo.setValue(t);
                     setGraphic(combo);
                 }
@@ -343,16 +347,17 @@ public class AcquisitionListSceneController implements Initializable {
         Label experimentLabel = new Label(experimentCol.getText());
         BorderPane experimentPane = new BorderPane();
         experimentPane.setLeft(experimentLabel);
-        experimentPane.setAlignment(experimentLabel, Pos.CENTER_LEFT);
+        BorderPane.setAlignment(experimentLabel, Pos.CENTER_LEFT);
         experimentPane.setRight(addExperimentButton);
-        experimentPane.setAlignment(experimentLabel, Pos.CENTER_RIGHT);
+        BorderPane.setAlignment(experimentLabel, Pos.CENTER_RIGHT);
         experimentCol.setText(null);
         experimentCol.setGraphic(experimentPane);
 
         TableColumn<Acquisition, ObservableList<ManagedList>> listCol = new TableColumn<>("Associated lists");
         listCol.setCellValueFactory(new PropertyValueFactory<>("managedLists"));
-        listCol.setCellFactory(col -> new TableCell<Acquisition, ObservableList<ManagedList>>() {
-            private MenuButton menuButton=new MenuButton();
+        listCol.setCellFactory(col -> new TableCell<>() {
+            private final MenuButton menuButton = new MenuButton();
+
             @Override
             public void updateItem(ObservableList<ManagedList> managedLists, boolean empty) {
                 menuButton.prefWidthProperty().bind(this.widthProperty());
@@ -360,7 +365,7 @@ public class AcquisitionListSceneController implements Initializable {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    menuButton.setText(managedLists.size() + " list"+(managedLists.size()==1?"":"s"));
+                    menuButton.setText(managedLists.size() + " list" + (managedLists.size() == 1 ? "" : "s"));
                     menuButton.getItems().removeAll(menuButton.getItems());
                     Menu menu;
                     Menu detailMenu;
@@ -369,19 +374,19 @@ public class AcquisitionListSceneController implements Initializable {
 
                     for (ManagedList managedList : managedLists) {
                         menu = new Menu(managedList.getName());
-                        detailMenu=new Menu("Details");
+                        detailMenu = new Menu("Details");
                         for (String detailText : managedList.getDetailText()) {
-                            detailItem=new MenuItem(detailText);
+                            detailItem = new MenuItem(detailText);
                             detailMenu.getItems().add(detailItem);
                         }
-                        deleteMenuItem=new MenuItem("Delete");
-                        deleteMenuItem.setOnAction(e -> ((Acquisition) this.getTableRow().getItem()).deleteManagedList(managedList,true));
-                        menu.getItems().addAll(detailMenu,deleteMenuItem);
+                        deleteMenuItem = new MenuItem("Delete");
+                        deleteMenuItem.setOnAction(e -> (this.getTableRow().getItem()).deleteManagedList(managedList, true));
+                        menu.getItems().addAll(detailMenu, deleteMenuItem);
                         menuButton.getItems().add(menu);
                     }
                     MenuItem addMenuItem = new MenuItem("Add New");
                     menuButton.getItems().add(addMenuItem);
-                    addMenuItem.setOnAction(e -> ((Acquisition) this.getTableRow().getItem()).addNewManagedList());
+                    addMenuItem.setOnAction(e -> (this.getTableRow().getItem()).addNewManagedList());
                     setGraphic(menuButton);
                 }
             }

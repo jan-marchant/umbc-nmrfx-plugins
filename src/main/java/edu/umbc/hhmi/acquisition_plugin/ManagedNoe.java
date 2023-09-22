@@ -49,7 +49,7 @@ enum DisTypes {
             return noe.getDisStatAvg().getMean();
         }
     };
-    private String description;
+    private final String description;
 
     public abstract double getDistance(ManagedNoe noe);
 
@@ -609,19 +609,8 @@ public class ManagedNoe extends DistanceConstraint implements Serializable {
         noeSet = set;
     }
 
-    public static class NoeMatch {
-
-        public final SpatialSet sp1;
-        public final SpatialSet sp2;
-        public final GenTypes type;
-        public final double error;
-
-        public NoeMatch(SpatialSet sp1, SpatialSet sp2, GenTypes type, double error) {
-            this.sp1 = sp1;
-            this.sp2 = sp2;
-            this.type = type;
-            this.error = error;
-        }
+    public record NoeMatch(SpatialSet sp1, SpatialSet sp2,
+                           GenTypes type, double error) {
 
         @Override
         public String toString() {

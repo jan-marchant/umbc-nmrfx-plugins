@@ -2,10 +2,10 @@ package edu.umbc.hhmi.subproject_plugin;
 
 import de.jensd.fx.glyphs.GlyphsDude;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import edu.umbc.hhmi.acquisition_plugin.ManagedNoe;
 import edu.umbc.hhmi.acquisition_plugin.ManagedNoeSet;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -18,9 +18,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
 import org.apache.commons.collections4.BidiMap;
-import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.Entity;
-import org.nmrfx.chemistry.Residue;
 import org.nmrfx.project.ProjectBase;
 
 import java.nio.file.Path;

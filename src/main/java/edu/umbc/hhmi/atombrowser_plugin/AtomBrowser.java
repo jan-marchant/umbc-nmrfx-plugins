@@ -20,6 +20,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 import org.apache.commons.collections4.BidiMap;
+import org.nmrfx.analyst.gui.AnalystApp;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.Entity;
 import org.nmrfx.datasets.DatasetBase;
@@ -100,7 +101,7 @@ public class AtomBrowser implements ControllerTool {
         boolean seen;
         do {
             seen = false;
-            for (FXMLController test : FXMLController.getControllers()) {
+            for (FXMLController test : AnalystApp.getFXMLControllerManager().getControllers()) {
                 if (test.getStage().getTitle().equalsIgnoreCase("Browser " + suffix)) {
                     suffix += 1;
                     seen = true;
@@ -325,17 +326,17 @@ public class AtomBrowser implements ControllerTool {
 
         if (aspectCheckBox.isSelected()) {
             for (PolyChart applyChart : controller.getCharts()) {
-                applyChart.chartProps.setAspect(true);
-                applyChart.chartProps.setAspectRatio(aspectRatio);
+                applyChart.getChartProperties().setAspect(true);
+                applyChart.getChartProperties().setAspectRatio(aspectRatio);
                 //applyChart.refresh();
             }
         } else {
             for (PolyChart applyChart : controller.getCharts()) {
-                applyChart.chartProps.setAspect(false);
+                applyChart.getChartProperties().setAspect(false);
             }
             updateAllBounds();
             if (controller.getActiveChart()!=null) {
-                double newAspectRatio = controller.getActiveChart().chartProps.getAspectRatio();
+                double newAspectRatio = controller.getActiveChart().getChartProperties().getAspectRatio();
                 if (aspectRatio != newAspectRatio) {
                     if (newAspectRatio <= aspectSlider.getMax() && newAspectRatio >= aspectSlider.getMin()) {
                         aspectSlider.setValue(newAspectRatio);
@@ -357,15 +358,15 @@ public class AtomBrowser implements ControllerTool {
             delta = width / 2;
             //refresh();
             for (PolyChart applyChart : controller.getCharts()) {
-                double shift = applyChart.getAxis(centerDim).getLowerBound()+applyChart.getAxis(centerDim).getRange()/2;
-                applyChart.getAxis(centerDim).setLowerBound(shift - delta);
-                applyChart.getAxis(centerDim).setUpperBound(shift + delta);
+                double shift = applyChart.getAxes().get(centerDim).getLowerBound()+applyChart.getAxes().get(centerDim).getRange()/2;
+                applyChart.getAxes().get(centerDim).setLowerBound(shift - delta);
+                applyChart.getAxes().get(centerDim).setUpperBound(shift + delta);
                 applyChart.refresh();
             }
         } else {
             updateAllBounds();
             if (controller.getActiveChart()!=null) {
-                double newWidth = controller.getActiveChart().getAxis(centerDim).getRange();
+                double newWidth = controller.getActiveChart().getAxes().get(centerDim).getRange();
                 if (width != newWidth) {
                     if (newWidth <= widthSlider.getMax() && newWidth >= widthSlider.getMin()) {
                         widthSlider.setValue(newWidth);
@@ -504,8 +505,9 @@ public class AtomBrowser implements ControllerTool {
                         controller.addChart();
                     }
                     PolyChart chart = controller.getCharts().get(i - 1);
-                    chart.setActiveChart();
-                    chart.chartProps.setTopBorderSize(40);
+                    //this doesn't feel like an improvement over chart.setActive()!
+                    chart.getFXMLController().setActiveChart(chart);
+                    chart.getChartProperties().setTopBorderSize(40);
 
                     chart.setDataset(item.dataset);
                     chart.getPeakListAttributes().clear();
@@ -522,7 +524,7 @@ public class AtomBrowser implements ControllerTool {
                     GraphicsContextInterface gC = new GraphicsContextProxy(gCC);
                     item.dataset.setTitle(item.dataset.getName());
 
-                    chart.chartProps.setTitles(true);
+                    chart.getChartProperties().setTitles(true);
 
                     if (item.getMinRange() < yMin) {
                         yMin = item.getMinRange();
@@ -531,11 +533,11 @@ public class AtomBrowser implements ControllerTool {
                         yMax = item.getMaxRange();
                     }
 
-                    chart.getAxis(centerDim).setLowerBound(ppm.get() - delta);
-                    chart.getAxis(centerDim).setUpperBound(ppm.get() + delta);
-                    chart.getAxis(rangeDim).setLowerBound(yMin);
-                    chart.getAxis(rangeDim).setUpperBound(yMax);
-                    chart.getAxis(rangeDim).lowerBoundProperty().addListener(e -> {
+                    chart.getAxes().get(centerDim).setLowerBound(ppm.get() - delta);
+                    chart.getAxes().get(centerDim).setUpperBound(ppm.get() + delta);
+                    chart.getAxes().get(rangeDim).setLowerBound(yMin);
+                    chart.getAxes().get(rangeDim).setUpperBound(yMax);
+                    chart.getAxes().get(rangeDim).lowerBoundProperty().addListener(e -> {
                         if (!scheduled) {
                             service.schedule(() -> Platform.runLater(() -> {
                                 updateAllBounds();
@@ -545,7 +547,7 @@ public class AtomBrowser implements ControllerTool {
                             scheduled = true;
                         }
                     });
-                    chart.getAxis(rangeDim).upperBoundProperty().addListener(e -> {
+                    chart.getAxes().get(rangeDim).upperBoundProperty().addListener(e -> {
                         if (!scheduled) {
                             service.schedule(() -> Platform.runLater(() -> {
                                 updateAllBounds();
@@ -559,13 +561,13 @@ public class AtomBrowser implements ControllerTool {
 
                     for (int n = 2; n < item.dataset.getNDim(); n++) {
                         int dataDim = datasetAttr.getDim(n);
-                        chart.getAxis(n).setLowerBound(item.getMinShift(dataDim));
-                        chart.getAxis(n).setUpperBound(item.getMaxShift(dataDim));
+                        chart.getAxes().get(n).setLowerBound(item.getMinShift(dataDim));
+                        chart.getAxes().get(n).setUpperBound(item.getMaxShift(dataDim));
                         int finalN = n;
-                        chart.getAxis(n).lowerBoundProperty().addListener(e -> {
+                        chart.getAxes().get(n).lowerBoundProperty().addListener(e -> {
                             for (PeakDim peakDim : item.dims.get(dataDim)) {
                                 if (!peakDim.isFrozen()) {
-                                    peakDim.setChemShift((float) chart.getAxis(finalN).getLowerBound());
+                                    peakDim.setChemShift((float) chart.getAxes().get(finalN).getLowerBound());
                                 }
                             }
                             if (!scheduled) {
@@ -577,10 +579,10 @@ public class AtomBrowser implements ControllerTool {
                                 scheduled = true;
                             }
                         });
-                        chart.getAxis(n).upperBoundProperty().addListener(e -> {
+                        chart.getAxes().get(n).upperBoundProperty().addListener(e -> {
                             for (PeakDim peakDim : item.dims.get(dataDim)) {
                                 if (!peakDim.isFrozen()) {
-                                    peakDim.setChemShift((float) chart.getAxis(finalN).getUpperBound());
+                                    peakDim.setChemShift((float) chart.getAxes().get(finalN).getUpperBound());
                                 }
                             }
                             if (!scheduled) {
@@ -596,17 +598,17 @@ public class AtomBrowser implements ControllerTool {
                     }
 
                     if (previousChart != null) {
-                        chart.getAxis(rangeDim).lowerBoundProperty().bindBidirectional(previousChart.getAxis(rangeDim).lowerBoundProperty());
-                        chart.getAxis(rangeDim).upperBoundProperty().bindBidirectional(previousChart.getAxis(rangeDim).upperBoundProperty());
+                        chart.getAxes().get(rangeDim).lowerBoundProperty().bindBidirectional(previousChart.getAxes().get(rangeDim).lowerBoundProperty());
+                        chart.getAxes().get(rangeDim).upperBoundProperty().bindBidirectional(previousChart.getAxes().get(rangeDim).upperBoundProperty());
                     }
 
                     item.peakList.registerPeakChangeListener(e -> {
                         boolean dirty = false;
                         Double newPpm = item.getShift();
                         if (newPpm != null && !newPpm.equals(ppm.get())) {
-                            double currentDelta = chart.getAxis(centerDim).getRange() / 2;
-                            chart.getAxis(centerDim).setLowerBound(newPpm - currentDelta);
-                            chart.getAxis(centerDim).setUpperBound(newPpm + currentDelta);
+                            double currentDelta = chart.getAxes().get(centerDim).getRange() / 2;
+                            chart.getAxes().get(centerDim).setLowerBound(newPpm - currentDelta);
+                            chart.getAxes().get(centerDim).setUpperBound(newPpm + currentDelta);
                             ppm.set(newPpm);
                             dirty = true;
                         }
@@ -615,12 +617,12 @@ public class AtomBrowser implements ControllerTool {
                             int dataDim = datasetAttr.getDim(n);
                             Double newMin = item.getMinShift(dataDim);
                             Double newMax = item.getMaxShift(dataDim);
-                            if (chart.getAxis(n).getLowerBound() != newMin) {
-                                chart.getAxis(n).setLowerBound(item.getMinShift(dataDim));
+                            if (chart.getAxes().get(n).getLowerBound() != newMin) {
+                                chart.getAxes().get(n).setLowerBound(item.getMinShift(dataDim));
                                 dirty = true;
                             }
-                            if (chart.getAxis(n).getUpperBound() != newMax) {
-                                chart.getAxis(n).setUpperBound(item.getMaxShift(dataDim));
+                            if (chart.getAxes().get(n).getUpperBound() != newMax) {
+                                chart.getAxes().get(n).setUpperBound(item.getMaxShift(dataDim));
                                 dirty = true;
                             }
                         }
@@ -635,8 +637,8 @@ public class AtomBrowser implements ControllerTool {
                             scheduled = true;
                         }
                     });
-                    chart.getAxis(rangeDim).lowerBoundProperty().addListener(e->updateBounds());
-                    chart.getAxis(rangeDim).upperBoundProperty().addListener(e->updateBounds());
+                    chart.getAxes().get(rangeDim).lowerBoundProperty().addListener(e->updateBounds());
+                    chart.getAxes().get(rangeDim).upperBoundProperty().addListener(e->updateBounds());
 
                     previousChart = chart;
                     chart.autoScale();
@@ -713,8 +715,8 @@ public class AtomBrowser implements ControllerTool {
 
             controller.getCharts().forEach(chart -> {
                 try {
-                    chart.getAxis(rangeDim).setLowerBound(min);
-                    chart.getAxis(rangeDim).setUpperBound(max);
+                    chart.getAxes().get(rangeDim).setLowerBound(min);
+                    chart.getAxes().get(rangeDim).setUpperBound(max);
                 } catch (NumberFormatException ignored) {
 
                 }

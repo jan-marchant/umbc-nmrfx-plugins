@@ -37,23 +37,18 @@ public class Sample implements Comparable<Sample>, SaveframeWriter {
 
     //todo: I think this fails on project replace, as happens if you start setting things up before saving
     //todo: Either needs to be added to the project or detect project type on plugin load? Seems fragile.
-    static HashMap<ProjectBase, ObservableList> projectSamplesMap= new HashMap<>();
+    static HashMap<ProjectBase, ObservableList<Sample>> projectSamplesMap= new HashMap<>();
     public static SampleListSceneController sampleListController;
 
     static public ObservableList<Sample> getActiveSampleList() {
-        ObservableList<Sample> sampleList = projectSamplesMap.get(ProjectBase.getActive());
-        if (sampleList == null) {
-            sampleList = FXCollections.observableArrayList();
-            projectSamplesMap.put(ProjectBase.getActive(),sampleList);
-        }
-        return sampleList;
+        return projectSamplesMap.computeIfAbsent(ProjectBase.getActive(), k -> FXCollections.observableArrayList());
     }
 
-    private StringProperty name = new SimpleStringProperty();
-    private ObjectProperty<Molecule> molecule = new SimpleObjectProperty<>();
-    private StringProperty labelString = new SimpleStringProperty("");
-    private HashMap<Atom, Double> atomFraction = new HashMap<>();
-    private HashMap<Entity, String> entityLabelString = new HashMap<>();
+    private final StringProperty name = new SimpleStringProperty();
+    private final ObjectProperty<Molecule> molecule = new SimpleObjectProperty<>();
+    private final StringProperty labelString = new SimpleStringProperty("");
+    private final HashMap<Atom, Double> atomFraction = new HashMap<>();
+    private final HashMap<Entity, String> entityLabelString = new HashMap<>();
 
     public Sample(String name) {
         setName(name);
@@ -259,17 +254,19 @@ public class Sample implements Comparable<Sample>, SaveframeWriter {
             } else {
                 result = Optional.of(ButtonType.OK);
             }
-            if (result.get() == ButtonType.OK) {
-                atomFraction.clear();
-                entityLabelString.put(entity, labels.replace(entity.getName()+":",""));
-                updateLabelString();
-                for (Acquisition acquisition : Acquisition.getActiveAcquisitionList()) {
-                    if (acquisition.getSample()==this) {
-                        acquisition.resetAcquisitionTree();
+            if (result.isPresent()) {
+                if (result.get() == ButtonType.OK) {
+                    atomFraction.clear();
+                    entityLabelString.put(entity, labels.replace(entity.getName() + ":", ""));
+                    updateLabelString();
+                    for (Acquisition acquisition : Acquisition.getActiveAcquisitionList()) {
+                        if (acquisition.getSample() == this) {
+                            acquisition.resetAcquisitionTree();
+                        }
                     }
-                }
-                for (ManagedList list : getAssociatedLists()) {
-                    PeakList.remove(list.getName());
+                    for (ManagedList list : getAssociatedLists()) {
+                        PeakList.remove(list.getName());
+                    }
                 }
             }
         }
@@ -285,13 +282,13 @@ public class Sample implements Comparable<Sample>, SaveframeWriter {
     }
 
     private void updateLabelString() {
-        String labels="";
+        StringBuilder labels= new StringBuilder();
         for (Entity entity : entityLabelString.keySet()) {
-            for (String group : entityLabelString.get(entity).split(";| ")) {
-                labels += entity.getName() + ":" + group+" ";
+            for (String group : entityLabelString.get(entity).split("[; ]")) {
+                labels.append(entity.getName()).append(":").append(group).append(" ");
             }
         }
-        labelString.set(labels);
+        labelString.set(labels.toString());
     }
 
     @FXML
@@ -316,7 +313,7 @@ public class Sample implements Comparable<Sample>, SaveframeWriter {
             List<String> starEntityLabelString = loop.getColumnAsList("Isotopic_labeling");
 
             for (int i = 0; i<entityLabels.size(); i++) {
-                Entity entity = (Entity) Molecule.getActive().entityLabels.get(entityLabels.get(i));
+                Entity entity = Molecule.getActive().entityLabels.get(entityLabels.get(i));
                 String labels = starEntityLabelString.get(i).replace("^'", "").replace("'$","");
                 entityLabelString.put(entity, labels.replace(entity.getName()+":",""));
                 updateLabelString();
@@ -325,7 +322,7 @@ public class Sample implements Comparable<Sample>, SaveframeWriter {
     }
 
     @Override
-    public void write(Writer chan) throws ParseException, IOException {
+    public void write(Writer chan) throws IOException {
         if (molecule.get() == null) {
             return;
         }
@@ -354,9 +351,7 @@ public class Sample implements Comparable<Sample>, SaveframeWriter {
         chan.write("\n");
 
         int entityID = 1;
-        Iterator entityIterator = molecule.get().entityLabels.values().iterator();
-        while (entityIterator.hasNext()) {
-            Entity entity = (Entity) entityIterator.next();
+        for (Entity entity : molecule.get().entityLabels.values()) {
             chan.write(String.format("%d %d %s '%s'", getId(), entityID, entity.label, getLabelString().equals("") ? "*" : getLabelString()));
             chan.write("\n");
             entityID++;

@@ -7,7 +7,6 @@ import org.nmrfx.chemistry.AtomResonance;
 import org.nmrfx.chemistry.MoleculeBase;
 import org.nmrfx.chemistry.PPMv;
 import org.nmrfx.peaks.*;
-import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.project.SubProject;
 import org.nmrfx.utils.GUIUtils;
 
@@ -73,7 +72,7 @@ public class ManagedPeak extends Peak {
                 List<PeakDim> peakDims = foundPeakDim.getResonance().getPeakDims();
                 Set<PeakDim> updateMe = new HashSet<>();
                 updateMe.add(thisPeakDim);
-                Boolean freezeMe = false;
+                boolean freezeMe = false;
 
                 for (PeakDim peakDim : peakDims) {
                     if (peakDim == foundPeakDim || peakDim==thisPeakDim) {
@@ -239,7 +238,7 @@ public class ManagedPeak extends Peak {
                     Multiplet multiplet = peakDim.getMultiplet();
                 }
             }
-            peakList.unLinkPeak(this);
+            PeakList.unLinkPeak(this);
             this.markDeleted();
             peakList.peaks().remove(this);
             peakList.reIndex();

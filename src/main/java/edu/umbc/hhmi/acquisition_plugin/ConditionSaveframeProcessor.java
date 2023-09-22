@@ -4,11 +4,9 @@ import org.nmrfx.star.ParseException;
 import org.nmrfx.star.Saveframe;
 import org.nmrfx.star.SaveframeProcessor;
 
-import java.io.IOException;
-
 public class ConditionSaveframeProcessor implements SaveframeProcessor {
     @Override
-    public void process(Saveframe saveframe) throws ParseException, IOException {
+    public void process(Saveframe saveframe) throws ParseException {
         //String name = saveframe.getName();
         //is this the same?
         String name = saveframe.getValue("_Sample_condition_list", "Name").replace("^'", "").replace("'$","");

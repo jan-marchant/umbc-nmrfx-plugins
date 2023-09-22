@@ -39,7 +39,7 @@ public class SubProjectPlugin implements NMRFxPlugin {
             //subProjMenu = new Menu("SubProject Setup");
 
             MenuItem subProjMenuItem = new MenuItem("Setup SubProjects");
-            subProjMenuItem.setOnAction(e -> ProjectRelations.showProjectRelations(e));
+            subProjMenuItem.setOnAction(ProjectRelations::showProjectRelations);
 
             //subProjMenu.getItems().addAll(setupMenuItem);
             ((Menu) object).getItems().addAll(subProjMenuItem);

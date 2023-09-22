@@ -20,19 +20,19 @@ public class ExpDim {
      * And 1,3 and 4 observable
      */
 
-    private String pattern;
-    private Boolean observed;
+    private final String pattern;
+    private final Boolean observed;
     private ExpDim nextExpDim;
     private ExpDim previousExpDim;
     private Connectivity nextCon;
     private Connectivity previousCon;
-    private Nuclei nucleus;
-    private HashMap<Molecule, HashMap<Atom,String>> molAtomMap=new HashMap<>();
+    private final Nuclei nucleus;
+    private final HashMap<Molecule, HashMap<Atom,String>> molAtomMap=new HashMap<>();
     public final static Pattern matchPattern = Pattern.compile("^(\\*|[A-z]+)(?:\\((\\*|[A-z])\\))?\\.([^,:.]+)(?::([0-9\\.]+))?$");
-    private static Pattern codePattern = Pattern.compile("^([A-z]+)\\[(.)\\]\\((.*)\\)$");
-    private static Pattern labelPattern = Pattern.compile("^([Fr])([0-9]+)([a-z]*)?$");
-    private static HashMap<String, HashMap<String, ArrayList<String>>> resMap = new HashMap<>();
-    private ArrayList<Match> matches=new ArrayList<>();
+    private static final Pattern codePattern = Pattern.compile("^([A-z]+)\\[(.)\\]\\((.*)\\)$");
+    private static final Pattern labelPattern = Pattern.compile("^([Fr])([0-9]+)([a-z]*)?$");
+    private static final HashMap<String, HashMap<String, ArrayList<String>>> resMap = new HashMap<>();
+    private final ArrayList<Match> matches=new ArrayList<>();
 
     public ExpDim(Nuclei nucleus,Boolean observed) {
         this.observed=observed;
@@ -62,7 +62,7 @@ public class ExpDim {
             this.pattern="*.*";
         } else {
             this.nucleus=Nuclei.findNuclei(matcher.group(1));
-            this.observed=matcher.group(2).equals("1")?true:false;
+            this.observed= matcher.group(2).equals("1");
             this.pattern=matcher.group(3);
         }
         parsePattern();
@@ -131,7 +131,7 @@ public class ExpDim {
         HashMap<Atom,String> activeAtoms=new HashMap<>();
         molAtomMap.put(mol,activeAtoms);
         for (Atom atom : mol.getAtoms()) {
-            if (atom.getElementName()!=nucleus.getName()) {
+            if (!Objects.equals(atom.getElementName(), nucleus.getName())) {
                 continue;
             }
             Entity entity=atom.getEntity();
@@ -167,12 +167,8 @@ public class ExpDim {
     }
 
     public Boolean isNoeDim() {
-        if ((nextCon!=null && nextCon.type == Connectivity.TYPE.NOE) ||
-                (previousCon!=null && previousCon.type == Connectivity.TYPE.NOE)) {
-            return true;
-        } else {
-            return false;
-        }
+        return (nextCon != null && nextCon.type == Connectivity.TYPE.NOE) ||
+                (previousCon != null && previousCon.type == Connectivity.TYPE.NOE);
     }
     public void setNext(Connectivity nextCon,ExpDim nextExpDim) {
         this.nextCon = nextCon;
@@ -222,7 +218,7 @@ public class ExpDim {
     }
 
     public boolean resPatMatches(Atom atom, Atom connectedAtom) {
-        return (resPat(atom) == "*" || nextExpDim.resPat(connectedAtom) == "*" ||
+        return (Objects.equals(resPat(atom), "*") || Objects.equals(nextExpDim.resPat(connectedAtom), "*") ||
                 (resPat(atom).equalsIgnoreCase(nextExpDim.resPat(connectedAtom)) && atom.getEntity()==connectedAtom.getEntity())
                 || (!resPat(atom).equalsIgnoreCase(nextExpDim.resPat(connectedAtom)) && atom.getEntity()!=connectedAtom.getEntity()));
     }
@@ -231,7 +227,7 @@ public class ExpDim {
         return this.pattern;
     }
 
-    private class Match {
+    private static class Match {
         String resType;
         String resId;
         String atomPat;
@@ -264,7 +260,7 @@ public class ExpDim {
             } catch (Exception e) {
                 fraction=1.0;
             }
-            matches.add(new Match(resType,resId,atomPat,fraction));
+            matches.add(new Match(resType, resId, atomPat, fraction));
         }
     }
 
@@ -277,13 +273,9 @@ public class ExpDim {
     }
 
     public static boolean patternShortcuts(String entityName,String atomName,String testPat) {
-        if (resMap.containsKey(entityName.toLowerCase()) &&
+        return resMap.containsKey(entityName.toLowerCase()) &&
                 resMap.get(entityName.toLowerCase()).containsKey(testPat.toLowerCase()) &&
-                resMap.get(entityName.toLowerCase()).get(testPat.toLowerCase()).contains(atomName.toLowerCase())) {
-            return true;
-        } else {
-            return false;
-        }
+                resMap.get(entityName.toLowerCase()).get(testPat.toLowerCase()).contains(atomName.toLowerCase());
     }
 
     static {

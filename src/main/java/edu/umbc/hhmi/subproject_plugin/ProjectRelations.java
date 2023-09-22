@@ -1,7 +1,6 @@
 package edu.umbc.hhmi.subproject_plugin;
 
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableArray;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -17,7 +16,6 @@ import org.nmrfx.chemistry.Residue;
 import org.nmrfx.project.ProjectBase;
 import org.nmrfx.project.ProjectUtilities;
 import org.nmrfx.project.SubProject;
-import org.nmrfx.star.ParseException;
 import org.nmrfx.star.SaveframeWriter;
 import org.nmrfx.utils.GUIUtils;
 
@@ -120,7 +118,7 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
     }
 
     public static ProjectRelations findProjectRelations(ProjectBase sub) {
-        //find subProjeRelations between active project and given subProject
+        //find subProjectRelations between active project and given subProject
         return findProjectRelations(ProjectBase.getActive(),sub);
     }
 

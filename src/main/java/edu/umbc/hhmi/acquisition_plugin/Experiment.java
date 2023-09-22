@@ -9,13 +9,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import org.nmrfx.project.ProjectBase;
 import org.nmrfx.utils.GUIUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
@@ -67,7 +65,7 @@ public class Experiment {
         }
         @Override
         public Iterator<ExpDim> iterator() {
-            return new Iterator<ExpDim>() {
+            return new Iterator<>() {
 
                 private ExpDim following=first;
                 {
@@ -106,10 +104,10 @@ public class Experiment {
     public ExpDims obsDims = new ExpDims(true);
 
     //public Iterator<ExpDim> obsIterator = obsDims.iterator();
-    private StringProperty name=new SimpleStringProperty();
+    private final StringProperty name=new SimpleStringProperty();
     private int size;
-    private IntegerProperty numObsDims=new SimpleIntegerProperty();
-    private StringProperty description=new SimpleStringProperty();
+    private final IntegerProperty numObsDims=new SimpleIntegerProperty();
+    private final StringProperty description=new SimpleStringProperty();
 
 
     private ExpDim first;
@@ -154,13 +152,13 @@ public class Experiment {
     }
 
     public String toCode() {
-        String toReturn="";
+        StringBuilder toReturn= new StringBuilder();
         for (ExpDim expDim : expDims) {
-            toReturn+=expDim.getNextCon(false)==null?"":"|"+expDim.getNextCon(false).toCode();
-            toReturn+="|";
-            toReturn+=expDim.toCode();
+            toReturn.append(expDim.getNextCon(false) == null ? "" : "|" + expDim.getNextCon(false).toCode());
+            toReturn.append("|");
+            toReturn.append(expDim.toCode());
         }
-        return toReturn;
+        return toReturn.toString();
     }
 
     @Override
@@ -173,13 +171,13 @@ public class Experiment {
     }
 
     public String describe() {
-        String toReturn="";
+        StringBuilder toReturn= new StringBuilder();
         for (ExpDim expDim : expDims) {
-            toReturn+=expDim.getNextCon(false)==null?"":expDim.getNextCon(false).toString()+"→";
-            toReturn+=expDim.toString() + "("+expDim.getNucleus().getNumberName()+"): "+expDim.getPattern();
-            toReturn+=expDim.getNextCon(true)==null?"":"→";
+            toReturn.append(expDim.getNextCon(false) == null ? "" : expDim.getNextCon(false).toString() + "→");
+            toReturn.append(expDim).append("(").append(expDim.getNucleus().getNumberName()).append("): ").append(expDim.getPattern());
+            toReturn.append(expDim.getNextCon(true) == null ? "" : "→");
         }
-        return toReturn;
+        return toReturn.toString();
     }
     public int getNumObsDims() {
         return numObsDims.get();

@@ -21,19 +21,11 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
 import javafx.util.converter.DefaultStringConverter;
-import org.nmrfx.chemistry.*;
 import org.nmrfx.chemistry.constraints.NoeSet;
-import org.nmrfx.project.ProjectBase;
-import org.nmrfx.project.SubProject;
-import org.nmrfx.structure.chemistry.Molecule;
-import org.nmrfx.structure.rna.InteractionType;
-import org.nmrfx.structure.rna.SSGen;
 import org.nmrfx.utils.GUIUtils;
-import org.python.modules.math;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.UnaryOperator;
 
 public class ManagedNoeSetController {

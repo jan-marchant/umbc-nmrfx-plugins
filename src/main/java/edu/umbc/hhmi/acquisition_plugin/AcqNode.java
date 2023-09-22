@@ -13,10 +13,10 @@ import java.util.Set;
 
 public class AcqNode {
 
-    private AcqTree acqTree;
-    private int id;
+    private final AcqTree acqTree;
+    private final int id;
     private Atom atom;
-    private Set<AcqTree.Edge> edges=new HashSet<>();
+    private final Set<AcqTree.Edge> edges=new HashSet<>();
     private ExpDim expDim;
 
     public AcqNode(AcqTree acqTree, int id) {

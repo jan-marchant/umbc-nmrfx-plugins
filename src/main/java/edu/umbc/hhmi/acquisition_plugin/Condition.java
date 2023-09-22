@@ -26,7 +26,7 @@ public class Condition implements SaveframeWriter, Comparable<Condition> {
 
     //todo: I think this fails on project replace, as happens if you start setting things up before saving
     //todo: Either needs to be added to the project or detect project type on plugin load? Seems fragile.
-    static HashMap<ProjectBase, ObservableList> projectConditionsMap= new HashMap<>();
+    static HashMap<ProjectBase, ObservableList<Condition>> projectConditionsMap= new HashMap<>();
     public static ConditionListSceneController conditionListController;
 
     static int count=0;
@@ -50,12 +50,7 @@ public class Condition implements SaveframeWriter, Comparable<Condition> {
     }
 
     static public ObservableList<Condition> getActiveConditionList() {
-        ObservableList<Condition> conditionList = projectConditionsMap.get(ProjectBase.getActive());
-        if (conditionList == null) {
-            conditionList = FXCollections.observableArrayList();
-            projectConditionsMap.put(ProjectBase.getActive(),conditionList);
-        }
-        return conditionList;
+        return projectConditionsMap.computeIfAbsent(ProjectBase.getActive(), k -> FXCollections.observableArrayList());
     }
 
     public void remove(boolean prompt) {
@@ -137,17 +132,10 @@ public class Condition implements SaveframeWriter, Comparable<Condition> {
 
     public void setVariable(String type, double val, double valErr) {
         switch (type) {
-            case "temperature":
-                setTemperature(val);
-                break;
-            case "pressure":
-                setPressure(val);
-                break;
-            case "pH":
-                setpH(val);
-                break;
-            default:
-                System.out.println("Couldn't process condition value for "+type);
+            case "temperature" -> setTemperature(val);
+            case "pressure" -> setPressure(val);
+            case "pH" -> setpH(val);
+            default -> System.out.println("Couldn't process condition value for " + type);
         }
     }
 
@@ -218,7 +206,7 @@ public class Condition implements SaveframeWriter, Comparable<Condition> {
 
 
     @Override
-    public void write(Writer chan) throws ParseException, IOException {
+    public void write(Writer chan) throws IOException {
         //categoryName is sample_conditions
         //id is from getName()
         //category is sample_conditions

@@ -30,15 +30,15 @@ import java.util.*;
 public class SubProjectSceneController implements SubProjMenu {
 
     double xOffset=50;
-    private Stage stage;
+    private final Stage stage;
     private AlignmentViewer alignmentViewer;
-    private GridPane grid;
+    private final GridPane grid;
     private MenuButton menuButton;
-    private ObjectProperty<ProjectBase> subProject = new SimpleObjectProperty<>();
+    private final ObjectProperty<ProjectBase> subProject = new SimpleObjectProperty<>();
     ChoiceBox<Entity> combo1=new ChoiceBox<>();
     ChoiceBox<Entity> combo2=new ChoiceBox<>();
     Button linkButton=new Button("Link");
-    BooleanProperty entitesLinked =new SimpleBooleanProperty(false);
+    BooleanProperty entitiesLinked =new SimpleBooleanProperty(false);
     StringProperty linkLabel = new SimpleStringProperty("Link");
     ObservableList<Entity> list1 =FXCollections.observableArrayList();
     ObservableList<Entity> list2 =FXCollections.observableArrayList();
@@ -95,7 +95,7 @@ public class SubProjectSceneController implements SubProjMenu {
         removeButton.disableProperty().bind(subProjectProperty().isNull());
         combo1.disableProperty().bind(subProjectProperty().isNull());
         combo2.disableProperty().bind(subProjectProperty().isNull());
-        alignmentViewer.disableProperty().bind(entitesLinked);
+        alignmentViewer.disableProperty().bind(entitiesLinked);
         combo1.setConverter(new StringConverter<>() {
             @Override
             public String toString(Entity object) {
@@ -155,13 +155,13 @@ public class SubProjectSceneController implements SubProjMenu {
             updateEntities();
         });
 
-        entitesLinkedProperty().addListener(e -> setLinkLabel(getEntitesLinked()?"Unlink":"Link"));
+        entitiesLinkedProperty().addListener(e -> setLinkLabel(getEntitiesLinked()?"Unlink":"Link"));
     }
 
     private void updateEntities() {
         BidiMap<Entity, Entity> map = ProjectRelations.getEntityMap(subProject.get());
         if (map==null) {
-            setEntitesLinked(false);
+            setEntitiesLinked(false);
             alignmentViewer.alignSW(combo1.getValue(), combo2.getValue());
             return;
         }
@@ -172,10 +172,10 @@ public class SubProjectSceneController implements SubProjMenu {
             combo1.setValue(map.get(combo2.getValue()));
         }
         if (map.get(combo2.getValue())==combo1.getValue()) {
-            setEntitesLinked(true);
+            setEntitiesLinked(true);
             alignmentViewer.alignFromMap(combo1.getValue(), combo2.getValue(),map);
         } else {
-            setEntitesLinked(false);
+            setEntitiesLinked(false);
             alignmentViewer.alignSW(combo1.getValue(), combo2.getValue());
         }
     }
@@ -189,7 +189,7 @@ public class SubProjectSceneController implements SubProjMenu {
     }
 
     private void linkEntities(Entity subEntity, Entity mainEntity) {
-        if (!getEntitesLinked()) {
+        if (!getEntitiesLinked()) {
             if (!subEntity.getClass().equals(mainEntity.getClass())) {
                 GUIUtils.warn("Error","Entities are not of the same type");
             } else {
@@ -321,16 +321,16 @@ public class SubProjectSceneController implements SubProjMenu {
         this.subProject.set(subProject);
     }
 
-    public boolean getEntitesLinked() {
-        return entitesLinked.get();
+    public boolean getEntitiesLinked() {
+        return entitiesLinked.get();
     }
 
-    public BooleanProperty entitesLinkedProperty() {
-        return entitesLinked;
+    public BooleanProperty entitiesLinkedProperty() {
+        return entitiesLinked;
     }
 
-    public void setEntitesLinked(boolean entitesLinked) {
-        this.entitesLinked.set(entitesLinked);
+    public void setEntitiesLinked(boolean entitiesLinked) {
+        this.entitiesLinked.set(entitiesLinked);
     }
 
     public String getLinkLabel() {
