@@ -6,7 +6,7 @@
     <groupId>edu.umbc.hhmi</groupId>
     <artifactId>nmrfx_acq_plugin</artifactId>
     <packaging>jar</packaging>
-    <version>11.3.3-SNAPSHOT</version>
+    <version>11.3.3</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

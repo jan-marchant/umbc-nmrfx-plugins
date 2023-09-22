@@ -6,6 +6,8 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import org.nmrfx.plugin.api.EntryPoint;
 import org.nmrfx.plugin.api.NMRFxPlugin;
+import org.nmrfx.processor.gui.FXMLController;
+import org.nmrfx.processor.gui.SpectrumStatusBar;
 
 import java.util.Set;
 
@@ -14,7 +16,7 @@ public class AtomBrowserPlugin implements NMRFxPlugin {
     //STARTUP, MENU_FILE, MENU_PLUGINS, STATUS_BAR_TOOLS
     @Override
     public Set<EntryPoint> getSupportedEntryPoints() {
-        return Set.of(EntryPoint.MENU_PLUGINS);
+        return Set.of(EntryPoint.STATUS_BAR_TOOLS);
     }
 
     @Override
@@ -23,14 +25,30 @@ public class AtomBrowserPlugin implements NMRFxPlugin {
             System.out.println("Adding AtomBrowser to plugins menu");
 
             MenuItem atomBrowserMenuItem = new MenuItem("AtomBrowser");
-            atomBrowserMenuItem.setOnAction(e -> showAtomBrowser(e));
+            atomBrowserMenuItem.setOnAction(this::showAtomBrowser);
 
             ((Menu) object).getItems().addAll(atomBrowserMenuItem);
+        }
+        if (entryPoint == EntryPoint.STATUS_BAR_TOOLS) {
+            MenuItem atomBrowserMenuItem = new MenuItem("AtomBrowser");
+            atomBrowserMenuItem.setOnAction(this::showAtomBrowser);
+            ((SpectrumStatusBar) object).addToToolMenu(atomBrowserMenuItem);
         }
     }
 
     public void showAtomBrowser(Event e) {
-        System.out.println("Not yet implemented");
+        FXMLController controller = FXMLController.getActiveController();
+        if (!controller.containsTool(AtomBrowser.class)) {
+            AtomBrowser atomBrowser = new AtomBrowser(controller, this::removeAtomBrowser);
+            atomBrowser.initialize();
+            controller.addTool(atomBrowser);
+        }
+    }
+
+    public void removeAtomBrowser(AtomBrowser atomBrowser) {
+        FXMLController controller = FXMLController.getActiveController();
+        controller.removeTool(AtomBrowser.class);
+        controller.getBottomBox().getChildren().remove(atomBrowser.getToolBar());
     }
 
 }

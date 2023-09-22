@@ -1,5 +1,8 @@
 package edu.umbc.hhmi.subproject_plugin;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableArray;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Menu;
@@ -33,14 +36,16 @@ import java.util.stream.Collectors;
 
 public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRelations> {
     private static SubProjectSceneController subProjController;
-    private ProjectBase parentProject;
-    private SubProject subProject;
+    private static SubProjectNoeController subProjNoeController;
+
+    private final ProjectBase parentProject;
+    private final SubProject subProject;
     public BidiMap<Entity,Entity> entityMap = new DualHashBidiMap<>();
 
-    private static HashMap<ProjectBase,List<ProjectRelations>> projectSubProjectMap = new HashMap<>();
+    private final static HashMap<ProjectBase,ObservableList<ProjectRelations>> projectSubProjectMap = new HashMap<>();
     //To allow us to write a header
-    private static HashMap<ProjectBase,Integer> projectSaveFramesAdded = new HashMap<>();
-    private static HashMap<ProjectBase,Integer> projectSaveFramesWritten = new HashMap<>();
+    private final static HashMap<ProjectBase,Integer> projectSaveFramesAdded = new HashMap<>();
+    private final static HashMap<ProjectBase,Integer> projectSaveFramesWritten = new HashMap<>();
 
     static public Integer getSaveFramesAdded() {
         return getSaveFramesAdded(ProjectBase.getActive());
@@ -51,12 +56,7 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
     }
 
     static public Integer getSaveFramesAdded(ProjectBase project) {
-        Integer saveFramesAdded = projectSaveFramesAdded.get(project);
-        if (saveFramesAdded == null) {
-            saveFramesAdded = 0;
-            projectSaveFramesAdded.put(project,saveFramesAdded);
-        }
-        return saveFramesAdded;
+        return projectSaveFramesAdded.computeIfAbsent(project, k -> 0);
     }
 
     static public Integer getSaveFramesWritten(ProjectBase project) {
@@ -68,17 +68,12 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
         return saveFramesWritten;
     }
 
-    static public List<ProjectRelations> getProjectRelations() {
+    static public ObservableList<ProjectRelations> getProjectRelations() {
         return getProjectRelations(ProjectBase.getActive());
     }
 
-    static public List<ProjectRelations> getProjectRelations(ProjectBase project) {
-        List<ProjectRelations> subProjList = projectSubProjectMap.get(project);
-        if (subProjList == null) {
-            subProjList = new ArrayList<>();
-            projectSubProjectMap.put(project,subProjList);
-        }
-        return subProjList;
+    static public ObservableList<ProjectRelations> getProjectRelations(ProjectBase project) {
+        return projectSubProjectMap.computeIfAbsent(project, k -> FXCollections.observableArrayList());
     }
 
     public static void doStartup() {
@@ -143,7 +138,8 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
     }
 
     public static BidiMap<Entity, Entity> getEntityMap(ProjectBase parent, ProjectBase sub) {
-        return (findProjectRelations(parent, sub) == null) ? null: findProjectRelations(parent, sub).entityMap;
+        ProjectRelations projRel = findProjectRelations(parent, sub);
+        return (projRel == null) ? null: projRel.entityMap;
     }
 
     @FXML
@@ -160,6 +156,21 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
         }
     }
 
+    @FXML
+    public static void showSubProjNoeTransfer(ActionEvent event) {
+        if (subProjNoeController == null) {
+            subProjNoeController = new SubProjectNoeController();
+            subProjNoeController.show(400,400);
+        }
+        if (subProjNoeController != null) {
+            subProjNoeController.getStage().show();
+            subProjNoeController.getStage().toFront();
+        } else {
+            System.out.println("Couldn't make SubProjectNoeController ");
+        }
+    }
+
+
     public void remove() {
         ProjectUtilities.removeExtraSaveFrame(getParentProject(),this);
         Integer count = getSaveFramesAdded(getParentProject());
@@ -168,7 +179,7 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
     }
 
     @Override
-    public void write(Writer chan) throws ParseException, IOException {
+    public void write(Writer chan) throws IOException {
         if (!parentProject.equals(ProjectBase.getActive())) {
             return;
         }
@@ -233,13 +244,13 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
         Integer count = getSaveFramesWritten();
         projectSaveFramesWritten.put(ProjectBase.getActive(),count+1);
 
-        if (getSaveFramesWritten() == getSaveFramesAdded()) {
+        if (getSaveFramesWritten().equals(getSaveFramesAdded())) {
             chan.write("\n\n");
-            projectSaveFramesWritten.put(ProjectBase.getActive(),0);;
+            projectSaveFramesWritten.put(ProjectBase.getActive(),0);
         }
     }
 
-    private ProjectBase getSubProject() {
+    public ProjectBase getSubProject() {
         return subProject;
     }
 

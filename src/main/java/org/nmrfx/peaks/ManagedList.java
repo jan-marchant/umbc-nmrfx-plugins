@@ -30,21 +30,19 @@ public class ManagedList extends PeakList {
 
     //SNR required for picking peak - useful when adding breakthrough labeling percentages
     private double detectionLimit=3;
-    private double noise;
+    private final double noise;
     //private Double highestSignal;
     private double pickThreshold() {
         return detectionLimit*noise;//highestSignal;
     }
     //TODO: persist across saves - have to think of how to do for sample, experiment, acquisition anyway
-    private HashMap<ExpDim,Integer> dimMap = new HashMap<>();
-    private Acquisition acquisition;
+    private final HashMap<ExpDim,Integer> dimMap;
+    private final Acquisition acquisition;
     private int ppmSet;
-    private int rPpmSet;
+    private final int rPpmSet;
     //probably don't need this type - just the noeSet which can be passed by managedListSetup
     public ManagedNoeSet noeSet=null;
     private ManagedNoe addedNoe=null;
-    //private ManagedPeak addedPeak=null;
-    //protected List<ManagedPeak> peaks;
     private Boolean listening = false;
 
     //initial creation
@@ -107,9 +105,8 @@ public class ManagedList extends PeakList {
     public void initializeList(Dataset dataset) {
         if (dataset!=null) {
             this.fileName = dataset.getFileName();
-            for (int i = 0; i < dataset.getNDim(); i++) {
-                int dDim = i;
-                SpectralDim sDim = getSpectralDim(i);
+            for (int dDim = 0; dDim < dataset.getNDim(); dDim++) {
+                SpectralDim sDim = getSpectralDim(dDim);
                 sDim.setDimName(dataset.getLabel(dDim));
                 sDim.setSf(dataset.getSf(dDim));
                 sDim.setSw(dataset.getSw(dDim));
@@ -118,19 +115,12 @@ public class ManagedList extends PeakList {
                 double tol = minTol;
                 Nuclei nuc = dataset.getNucleus(dDim);
                 if (null != nuc) {
-                    switch (nuc) {
-                        case H1:
-                            tol = 0.05;
-                            break;
-                        case C13:
-                            tol = 0.6;
-                            break;
-                        case N15:
-                            tol = 0.2;
-                            break;
-                        default:
-                            tol = minTol;
-                    }
+                    tol = switch (nuc) {
+                        case H1 -> 0.05;
+                        case C13 -> 0.6;
+                        case N15 -> 0.2;
+                        default -> minTol;
+                    };
                 }
                 tol = Math.min(tol, minTol);
 
@@ -181,7 +171,7 @@ public class ManagedList extends PeakList {
                 Multiplet multiplet = peakDim.getMultiplet();
             }
         }
-        this.unLinkPeak(pickedPeak);
+        unLinkPeak(pickedPeak);
         pickedPeak.markDeleted();
         addedNoe=null;
 
@@ -210,7 +200,7 @@ public class ManagedList extends PeakList {
         Set<PeakDim> seenPeakDims;
         seenPeakDims = new HashSet<>();
 
-        Boolean first=true;
+        boolean first=true;
         for (PeakDim peakDim : searchPeak.getPeakDims()) {
             for (PeakDim linkedPeakDim : peakDim.getLinkedPeakDims()) {
                 //only delete matching peaks from this list
@@ -245,10 +235,8 @@ public class ManagedList extends PeakList {
         detailArray.add(peaks().size()+" peaks");
         detailArray.add("rPPM Set: "+rPpmSet);
         if (noeSet!=null) {
-            Optional<Map.Entry<String, ManagedNoeSet>> optionalEntry = ManagedNoeSetup.getProjectNoeSets(acquisition.getProject()).entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
-            if (optionalEntry.isPresent()) {
-            detailArray.add("NOE Set: "+optionalEntry.get().getKey());
-            }
+            Optional<Map.Entry<String, ManagedNoeSet>> optionalEntry = ManagedNoeSet.getManagedNoeSetsMap(acquisition.getProject()).entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
+            optionalEntry.ifPresent(stringManagedNoeSetEntry -> detailArray.add("NOE Set: " + stringManagedNoeSetEntry.getKey()));
         }
         return detailArray;
     }
@@ -258,7 +246,6 @@ public class ManagedList extends PeakList {
             return;
         }
         addPeaks(edge);
-        return;
     }
 
     public List<ManagedPeak> addNoeToList(ManagedNoe noe) {
@@ -294,7 +281,7 @@ public class ManagedList extends PeakList {
 
     private ManagedPeak addPeakFromPath(HashMap<ExpDim, AcqTree.Edge> path) {
         //TODO: Only add peaks with ppm associated? But what if they are assigned later?
-        Double peakIntensity=1.0;
+        double peakIntensity=1.0;
         Set<ManagedNoe> noes=new HashSet<>();
         HashMap<Integer, Atom> atoms=new HashMap<>();
         for (ExpDim expDim : acquisition.getExperiment().expDims) {
@@ -327,7 +314,7 @@ public class ManagedList extends PeakList {
             ManagedPeak newPeak = new ManagedPeak(this, this.nDim, noes, atoms);
             peaks().add(newPeak);
             this.reIndex();
-            newPeak.setIntensity(peakIntensity.floatValue());
+            newPeak.setIntensity((float) peakIntensity);
             return newPeak;
         } else {
             return null;
@@ -373,7 +360,7 @@ public class ManagedList extends PeakList {
         }
 
         for (int i = 0; i < originalList.peaks.size(); i++) {
-            Peak originalPeak = (Peak) originalList.peaks.get(i);
+            Peak originalPeak = originalList.peaks.get(i);
             ManagedPeak newPeak = ManagedPeak.copyFrom(originalPeak, this); //originalPeak.copy(originalList);
             newPeak.setResonanceAtoms();
             newPeak.setIdNum(originalPeak.getIdNum());
@@ -433,7 +420,7 @@ public class ManagedList extends PeakList {
         chan.write("_Spectral_peak_list.Experiment_class              ");
         chan.write("$" + acquisition.getExperiment().toCode() + "\n");
         chan.write("_Spectral_peak_list.Number_of_spectral_dimensions ");
-        chan.write(String.valueOf(nDim) + "\n");
+        chan.write(nDim + "\n");
         chan.write("_Spectral_peak_list.Details                       ");
         if (getDetails().length() != 0) {
             chan.write(stringQuote + getDetails() + stringQuote + "\n");
@@ -509,9 +496,9 @@ public class ManagedList extends PeakList {
                     chan.write(String.format("%d %s %d %s %s %d %d %d %d spectral_peak_list %s\n", noe.starID, noeSet.getType(), noeSet.getSetId(), noeSet.getCategory(), noeSet.getCategory() + noeSet.getName().replaceAll("\\W", ""), ID++, getId(), peak.getIdNum(), getId(), getName()));
                 }
             }
-            //a bit hacky to ensure peaklist read in OK.
+            //a bit hacky to ensure peaklist read in OK if no NOEs
             if (ID==0) {
-                chan.write(String.format("%s %s %d %s %s %d %d %s %d spectral_peak_list %s\n", ".", noeSet.getType(), noeSet.ID, noeSet.getCategory(), noeSet.getCategory() + noeSet.getName().replaceAll("\\W", ""), ID++, getId(), ".", getId(), getName()));
+                chan.write(String.format("%s %s %d %s %s %d %d %s %d spectral_peak_list %s\n", ".", noeSet.getType(), ManagedNoeSet.ID, noeSet.getCategory(), noeSet.getCategory() + noeSet.getName().replaceAll("\\W", ""), ID, getId(), ".", getId(), getName()));
             }
             chan.write("stop_\n");
             chan.write("save_\n\n");

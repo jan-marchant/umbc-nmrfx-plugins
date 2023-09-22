@@ -33,10 +33,10 @@ public class ManagedListSetup {
     Acquisition acquisition;
 
     TextField nameField=new TextField();
-    ChoiceBox<Integer> ppmSetChoices = new ChoiceBox();
-    ChoiceBox<Integer> rPpmSetChoices = new ChoiceBox();
+    ChoiceBox<Integer> ppmSetChoices = new ChoiceBox<>();
+    ChoiceBox<Integer> rPpmSetChoices = new ChoiceBox<>();
     //all NOE dims must use same NoeSet
-    ComboBox<ManagedNoeSet> noeSet = new ComboBox();
+    ComboBox<ManagedNoeSet> noeSet = new ComboBox<>();
     HashMap<ExpDim,ComboBox<Integer>> dimBoxes=new HashMap<>();
     boolean dimBoxesOk=true;
     boolean noesOk=true;
@@ -75,11 +75,11 @@ public class ManagedListSetup {
         String name="managed_"+acquisition.getDataset().getName().split("\\.")[0];
 
         if (PeakList.get(name)!=null) {
-            Integer suffix = 2;
-            while (PeakList.get(name + suffix.toString()) != null) {
+            int suffix = 2;
+            while (PeakList.get(name + suffix) != null) {
                 suffix += 1;
             }
-            nameField.setText(name+suffix.toString());
+            nameField.setText(name+ suffix);
         } else {
             nameField.setText(name);
         }
@@ -132,9 +132,7 @@ public class ManagedListSetup {
             stage.close();
         });
 
-        cancel.setOnAction((event) -> {
-            stage.close();
-        });
+        cancel.setOnAction(e -> stage.close());
 
         Label connLabel;
         GridPane connPane=new GridPane();
@@ -143,7 +141,7 @@ public class ManagedListSetup {
             connLabel = new Label(expDim.toString() + "("+expDim.getNucleus().getNumberName()+"): "+expDim.getPattern());
             connPane.add(connLabel, 0, row, 1, 1);
             GridPane.setHgrow(connLabel, Priority.ALWAYS);
-            ComboBox<Integer> dimBox=new ComboBox();
+            ComboBox<Integer> dimBox=new ComboBox<>();
             dimBox.setMaxWidth(Double.MAX_VALUE);
             if (expDim.isObserved()) {
                 dimBox.setItems(datasetMap.get(expDim.getNucleus()));
@@ -156,15 +154,14 @@ public class ManagedListSetup {
                     ok.setDisable(true);
                     dimBox.valueProperty().addListener((observable,oldValue,newValue) -> {
                         if (newValue!=null) {
-                            List<ComboBox> blank=new ArrayList<>();
-                            List<Integer> notSeen=new ArrayList<>();
-                            notSeen.addAll(dimBox.getItems());
+                            List<ComboBox<Integer>> blank=new ArrayList<>();
+                            List<Integer> notSeen = new ArrayList<>(dimBox.getItems());
                             notSeen.remove(newValue);
                             int seen=0;
                             for (ExpDim obsDim : acquisition.getExperiment().obsDims) {
                                 if (!obsDim.equals(expDim)) {
                                     if (obsDim.getNucleus() == expDim.getNucleus()) {
-                                        if (dimBoxes.get(obsDim).getValue() == newValue) {
+                                        if (Objects.equals(dimBoxes.get(obsDim).getValue(), newValue)) {
                                             dimBoxes.get(obsDim).setValue(null);
                                         }
                                         if (dimBoxes.get(obsDim).getValue() == null) {
@@ -196,7 +193,7 @@ public class ManagedListSetup {
             } else {
                 dimBox.setPromptText("-");
             }
-            dimBox.setConverter(new StringConverter<Integer>() {
+            dimBox.setConverter(new StringConverter<>() {
                 @Override
                 public String toString(Integer dim) {
                     return acquisition.getDataset().getLabel(dim);
@@ -223,22 +220,22 @@ public class ManagedListSetup {
                         //labString += " using NOE set: ";
                         //noeType.getItems().setAll(Connectivity.NOETYPE.values());
                         noeSet.setMaxWidth(Double.MAX_VALUE);
-                        if (ManagedNoeSetup.getProjectNoeSets(acquisition.getProject()).values().size()<1) {
-                            ManagedNoeSetup.addSet("default",acquisition.getProject());
+                        if (ManagedNoeSet.getManagedNoeSetsMap(acquisition.getProject()).values().size()<1) {
+                            ManagedNoeSet.addSet("default",acquisition.getProject());
                         }
-                        noeSet.getItems().setAll(ManagedNoeSetup.getProjectNoeSets(acquisition.getProject()).values());
+                        noeSet.getItems().setAll(ManagedNoeSet.getManagedNoeSetsMap(acquisition.getProject()).values());
                         noeSet.setPromptText("NOE Set:");
-                        noeSet.setConverter(new StringConverter<ManagedNoeSet>() {
+                        noeSet.setConverter(new StringConverter<>() {
 
                             @Override
                             public String toString(ManagedNoeSet noeSet) {
-                                Optional<Map.Entry<String, ManagedNoeSet>> optionalEntry = ManagedNoeSetup.getProjectNoeSets(acquisition.getProject()).entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
+                                Optional<Map.Entry<String, ManagedNoeSet>> optionalEntry = ManagedNoeSet.getManagedNoeSetsMap(acquisition.getProject()).entrySet().stream().filter(ap -> ap.getValue().equals(noeSet)).findFirst();
                                 return (optionalEntry.map(Map.Entry::getKey).orElse(null));
                             }
 
                             @Override
                             public ManagedNoeSet fromString(String string) {
-                                return ManagedNoeSetup.getProjectNoeSets(acquisition.getProject()).get(string);
+                                return ManagedNoeSet.getManagedNoeSetsMap(acquisition.getProject()).get(string);
                             }
                         });
 

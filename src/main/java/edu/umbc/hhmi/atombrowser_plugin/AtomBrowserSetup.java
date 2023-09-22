@@ -4,6 +4,7 @@ import edu.umbc.hhmi.acquisition_plugin.Acquisition;
 import edu.umbc.hhmi.acquisition_plugin.Condition;
 import edu.umbc.hhmi.acquisition_plugin.Experiment;
 import edu.umbc.hhmi.acquisition_plugin.Sample;
+import edu.umbc.hhmi.subproject_plugin.ProjectRelations;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
@@ -24,7 +25,6 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
 import javafx.util.converter.NumberStringConverter;
-import org.nmrfx.analyst.gui.tools.PeakSlider;
 import org.nmrfx.datasets.DatasetBase;
 import org.nmrfx.processor.gui.FXMLController;
 import org.nmrfx.processor.project.Project;
@@ -39,15 +39,15 @@ import java.util.stream.Collectors;
 //import static org.nmrfx.analyst.gui.AnalystApp.getFXMLControllerManager;
 
 public class AtomBrowserSetup {
-/*
+
     Stage stage;
     BorderPane borderPane;
     double xOffset = 50;
     FXMLController controller;
     ComboBox<String> xLabel;
     ComboBox<String> yLabel;
-    TableView<AtomBrowser.RangeItem> rangeItemTable;
-    TableView<AtomBrowser.FilterItem> filterItemTable;
+    TableView<RangeItem> rangeItemTable;
+    TableView<FilterItem> filterItemTable;
     static final Map<String, String> filterMap = new HashMap<>();
     TextField atomFilterTextField;
     TextField atomFilterTextField2;
@@ -90,9 +90,9 @@ public class AtomBrowserSetup {
 
         Label nameLabel=new Label("Window:");
 
-        ObservableList<FXMLController> controllerList = FXCollections.observableArrayList(getFXMLControllerManager().getControllers().stream().filter(c -> c.containsTool(AtomBrowser.class)).collect(Collectors.toList()));
+        ObservableList<FXMLController> controllerList = FXCollections.observableArrayList(FXMLController.getControllers().stream().filter(c -> c.containsTool(AtomBrowser.class)).collect(Collectors.toList()));
 
-        atomBrowserChoice.setConverter(new StringConverter<FXMLController>() {
+        atomBrowserChoice.setConverter(new StringConverter<>() {
             @Override
             public String toString(FXMLController object) {
                 return object.getStage().getTitle();
@@ -149,21 +149,21 @@ public class AtomBrowserSetup {
         rangeItemTable.setMaxHeight(120);
         Button addRangeItem = new Button("Add Range Item");
         rangeItemTable.setEditable(true);
-        TableColumn<AtomBrowser.RangeItem, String> nameCol = new TableColumn<>("Label");
+        TableColumn<RangeItem, String> nameCol = new TableColumn<>("Label");
         nameCol.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
         nameCol.setCellFactory(TextFieldTableCell.forTableColumn());
         nameCol.setEditable(true);
-        TableColumn<AtomBrowser.RangeItem, Number> minCol = new TableColumn<>("minShift");
+        TableColumn<RangeItem, Number> minCol = new TableColumn<>("minShift");
         minCol.setCellValueFactory(cellData -> cellData.getValue().minProperty());
         minCol.setCellFactory(TextFieldTableCell.forTableColumn(new NumberStringConverter()));
-        TableColumn<AtomBrowser.RangeItem, Number> maxCol = new TableColumn<>("maxShift");
+        TableColumn<RangeItem, Number> maxCol = new TableColumn<>("maxShift");
         maxCol.setCellValueFactory(cellData -> cellData.getValue().maxProperty());
         maxCol.setCellFactory(TextFieldTableCell.forTableColumn(new NumberStringConverter()));
 
         rangeItemTable.getColumns().setAll(nameCol,minCol,maxCol);
 
         rangeItemTable.setOnKeyPressed(keyEvent -> {
-            final AtomBrowser.RangeItem selectedItem = rangeItemTable.getSelectionModel().getSelectedItem();
+            final RangeItem selectedItem = rangeItemTable.getSelectionModel().getSelectedItem();
 
             if ( selectedItem != null )
             {
@@ -180,20 +180,20 @@ public class AtomBrowserSetup {
         filterItemTable = new TableView<>();
         filterItemTable.setMaxHeight(120);
         filterItemTable.setEditable(false);
-        TableColumn<AtomBrowser.FilterItem, String> typeCol = new TableColumn<>("Type");
+        TableColumn<FilterItem, String> typeCol = new TableColumn<>("Type");
         typeCol.setCellValueFactory(cellData -> cellData.getValue().typeProperty());
 
-        TableColumn<AtomBrowser.FilterItem, String> objNameCol = new TableColumn<>("Name");
+        TableColumn<FilterItem, String> objNameCol = new TableColumn<>("Name");
         objNameCol.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
 
-        TableColumn<AtomBrowser.FilterItem, Boolean> allowCol = new TableColumn<>("Allow?");
+        TableColumn<FilterItem, Boolean> allowCol = new TableColumn<>("Allow?");
         allowCol.setCellValueFactory(cellData -> cellData.getValue().allowProperty());
 
 
         filterItemTable.getColumns().setAll(typeCol,objNameCol,allowCol);
 
         filterItemTable.setOnKeyPressed(keyEvent -> {
-            final AtomBrowser.FilterItem selectedItem = filterItemTable.getSelectionModel().getSelectedItem();
+            final FilterItem selectedItem = filterItemTable.getSelectionModel().getSelectedItem();
 
             if ( selectedItem != null )
             {
@@ -242,9 +242,7 @@ public class AtomBrowserSetup {
             stage.close();
         });
 
-        cancel.setOnAction((event) -> {
-            stage.close();
-        });
+        cancel.setOnAction(e -> stage.close());
 
         ButtonBar buttonBar = new ButtonBar();
         ButtonBar.setButtonData(ok, ButtonBar.ButtonData.OK_DONE);
@@ -265,7 +263,7 @@ public class AtomBrowserSetup {
     public void initialize() {
         xLabel.setValue(getAtomBrowser().getxLabel());
         yLabel.setValue(getAtomBrowser().getyLabel());
-        rangeItemTable.setItems(getAtomBrowser().rangeItems);
+        rangeItemTable.setItems(getAtomBrowser().getRangeItems());
         atomFilterTextField.setText(getAtomBrowser().atomSelector1.filterString);
         atomFilterTextField2.setText(getAtomBrowser().atomSelector2.filterString);
 
@@ -279,8 +277,8 @@ public class AtomBrowserSetup {
         projectFilter.getItems().add(projectMenuItem);
         projectMenuItem.getItems().addAll(allow,deny);
 
-        for (SubProject object : SubProject.findSubProject(ProjectBase.getActive()).subProjectList) {
-            Menu item = new Menu(object.getProject().getName());
+        for (ProjectRelations object : ProjectRelations.getProjectRelations()) {
+            Menu item = new Menu(object.getSubProject().getName());
             MenuItem allow2 = new MenuItem("Allow");
             MenuItem deny2 = new MenuItem("Deny");
             allow2.setOnAction(e-> getAtomBrowser().addFilterItem(object,true));
@@ -331,7 +329,6 @@ public class AtomBrowserSetup {
             item.getItems().addAll(allow2,deny2);
         }
         filterItemTable.setItems(getAtomBrowser().filterList);
-
     }
 
     public void show() {
@@ -403,7 +400,7 @@ public class AtomBrowserSetup {
     void apply() {
         getAtomBrowser().setxLabel(xLabel.getValue());
         getAtomBrowser().setyLabel(yLabel.getValue());
-        getAtomBrowser().rangeSelector.setItems(getAtomBrowser().rangeItems);
+        getAtomBrowser().rangeSelector.setItems(getAtomBrowser().getRangeItems());
         getAtomBrowser().atomSelector1.setFilterString(atomFilterTextField.getText());
         getAtomBrowser().atomSelector2.setFilterString(atomFilterTextField2.getText());
     }
@@ -418,5 +415,4 @@ public class AtomBrowserSetup {
         }
         return labelSet;
     }
-*/
 }

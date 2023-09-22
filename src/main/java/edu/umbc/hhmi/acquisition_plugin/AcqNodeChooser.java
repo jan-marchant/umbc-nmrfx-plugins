@@ -61,7 +61,7 @@ public class AcqNodeChooser {
     }
 
 
-    class NodeComparator implements Comparator<AcqNode> {
+    static class NodeComparator implements Comparator<AcqNode> {
         Float shift;
 
         public NodeComparator(Float shift) {
@@ -73,7 +73,7 @@ public class AcqNodeChooser {
             if (shift==null) {return 0;}
             double aDelta=a.getDeltaPPM(shift);
             double bDelta=b.getDeltaPPM(shift);
-            return aDelta < bDelta ? -1 : aDelta == bDelta ? 0 : 1;
+            return Double.compare(aDelta, bDelta);
         }
     }
 
@@ -97,7 +97,7 @@ public class AcqNodeChooser {
                 }
                 NodeComparator comparator = new NodeComparator(shift);
 
-                Collections.sort(possibleNodes.get(expDim),comparator);
+                possibleNodes.get(expDim).sort(comparator);
                 Label label=new Label(expDim.toString());
                 String shiftString;
                 if (shift!=null) {
@@ -106,13 +106,13 @@ public class AcqNodeChooser {
                     shiftString="";
                 }
                 Label label2=new Label(shiftString);
-                ComboBox<AcqNode> comboBox = new ComboBox();
+                ComboBox<AcqNode> comboBox = new ComboBox<>();
                 combos.put(expDim, comboBox);
                 comboBox.setItems(possibleNodes.get(expDim));
                 comboBox.setEditable(false);
 
                 Float finalShift = shift;
-                comboBox.setConverter(new StringConverter<AcqNode>() {
+                comboBox.setConverter(new StringConverter<>() {
 
                     @Override
                     public String toString(AcqNode node) {
@@ -120,9 +120,9 @@ public class AcqNodeChooser {
                             return "";
                         }
                         if (finalShift==null) {
-                            return String.format("%-10.10s",node.toString());
+                            return String.format("%-10.10s", node);
                         } else {
-                            return String.format("%-10.10s %5.3f", node.toString(), node.getDeltaPPM(finalShift));
+                            return String.format("%-10.10s %5.3f", node, node.getDeltaPPM(finalShift));
                         }
                     }
 
@@ -138,7 +138,7 @@ public class AcqNodeChooser {
 
                 TextField textField = new TextField();
                 textField.setPromptText("Search");
-                SuggestionProvider<AcqNode> provider = new SuggestionProvider<AcqNode>() {
+                SuggestionProvider<AcqNode> provider = new SuggestionProvider<>() {
                     @Override
                     protected Comparator<AcqNode> getComparator() {
                         return comparator;
@@ -196,9 +196,7 @@ public class AcqNodeChooser {
 
             ok.setDisable(true);
 
-            cancel.setOnAction((event) -> {
-                stage.close();
-            });
+            cancel.setOnAction(e -> stage.close());
 
             ButtonBar buttonBar = new ButtonBar();
             ButtonBar.setButtonData(ok, ButtonBar.ButtonData.OK_DONE);
@@ -330,11 +328,15 @@ public class AcqNodeChooser {
                                     alert.getButtonTypes().setAll(shiftFrozen, shiftNew, cancel);
 
                                     Optional<ButtonType> result = alert.showAndWait();
-                                    if (result.get() == shiftFrozen){
-                                        testPeakDim.setFrozen(false);
-                                        updateMe.add(testPeakDim);
-                                    } else if (result.get() == shiftNew) {
-                                        pickedShift = testPeakDim.getChemShift();
+                                    if (result.isPresent()) {
+                                        if (result.get() == shiftFrozen) {
+                                            testPeakDim.setFrozen(false);
+                                            updateMe.add(testPeakDim);
+                                        } else if (result.get() == shiftNew) {
+                                            pickedShift = testPeakDim.getChemShift();
+                                        } else {
+                                            return;
+                                        }
                                     } else {
                                         return;
                                     }
@@ -376,7 +378,7 @@ public class AcqNodeChooser {
                     return;
                 }
                 //todo: add ppm set support
-                if (!noeExists(list.noeSet,atom1,atom2)) {
+                if (!list.noeSet.noeExists(atom1,atom2)) {
                     if (atom1.getResonance()==null) {
                         atom1.setResonance((AtomResonance) SubProject.resFactory().build());
                     }
@@ -399,15 +401,4 @@ public class AcqNodeChooser {
         list.noeSet.add(noe);
         }
     }
-
-    private boolean noeExists(ManagedNoeSet noeSet, Atom atom1, Atom atom2) {
-        for (ManagedNoe noe : noeSet.getConstraints()) {
-            if (atom1 == noe.spg1.getAnAtom() && atom2 == noe.spg2.getAnAtom() ||
-                    atom2 == noe.spg1.getAnAtom() && atom1 == noe.spg2.getAnAtom()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 }

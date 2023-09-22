@@ -1,14 +1,11 @@
 package edu.umbc.hhmi.acquisition_plugin;
 
 import com.google.auto.service.AutoService;
-import org.nmrfx.analyst.gui.tools.PeakSlider;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.plugin.api.EntryPoint;
 import org.nmrfx.plugin.api.NMRFxPlugin;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import org.nmrfx.processor.gui.PolyChart;
-import org.nmrfx.processor.gui.spectra.KeyBindings;
 
 import java.util.Set;
 
@@ -29,7 +26,7 @@ public class AcquisitionPlugin implements NMRFxPlugin {
             Condition.doStartup();
             Sample.doStartup();
             Experiment.doStartup();
-            ManagedNoeSetup.doStartup();
+            ManagedNoeSet.doStartup();
             Acquisition.doStartup();
         }
 
@@ -38,17 +35,17 @@ public class AcquisitionPlugin implements NMRFxPlugin {
             acqMenu = new Menu("Acquisition Setup");
 
             MenuItem acqMenuItem = new MenuItem("Associations");
-            acqMenuItem.setOnAction(e -> Acquisition.showAcquisitionList(e));
+            acqMenuItem.setOnAction(Acquisition::showAcquisitionList);
             MenuItem sampleMenuItem = new MenuItem("Samples");
-            sampleMenuItem.setOnAction(e -> Sample.showSampleList(e));
+            sampleMenuItem.setOnAction(Sample::showSampleList);
             MenuItem conditionMenuItem = new MenuItem("Conditions");
-            conditionMenuItem.setOnAction(e -> Condition.showConditionList(e));
+            conditionMenuItem.setOnAction(Condition::showConditionList);
             MenuItem experimentMenuItem = new MenuItem("Experiments");
-            experimentMenuItem.setOnAction(e -> Experiment.showExperimentList(e));
+            experimentMenuItem.setOnAction(Experiment::showExperimentList);
             MenuItem noeSetupMenuItem = new MenuItem("NOE Sets");
-            noeSetupMenuItem.setOnAction(e -> ManagedNoeSetup.showNoeSetup(e));
+            noeSetupMenuItem.setOnAction(ManagedNoeSetController::showNoeSetup);
             MenuItem fixDatasetMenuItem = new MenuItem("Fix dataset");
-            fixDatasetMenuItem.setOnAction(e -> Acquisition.fixDataset(e));
+            fixDatasetMenuItem.setOnAction(Acquisition::fixDataset);
 
             acqMenu.getItems().addAll(acqMenuItem,sampleMenuItem,conditionMenuItem,experimentMenuItem,noeSetupMenuItem,fixDatasetMenuItem);
             ((Menu) object).getItems().addAll(acqMenu);

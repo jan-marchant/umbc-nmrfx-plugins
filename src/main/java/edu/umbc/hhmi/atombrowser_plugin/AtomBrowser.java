@@ -5,48 +5,102 @@
  */
 package edu.umbc.hhmi.atombrowser_plugin;
 
-//import static org.nmrfx.analyst.gui.AnalystApp.getFXMLControllerManager;
-public class AtomBrowser {
+import de.jensd.fx.glyphs.GlyphsDude;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
+import edu.umbc.hhmi.subproject_plugin.ProjectRelations;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Pos;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
+import org.apache.commons.collections4.BidiMap;
+import org.nmrfx.chemistry.Atom;
+import org.nmrfx.chemistry.Entity;
+import org.nmrfx.datasets.DatasetBase;
+import org.nmrfx.datasets.Nuclei;
+import org.nmrfx.graphicsio.GraphicsContextInterface;
+import org.nmrfx.graphicsio.GraphicsContextProxy;
+import org.nmrfx.peaks.*;
+import org.nmrfx.processor.gui.ControllerTool;
+import org.nmrfx.processor.gui.FXMLController;
+import org.nmrfx.processor.gui.PolyChart;
+import org.nmrfx.processor.gui.controls.GridPaneCanvas;
+import org.nmrfx.processor.gui.spectra.DatasetAttributes;
+import org.nmrfx.processor.gui.spectra.PeakListAttributes;
+import org.nmrfx.project.ProjectBase;
+import org.nmrfx.structure.chemistry.Molecule;
+import org.nmrfx.utils.GUIUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/*
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+
 public class AtomBrowser implements ControllerTool {
 
+    private static final Logger log = LoggerFactory.getLogger(AtomBrowser.class);
+
+    static HashMap<DatasetBase,Double> savedLevels = new HashMap<>();
     ToolBar browserToolBar;
     FXMLController controller;
-    Consumer closeAction;
+    Consumer<AtomBrowser> closeAction;
     AtomSelector atomSelector1;
     AtomSelector atomSelector2;
 
     int centerDim = 0;
     int rangeDim = 1;
+    GridPaneCanvas.ORIENTATION orientation = GridPaneCanvas.ORIENTATION.HORIZONTAL;
+    ComboBox<GridPaneCanvas.ORIENTATION> orientationComboBox;
+
     CheckBox aspectCheckBox;
     Slider aspectSlider;
     Label aspectRatioValue;
+    CheckBox widthCheckBox;
+    Slider widthSlider;
+    Label widthValue;
+
     ObservableList<RangeItem> rangeItems = FXCollections.observableArrayList();
     ObservableList<FilterItem> filterList = FXCollections.observableArrayList();
     ComboBox<RangeItem> rangeSelector;
     List<DrawItem> drawItems = new ArrayList<>();
     ObservableList<LocateItem> locateItems = FXCollections.observableArrayList();
     ComboBox<Nuclei> otherNucleus;
-    //TODO: Consider best default labels
-    String xLabel="1H";
-    String yLabel="H";
+    String xLabel;
+    String yLabel;
     Molecule mol;
-
 
     ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
     double delta = 0.1;
     boolean scheduled=false;
     private Atom currentAtom=null;
 
-    public AtomBrowser(FXMLController controller, Consumer closeAction) {
+    public AtomBrowser(FXMLController controller, Consumer<AtomBrowser> closeAction) {
         this.controller = controller;
-        String title = "Browser 1";
-        Integer suffix = 1;
+        this.closeAction = closeAction;
+        if (controller.getActiveChart()!=null) {
+            xLabel = controller.getActiveChart().getDimNames().get(0);
+            yLabel = controller.getActiveChart().getDimNames().get(1);
+        } else {
+            xLabel = "1H";
+            yLabel = "H";
+        }
+        int suffix = 1;
         boolean seen;
         do {
             seen = false;
-            for (FXMLController test : getFXMLControllerManager().getControllers()) {
+            for (FXMLController test : FXMLController.getControllers()) {
                 if (test.getStage().getTitle().equalsIgnoreCase("Browser " + suffix)) {
                     suffix += 1;
                     seen = true;
@@ -55,7 +109,6 @@ public class AtomBrowser implements ControllerTool {
         } while (seen);
 
         controller.getStage().setTitle("Browser "+suffix);
-        this.closeAction = closeAction;
     }
 
     public ToolBar getToolBar() {
@@ -66,9 +119,13 @@ public class AtomBrowser implements ControllerTool {
         closeAction.accept(this);
     }
 
-    void initToolbar(ToolBar toolBar) {
-        this.browserToolBar = toolBar;
-        toolBar.setPrefWidth(900.0);
+    public void initialize() {
+        initToolbar();
+
+    }
+    void initToolbar() {
+        browserToolBar = new ToolBar();
+        browserToolBar.setPrefWidth(900.0);
 
         String iconSize = "16px";
         String fontSize = "7pt";
@@ -77,9 +134,9 @@ public class AtomBrowser implements ControllerTool {
         closeButton.setOnAction(e -> close());
         setupButton.setOnAction(e -> new AtomBrowserSetup(this.controller));
 
-        toolBar.getItems().add(closeButton);
-        toolBar.getItems().add(setupButton);
-        addFiller(toolBar);
+        browserToolBar.getItems().add(closeButton);
+        browserToolBar.getItems().add(setupButton);
+        addFiller(browserToolBar);
 
         mol = Molecule.getActive();
 
@@ -89,7 +146,7 @@ public class AtomBrowser implements ControllerTool {
             return;
         }
 
-        atomSelector1 = new AtomSelector("Atom",false) {
+        atomSelector1 = new AtomSelector(this,"Atom",false) {
             @Override
             public void selectAtom (Atom atom) {
                 setAtom(atom);
@@ -101,11 +158,11 @@ public class AtomBrowser implements ControllerTool {
             }
         };
 
-        atomSelector2 = new AtomSelector("Locate",true) {
+        atomSelector2 = new AtomSelector(this, "Locate",true) {
             @Override
             public void selectAtom(Atom atom) {
                 if (atom!=null) {
-                    LocateItem locateItem = new LocateItem(atom);
+                    LocateItem locateItem = new LocateItem(atomBrowser, atom);
                     if (!locateItems.contains(locateItem)) {
                         locateItems.add(locateItem);
                         locateItem.add();
@@ -124,8 +181,8 @@ public class AtomBrowser implements ControllerTool {
         };
 
         atomSelector1.prefWidthProperty().bindBidirectional(atomSelector2.prefWidthProperty());
-        toolBar.getItems().add(atomSelector1);
-        toolBar.getItems().add(atomSelector2);
+        browserToolBar.getItems().add(atomSelector1);
+        browserToolBar.getItems().add(atomSelector2);
 
         otherNucleus = new ComboBox<>();
         ObservableList<Nuclei> nucleiList=FXCollections.observableArrayList();
@@ -137,13 +194,13 @@ public class AtomBrowser implements ControllerTool {
         //addFiller(toolBar);
 
         VBox vBox2=new VBox();
-        toolBar.getItems().add(vBox2);
-        addFiller(toolBar);
+        browserToolBar.getItems().add(vBox2);
+        addFiller(browserToolBar);
 
         rangeSelector = new ComboBox<>();
 
         rangeSelector.setItems(rangeItems);
-        rangeSelector.setConverter(new StringConverter<RangeItem>() {
+        rangeSelector.setConverter(new StringConverter<>() {
             @Override
             public String toString(RangeItem object) {
                 return object.getName();
@@ -155,13 +212,13 @@ public class AtomBrowser implements ControllerTool {
             }
         });
 
-        Button restore = new Button("Auto");
+        Button restore = new Button("Refresh");
         restore.setOnAction(e -> setAtom(currentAtom));
         restore.setAlignment(Pos.BASELINE_LEFT);
 
         VBox vBox3 = new VBox(rangeSelector,restore);
         vBox3.setPrefWidth(100);
-        toolBar.getItems().add(vBox3);
+        browserToolBar.getItems().add(vBox3);
         restore.prefWidthProperty().bind(vBox3.widthProperty());
         rangeSelector.prefWidthProperty().bind(vBox3.widthProperty());
         rangeSelector.showingProperty().addListener((obs, wasShowing, isShowing) -> {
@@ -177,9 +234,9 @@ public class AtomBrowser implements ControllerTool {
         aspectRatioValue= new Label(String.valueOf(initialAspect));
         aspectCheckBox.selectedProperty().addListener(e -> updateAspectRatio());
         aspectSlider.setMin(0.1);
-        aspectSlider.setMax(3.0);
+        aspectSlider.setMax(10.0);
         aspectSlider.setValue(initialAspect);
-        aspectSlider.setBlockIncrement(0.01);
+        aspectSlider.setBlockIncrement(0.05);
         //aspectSlider.setOnMousePressed(e -> shiftState = e.isShiftDown());
         aspectSlider.valueProperty().addListener(e -> updateAspectRatio());
 
@@ -189,15 +246,77 @@ public class AtomBrowser implements ControllerTool {
         HBox hBox = new HBox(aspectSlider,aspectRatioValue);
         VBox vBox4 = new VBox(aspectCheckBox,hBox);
 
-        addFiller(toolBar);
-        toolBar.getItems().add(vBox4);
+        addFiller(browserToolBar);
+        browserToolBar.getItems().add(vBox4);
+
+        double initialWidth=delta*2;
+        widthCheckBox = new CheckBox("Strip Width");
+        widthSlider = new Slider();
+        widthValue= new Label(String.valueOf(initialWidth));
+        widthCheckBox.selectedProperty().addListener(e -> updateWidth());
+        widthSlider.setMin(0.1);
+        widthSlider.setMax(3.0);
+        widthSlider.setValue(initialWidth);
+        widthSlider.setBlockIncrement(0.05);
+        //widthSlider.setOnMousePressed(e -> shiftState = e.isShiftDown());
+        widthSlider.valueProperty().addListener(e -> updateWidth());
+
+        widthSlider.setPrefWidth(100);
+        widthValue.setMinWidth(35);
+        widthValue.setMaxWidth(35);
+        HBox hBox2 = new HBox(widthSlider,widthValue);
+        VBox vBox5 = new VBox(widthCheckBox,hBox2);
+
+        addFiller(browserToolBar);
+        browserToolBar.getItems().add(vBox5);
+
+        orientationComboBox = new ComboBox<>();
+        ObservableList<GridPaneCanvas.ORIENTATION> orientations = FXCollections.observableArrayList(GridPaneCanvas.ORIENTATION.values());
+        orientationComboBox.setItems(orientations);
+        orientationComboBox.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(GridPaneCanvas.ORIENTATION object) {
+                if (GridPaneCanvas.ORIENTATION.HORIZONTAL.equals(object)) {
+                    return "Horiz.";
+                } else if (GridPaneCanvas.ORIENTATION.VERTICAL.equals(object)) {
+                    return "Vert.";
+                } else if (GridPaneCanvas.ORIENTATION.GRID.equals(object)) {
+                    return "Grid";
+                } else {
+                    return "";
+                }
+            }
+
+            @Override
+            public GridPaneCanvas.ORIENTATION fromString(String string) {
+                return null;
+            }
+        });
+
+        orientationComboBox.setValue(orientation);
+
+        orientationComboBox.setOnAction(e -> updateOrientation());
+
+        addFiller(browserToolBar);
+        browserToolBar.getItems().add(orientationComboBox);
 
         addRangeControl("Aro", 6.5, 8.2);
         rangeSelector.setValue(addRangeControl("H1'", 5.1, 6.2));
         addRangeControl("H2'", 3.8, 5.1);
         updateRange();
+        controller.getBottomBox().getChildren().add(browserToolBar);
+    }
 
-
+    private void updateOrientation() {
+        orientation = orientationComboBox.getValue();
+        if (orientation == GridPaneCanvas.ORIENTATION.VERTICAL) {
+            centerDim = 1;
+            rangeDim = 0;
+        } else {
+            centerDim = 0;
+            rangeDim = 1;
+        }
+        refresh();
     }
 
     void updateAspectRatio () {
@@ -206,119 +325,55 @@ public class AtomBrowser implements ControllerTool {
 
         if (aspectCheckBox.isSelected()) {
             for (PolyChart applyChart : controller.getCharts()) {
-                applyChart.chartProps.setAspect(aspectCheckBox.isSelected());
+                applyChart.chartProps.setAspect(true);
                 applyChart.chartProps.setAspectRatio(aspectRatio);
-                applyChart.refresh();
+                //applyChart.refresh();
+            }
+        } else {
+            for (PolyChart applyChart : controller.getCharts()) {
+                applyChart.chartProps.setAspect(false);
+            }
+            updateAllBounds();
+            if (controller.getActiveChart()!=null) {
+                double newAspectRatio = controller.getActiveChart().chartProps.getAspectRatio();
+                if (aspectRatio != newAspectRatio) {
+                    if (newAspectRatio <= aspectSlider.getMax() && newAspectRatio >= aspectSlider.getMin()) {
+                        aspectSlider.setValue(newAspectRatio);
+                    } else if (newAspectRatio > aspectSlider.getMax() && aspectSlider.getValue() != aspectSlider.getMax()) {
+                        aspectSlider.setValue(aspectSlider.getMax());
+                    } else if (newAspectRatio < aspectSlider.getMin() && aspectSlider.getValue() != aspectSlider.getMin()) {
+                        aspectSlider.setValue(aspectSlider.getMin());
+                    }
+                }
             }
         }
     }
 
-    abstract class AtomSelector extends VBox {
-        ComboBox<Atom> atomComboBox;
-        Button clear;
-        ObservableList<Atom> atomList = FXCollections.observableArrayList();
-        TextField atomField;
-        AutoCompletionBinding<Atom> acb;
-        String filterString;
-        MolFilter molFilter;
+    void updateWidth () {
+        double width = widthSlider.getValue();
+        widthValue.setText(String.format("%.2f", width));
 
-        public AtomSelector (String prompt, boolean includeClear) {
-            atomComboBox = new ComboBox<>();
-            atomComboBox.setPromptText(prompt);
-
-            atomComboBox.setItems(atomList);
-            atomComboBox.setEditable(false);
-
-            atomComboBox.setConverter(new StringConverter<Atom>() {
-                @Override
-                public String toString(Atom atom) {
-                    return atom.getShortName();
-                }
-
-                @Override
-                public Atom fromString(String string) {
-                    return null;
-                }
-            });
-
-            clear = new Button("Clear");
-
-            clear.setOnAction(e -> clearAction());
-
-            HBox hBox = new HBox();
-
-            hBox.getChildren().add(atomComboBox);
-
-            if (includeClear) {
-                hBox.getChildren().add(clear);
+        if (widthCheckBox.isSelected()) {
+            delta = width / 2;
+            //refresh();
+            for (PolyChart applyChart : controller.getCharts()) {
+                double shift = applyChart.getAxis(centerDim).getLowerBound()+applyChart.getAxis(centerDim).getRange()/2;
+                applyChart.getAxis(centerDim).setLowerBound(shift - delta);
+                applyChart.getAxis(centerDim).setUpperBound(shift + delta);
+                applyChart.refresh();
             }
-
-            atomField = new TextField();
-            atomField.setPromptText("Search");
-            atomField.prefWidthProperty().bind(hBox.widthProperty());
-            acb = TextFields.bindAutoCompletion(atomField, atomComboBox.getItems());
-            acb.setOnAutoCompleted(event -> {
-                Atom atom = event.getCompletion();
-                atomField.clear();
-                atomComboBox.setValue(atom);
-                selectAtom(atom);
-            });
-            acb.setVisibleRowCount(10);
-            setFilterString("*.H*");
-
-            atomField.setOnKeyPressed(keyEvent -> {
-                if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-                    Atom atom = mol.getAtom(atomField.getText());
-                    if (atom!=null) {
-                        atomComboBox.setValue(atom);
-                        selectAtom(atom);
+        } else {
+            updateAllBounds();
+            if (controller.getActiveChart()!=null) {
+                double newWidth = controller.getActiveChart().getAxis(centerDim).getRange();
+                if (width != newWidth) {
+                    if (newWidth <= widthSlider.getMax() && newWidth >= widthSlider.getMin()) {
+                        widthSlider.setValue(newWidth);
+                    } else if (newWidth > widthSlider.getMax() && widthSlider.getValue() != widthSlider.getMax()) {
+                        widthSlider.setValue(widthSlider.getMax());
+                    } else if (newWidth < widthSlider.getMin() && widthSlider.getValue() != widthSlider.getMin()) {
+                        widthSlider.setValue(widthSlider.getMin());
                     }
-                    atomField.clear();
-                } else if (keyEvent.getCode().equals(KeyCode.ESCAPE)) {
-                    atomField.clear();
-                }
-            });
-
-            atomComboBox.showingProperty().addListener((obs, wasShowing, isShowing) -> {
-                if (! isShowing) {
-                    selectAtom(atomComboBox.getValue());
-                    atomField.clear();
-                }
-            });
-
-            this.getChildren().addAll(hBox,atomField);
-        }
-
-        public abstract void selectAtom (Atom atom);
-        public abstract void clearAction();
-
-        public void setFilterString(String string) {
-            if (!string.equalsIgnoreCase(filterString)) {
-                filterString = string;
-                molFilter = new MolFilter(filterString);
-                Molecule molecule = Molecule.getActive();
-                atomList.clear();
-                if (molecule != null) {
-                    try {
-                        Molecule.selectAtomsForTable(molFilter, atomList);
-                    } catch (InvalidMoleculeException ex) {
-                    }
-                }
-                atomComboBox.setItems(atomList);
-                acb.dispose();
-                acb = TextFields.bindAutoCompletion(atomField, atomComboBox.getItems());
-                acb.setOnAutoCompleted(event -> {
-                    Atom atom = event.getCompletion();
-                    atomField.clear();
-                    atomComboBox.setValue(atom);
-                    selectAtom(atom);
-                });
-                acb.setVisibleRowCount(10);
-                if (atomList.contains(currentAtom)) {
-                    atomComboBox.setValue(currentAtom);
-                    selectAtom(currentAtom);
-                } else {
-                    currentAtom = null;
                 }
             }
         }
@@ -332,7 +387,7 @@ public class AtomBrowser implements ControllerTool {
         toolBar.getItems().add(filler);
     }
 
-    public void addDrawItems(Atom atom, Project project) {
+    public void addDrawItems(Atom atom, ProjectBase project) {
         if (atom.getResonance()!=null) {
             for (PeakDim peakDim : atom.getResonance().getPeakDims()) {
                 if (peakDim.getSpectralDimObj().getDimName().equals(xLabel)) {
@@ -358,28 +413,27 @@ public class AtomBrowser implements ControllerTool {
     }
 
     public void setAtom(Atom atom) {
-        LocateItem locateItem = new LocateItem(currentAtom);
+        LocateItem locateItem = new LocateItem(this, currentAtom);
         if (locateItems.contains(locateItem)) {
             locateItems.get(locateItems.indexOf(locateItem)).remove();
             locateItems.remove(locateItem);
         }
         drawItems.clear();
-        if (atom!=null) {
-            currentAtom = atom;
-            locateItem = new LocateItem(atom);
-            if (!locateItems.contains(locateItem)) {
-                locateItems.add(locateItem);
-                locateItem.add();
-            }
-            addDrawItems(atom, (Project) ProjectBase.getActive());
-            for (SubProject subProject : SubProject.findSubProject(ProjectBase.getActive()).subProjectList) {
-                BidiMap<Entity, Entity> map = SubProject.findSubProject(ProjectBase.getActive()).entityMap.get(subProject);
-                if (map.containsKey(atom.getEntity())) {
-                    Entity otherEntity = map.get(atom.getEntity());
-                    for (Atom otherAtom : otherEntity.getAtoms()) {
-                        if (otherAtom.getName().equals(atom.getName())) {
-                            addDrawItems(otherAtom, (Project) subProject.getProject());
-                        }
+        //atom guaranteed to be not null
+        currentAtom = atom;
+        locateItem = new LocateItem(this, atom);
+        if (!locateItems.contains(locateItem)) {
+            locateItems.add(locateItem);
+            locateItem.add();
+        }
+        addDrawItems(atom, ProjectBase.getActive());
+        for (ProjectRelations projectRelation : ProjectRelations.getProjectRelations()) {
+            BidiMap<Entity, Entity> map = projectRelation.entityMap;
+            if (map.containsKey(atom.getEntity())) {
+                Entity otherEntity = map.get(atom.getEntity());
+                for (Atom otherAtom : otherEntity.getAtoms()) {
+                    if (otherAtom.getName().equals(atom.getName())) {
+                        addDrawItems(otherAtom, projectRelation.getSubProject());
                     }
                 }
             }
@@ -418,13 +472,15 @@ public class AtomBrowser implements ControllerTool {
     }
 
     public void refresh() {
+        //can we make scrollable?
         controller.setBorderState(true);
         controller.setNCharts(0);
         int i = 1;
         Double yMin = Double.MAX_VALUE;
         Double yMax = Double.MIN_VALUE;
         //just filter on active datasets, peakLists, dims, experiment types, subProjects etc. here?
-        /*for (DrawItem item : drawItems.values()) {
+        /*
+        for (DrawItem item : drawItems.values()) {
             if (item.getOtherDims().containsKey(otherNucleus.getValue())) {
                 for (DrawItem.OtherDim otherDim : item.getOtherDims().get(otherNucleus.getValue())) {
                     if (otherDim.min < yMin) {
@@ -438,429 +494,187 @@ public class AtomBrowser implements ControllerTool {
         }
 
          */
-/*
+
         PolyChart previousChart = null;
         for (DrawItem item : drawItems) {
-            AtomicReference<Double> ppm = new AtomicReference<>(item.getShift());
-            if (ppm.get() != null) {
-                if (controller.getCharts().size() < i) {
-                    controller.addChart();
-                }
-                PolyChart chart = controller.getCharts().get(i - 1);
-                chart.setActiveChart();
-                chart.chartProps.setTopBorderSize(40);
-                chart.topBorder=40;
-                List<Dataset> datasetList = new ArrayList<>();
-                datasetList.add(item.dataset);
-                List<PeakList> peakListList = new ArrayList<>();
-                peakListList.add(item.peakList);
-                //think I added these?
-                chart.updateDatasetObjects(datasetList);
-                chart.updatePeakListObjects(peakListList);
-                for (PeakListAttributes peakListAttributes : chart.getPeakListAttributes()) {
-                    peakListAttributes.setLabelType("Label");
-                }
-                // fixme
-//                chart.getChildrenUnmodifiable().stream().filter((node) -> (node instanceof Label)).forEachOrdered((node) -> {
-//                    node.setOnMouseClicked(e -> System.out.println("Clicked node " + item.dataset.getName()));
-//                });
-                DatasetAttributes datasetAttr = chart.datasetAttributesList.get(0);
-                datasetAttr.setDim(item.centerDimNo, centerDim);
-                datasetAttr.setDim(item.rangeDimNo, rangeDim);
-
-                GraphicsContext gCC = chart.getCanvas().getGraphicsContext2D();
-                GraphicsContextInterface gC = new GraphicsContextProxy(gCC);
-                item.dataset.setTitle(item.dataset.getName());
-
-                chart.chartProps.setTitles(true);
-
-                if (item.getMinRange() < yMin) {
-                    yMin = item.getMinRange();
-                }
-                if (item.getMaxRange() > yMax) {
-                    yMax = item.getMaxRange();
-                }
-
-                chart.getAxis(centerDim).setLowerBound(ppm.get() - delta);
-                chart.getAxis(centerDim).setUpperBound(ppm.get() + delta);
-                chart.getAxis(rangeDim).setLowerBound(yMin - delta);
-                chart.getAxis(rangeDim).setUpperBound(yMax + delta);
-                chart.getAxis(rangeDim).lowerBoundProperty().addListener(e -> {
-                    if (!scheduled) {
-                        service.schedule(() -> {
-                            Platform.runLater(() -> {
-                                updateAllBounds();
-                                scheduled = false;
-                            });
-                        }, 1, TimeUnit.MILLISECONDS);
-
-                        scheduled = true;
+            if (item.isAllowed(filterList)) {
+                AtomicReference<Double> ppm = new AtomicReference<>(item.getShift());
+                if (ppm.get() != null) {
+                    if (controller.getCharts().size() < i) {
+                        controller.addChart();
                     }
-                });
-                chart.getAxis(rangeDim).upperBoundProperty().addListener(e -> {
-                    if (!scheduled) {
-                        service.schedule(() -> {
-                            Platform.runLater(() -> {
-                                updateAllBounds();
-                                scheduled = false;
-                            });
-                        }, 1, TimeUnit.MILLISECONDS);
+                    PolyChart chart = controller.getCharts().get(i - 1);
+                    chart.setActiveChart();
+                    chart.chartProps.setTopBorderSize(40);
 
-                        scheduled = true;
+                    chart.setDataset(item.dataset);
+                    chart.getPeakListAttributes().clear();
+                    chart.setupPeakListAttributes(item.peakList);
+                    for (PeakListAttributes peakListAttributes : chart.getPeakListAttributes()) {
+                        peakListAttributes.setLabelType("Label");
                     }
-                });
 
+                    DatasetAttributes datasetAttr = chart.getActiveDatasetAttributes().get(0);
+                    datasetAttr.setDim(item.centerDimNo, centerDim);
+                    datasetAttr.setDim(item.rangeDimNo, rangeDim);
 
-                for (int n = 2; n < item.dataset.getNDim(); n++) {
-                    int dataDim = datasetAttr.getDim(n);
-                    chart.getAxis(n).setLowerBound(item.getMinShift(dataDim));
-                    chart.getAxis(n).setUpperBound(item.getMaxShift(dataDim));
-                    int finalN = n;
-                    chart.getAxis(n).lowerBoundProperty().addListener(e -> {
-                        for (PeakDim peakDim : item.dims.get(dataDim)) {
-                            if (!peakDim.isFrozen()) {
-                                peakDim.setChemShift((float) chart.getAxis(finalN).getLowerBound());
-                            }
-                        }
+                    GraphicsContext gCC = chart.getCanvas().getGraphicsContext2D();
+                    GraphicsContextInterface gC = new GraphicsContextProxy(gCC);
+                    item.dataset.setTitle(item.dataset.getName());
+
+                    chart.chartProps.setTitles(true);
+
+                    if (item.getMinRange() < yMin) {
+                        yMin = item.getMinRange();
+                    }
+                    if (item.getMaxRange() > yMax) {
+                        yMax = item.getMaxRange();
+                    }
+
+                    chart.getAxis(centerDim).setLowerBound(ppm.get() - delta);
+                    chart.getAxis(centerDim).setUpperBound(ppm.get() + delta);
+                    chart.getAxis(rangeDim).setLowerBound(yMin);
+                    chart.getAxis(rangeDim).setUpperBound(yMax);
+                    chart.getAxis(rangeDim).lowerBoundProperty().addListener(e -> {
                         if (!scheduled) {
-                            service.schedule(() -> {
-                                Platform.runLater(() -> {
-                                    updateAllBounds();
-                                    scheduled = false;
-                                });
-                            }, 1, TimeUnit.MILLISECONDS);
+                            service.schedule(() -> Platform.runLater(() -> {
+                                updateAllBounds();
+                                scheduled = false;
+                            }), 1, TimeUnit.MILLISECONDS);
 
                             scheduled = true;
                         }
                     });
-                    chart.getAxis(n).upperBoundProperty().addListener(e -> {
-                        for (PeakDim peakDim : item.dims.get(dataDim)) {
-                            if (!peakDim.isFrozen()) {
-                                peakDim.setChemShift((float) chart.getAxis(finalN).getUpperBound());
-                            }
-                        }
+                    chart.getAxis(rangeDim).upperBoundProperty().addListener(e -> {
                         if (!scheduled) {
-                            service.schedule(() -> {
-                                Platform.runLater(() -> {
-                                    updateAllBounds();
-                                    scheduled = false;
-                                });
-                            }, 1, TimeUnit.MILLISECONDS);
+                            service.schedule(() -> Platform.runLater(() -> {
+                                updateAllBounds();
+                                scheduled = false;
+                            }), 1, TimeUnit.MILLISECONDS);
 
                             scheduled = true;
                         }
                     });
 
-                }
-
-                if (previousChart != null) {
-                    chart.getAxis(rangeDim).lowerBoundProperty().bindBidirectional(previousChart.getAxis(rangeDim).lowerBoundProperty());
-                    chart.getAxis(rangeDim).upperBoundProperty().bindBidirectional(previousChart.getAxis(rangeDim).upperBoundProperty());
-                }
-
-                item.peakList.registerListener(e -> {
-                    boolean dirty=false;
-                    Double newPpm = item.getShift();
-                    if (newPpm != null && newPpm != ppm.get()) {
-                        double currentDelta=chart.getAxis(centerDim).getRange()/2;
-                        chart.getAxis(centerDim).setLowerBound(newPpm - currentDelta);
-                        chart.getAxis(centerDim).setUpperBound(newPpm + currentDelta);
-                        ppm.set(newPpm);
-                        dirty = true;
-                    }
 
                     for (int n = 2; n < item.dataset.getNDim(); n++) {
                         int dataDim = datasetAttr.getDim(n);
-                        Double newMin = item.getMinShift(dataDim);
-                        Double newMax = item.getMaxShift(dataDim);
-                        if (chart.getAxis(n).getLowerBound()!=newMin) {
-                            chart.getAxis(n).setLowerBound(item.getMinShift(dataDim));
-                            dirty=true;
-                        }
-                        if (chart.getAxis(n).getUpperBound()!=newMax) {
-                            chart.getAxis(n).setUpperBound(item.getMaxShift(dataDim));
-                            dirty=true;
-                        }
+                        chart.getAxis(n).setLowerBound(item.getMinShift(dataDim));
+                        chart.getAxis(n).setUpperBound(item.getMaxShift(dataDim));
+                        int finalN = n;
+                        chart.getAxis(n).lowerBoundProperty().addListener(e -> {
+                            for (PeakDim peakDim : item.dims.get(dataDim)) {
+                                if (!peakDim.isFrozen()) {
+                                    peakDim.setChemShift((float) chart.getAxis(finalN).getLowerBound());
+                                }
+                            }
+                            if (!scheduled) {
+                                service.schedule(() -> Platform.runLater(() -> {
+                                    updateAllBounds();
+                                    scheduled = false;
+                                }), 1, TimeUnit.MILLISECONDS);
+
+                                scheduled = true;
+                            }
+                        });
+                        chart.getAxis(n).upperBoundProperty().addListener(e -> {
+                            for (PeakDim peakDim : item.dims.get(dataDim)) {
+                                if (!peakDim.isFrozen()) {
+                                    peakDim.setChemShift((float) chart.getAxis(finalN).getUpperBound());
+                                }
+                            }
+                            if (!scheduled) {
+                                service.schedule(() -> Platform.runLater(() -> {
+                                    updateAllBounds();
+                                    scheduled = false;
+                                }), 1, TimeUnit.MILLISECONDS);
+
+                                scheduled = true;
+                            }
+                        });
+
                     }
 
-                    if (dirty && !scheduled) {
-                        service.schedule(() -> {
-                            Platform.runLater(() -> {
+                    if (previousChart != null) {
+                        chart.getAxis(rangeDim).lowerBoundProperty().bindBidirectional(previousChart.getAxis(rangeDim).lowerBoundProperty());
+                        chart.getAxis(rangeDim).upperBoundProperty().bindBidirectional(previousChart.getAxis(rangeDim).upperBoundProperty());
+                    }
+
+                    item.peakList.registerPeakChangeListener(e -> {
+                        boolean dirty = false;
+                        Double newPpm = item.getShift();
+                        if (newPpm != null && !newPpm.equals(ppm.get())) {
+                            double currentDelta = chart.getAxis(centerDim).getRange() / 2;
+                            chart.getAxis(centerDim).setLowerBound(newPpm - currentDelta);
+                            chart.getAxis(centerDim).setUpperBound(newPpm + currentDelta);
+                            ppm.set(newPpm);
+                            dirty = true;
+                        }
+
+                        for (int n = 2; n < item.dataset.getNDim(); n++) {
+                            int dataDim = datasetAttr.getDim(n);
+                            Double newMin = item.getMinShift(dataDim);
+                            Double newMax = item.getMaxShift(dataDim);
+                            if (chart.getAxis(n).getLowerBound() != newMin) {
+                                chart.getAxis(n).setLowerBound(item.getMinShift(dataDim));
+                                dirty = true;
+                            }
+                            if (chart.getAxis(n).getUpperBound() != newMax) {
+                                chart.getAxis(n).setUpperBound(item.getMaxShift(dataDim));
+                                dirty = true;
+                            }
+                        }
+
+                        if (dirty && !scheduled) {
+                            service.schedule(() -> Platform.runLater(() -> {
                                 //updateChartBounds(chart);
                                 updateAllBounds();
                                 drawLocateItems();
                                 scheduled = false;
-                            });
-                        }, 1, TimeUnit.MILLISECONDS);
-                        scheduled = true;
-                    }
-                });
-                //chart.getAxis(rangeDim).lowerBoundProperty().addListener(e->updateBounds());
-                //chart.getAxis(rangeDim).upperBoundProperty().addListener(e->updateBounds());
+                            }), 1, TimeUnit.MILLISECONDS);
+                            scheduled = true;
+                        }
+                    });
+                    chart.getAxis(rangeDim).lowerBoundProperty().addListener(e->updateBounds());
+                    chart.getAxis(rangeDim).upperBoundProperty().addListener(e->updateBounds());
 
-                previousChart = chart;
-                chart.refresh();
-                i++;
+                    previousChart = chart;
+                    chart.autoScale();
+                    for (DatasetAttributes datasetAt : chart.getActiveDatasetAttributes()) {
+                        datasetAttr.setLvl(getLevelForDataset(datasetAt));
+                    }
+                    chart.refresh();
+                    i++;
+                }
             }
         }
-        controller.arrange(FractionCanvas.ORIENTATION.HORIZONTAL);
-        controller.showPeakSlider(false);
+        controller.arrange(orientation);
+        //controller.showPeakSlider(false);
         drawLocateItems();
+        updateWidth();
         updateAspectRatio();
     }
 
-    public class FilterItem {
+    private void updateBounds() {
+        //called whenever upper of lower bound of rangeDim is changed
+        //used to synchronise all strips
+    }
 
-        Object object;
-        public BooleanProperty allow = new SimpleBooleanProperty();
+    private double getLevelForDataset(DatasetAttributes datasetAt) {
+        savedLevels.computeIfAbsent(datasetAt.getDataset(),k -> datasetAt.getLvl());
+        return savedLevels.get(datasetAt.getDataset());
+    }
 
-        public StringProperty name = new SimpleStringProperty();
-        public StringProperty type = new SimpleStringProperty();
+    public Atom getCurrentAtom() {
+        return currentAtom;
+    }
 
-        FilterItem(Object object, boolean allow) {
-            this.object=object;
-            setAllow(allow);
-            setName(getObjectName());
-            setType(getObjectClassName());
-        }
-
-        public String getName() {
-            return name.get();
-        }
-
-        public boolean isAllow() {
-            return allow.get();
-        }
-
-        public BooleanProperty allowProperty() {
-            return allow;
-        }
-
-        public void setAllow(boolean allow) {
-            this.allow.set(allow);
-        }
-
-        public StringProperty nameProperty() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name.set(name);
-        }
-
-        public String getType() {
-            return type.get();
-        }
-
-        public StringProperty typeProperty() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type.set(type);
-        }
-
-        public String getObjectName () {
-            return object.toString();
-        }
-
-        public Object getObject() {
-            return object;
-        }
-
-        public void setObject(Object object) {
-            this.object = object;
-        }
-
-        public String getObjectClassName () {
-            return object.getClass().getSimpleName();
-        }
-
-        public Class getObjectClass() {
-            return object.getClass();
-        }
-
-        public void remove (AtomBrowser browser) {
-            browser.filterList.remove(this);
-        }
-
-        public boolean matches (DrawItem drawItem) {
-            if (object instanceof Dataset) {
-                if (drawItem.dataset==getObject()) {
-                        return true;
-                }
-            } else if (object instanceof PeakList) {
-                if (drawItem.peakList==getObject()) {
-                    return true;
-                }
-            }  else if (object instanceof Project) {
-                if (drawItem.project==getObject()) {
-                    return true;
-                }
-            } else if (object instanceof Acquisition) {
-                if (((ManagedList) drawItem.peakList).getAcquisition() == object) {
-                    return true;
-                }
-            } else if (object instanceof Experiment) {
-                if (((ManagedList) drawItem.peakList).getAcquisition().getExperiment() == object) {
-                    return true;
-                }
-            } else if (object instanceof Sample) {
-                if (((ManagedList) drawItem.peakList).getAcquisition().getSample() == object) {
-                    return true;
-                }
-            } else if (object instanceof Condition) {
-                if (((ManagedList) drawItem.peakList).getAcquisition().getCondition() == object) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
+    public void setCurrentAtom(Atom atom) {
+        currentAtom = atom;
     }
 
     public void addFilterItem (Object object, boolean allow) {
         filterList.add(new FilterItem(object,allow));
-    }
-
-    public class LocateItem {
-        Atom atom;
-        HashMap<PolyChart,List<AnnoLine>> annotations;
-
-        LocateItem(Atom atom) {
-            this.atom=atom;
-            annotations = new HashMap<>();
-        }
-        @Override
-        public boolean equals (Object o) {
-            if (this.atom == ((LocateItem) o).atom) {
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return 0;
-        }
-
-        public void remove () {
-            annotations.forEach((chart,annoList) -> {
-                for (AnnoLine anno : annoList) {
-                    chart.removeAnnotation(anno);
-                    GraphicsContextProxy gcPeaks = new GraphicsContextProxy(chart.peakCanvas.getGraphicsContext2D());
-                    chart.drawPeakLists(true, gcPeaks);
-                    chart.drawAnnotations(gcPeaks);
-                }
-            });
-            annotations.clear();
-        }
-
-        public void update () {
-            remove();
-            add();
-        }
-
-        public void add () {
-            for (int i = 0; i < controller.getCharts().size(); i++) {
-                PolyChart chart = controller.getCharts().get(i);
-                add(chart);
-            }
-        }
-
-        public void add (PolyChart chart) {
-            if (atom.getResonance() != null) {
-                for (PeakDim peakDim : atom.getResonance().getPeakDims()) {
-                    for (PeakListAttributes peakAttr : chart.peakListAttributesList) {
-                        PeakList peakList = peakAttr.getPeakList();
-                        if (peakDim.getPeakList() == peakList) {
-                            AnnoLineWithText annoLine;
-                            if (peakDim.getSpectralDim() == centerDim) {
-                                annoLine = new AnnoLineWithText(atom.getShortName(), peakDim.getChemShiftValue(), 0.99 , peakDim.getChemShiftValue(), 0, peakDim.getChemShiftValue(), 1, CanvasAnnotation.POSTYPE.WORLD, CanvasAnnotation.POSTYPE.FRACTION);
-                            } else if (peakDim.getSpectralDim() == rangeDim) {
-                                annoLine = new AnnoLineWithText(atom.getShortName(), 0.01, peakDim.getChemShiftValue() ,0, peakDim.getChemShiftValue(), 1, peakDim.getChemShiftValue(), CanvasAnnotation.POSTYPE.FRACTION, CanvasAnnotation.POSTYPE.WORLD);
-                            } else {
-                                continue;
-                            }
-                            if (peakDim.isFrozen()) {
-                                annoLine.setStroke(Color.RED);
-                            } else {
-                                annoLine.setStroke(Color.GRAY);
-                            }
-                            annotations.putIfAbsent(chart, new ArrayList<>());
-                            if (!annotations.get(chart).contains(annoLine)) {
-                                annotations.get(chart).add(annoLine);
-                                chart.addAnnotation(annoLine);
-                                GraphicsContextProxy gcPeaks = new GraphicsContextProxy(chart.peakCanvas.getGraphicsContext2D());
-                                chart.drawPeakLists(true, gcPeaks);
-                                chart.drawAnnotations(gcPeaks);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public class RangeItem {
-
-        StringProperty name = new SimpleStringProperty();
-        DoubleProperty min = new SimpleDoubleProperty();
-        DoubleProperty max = new SimpleDoubleProperty();
-        //double min;
-        //double max;
-        //String name;
-
-        RangeItem(String name, double min, double max) {
-            setName(name);
-            setMin(min);
-            setMax(max);
-        }
-
-        public void remove (AtomBrowser browser) {
-            browser.rangeItems.remove(this);
-        }
-
-        @Override
-        public String toString() {
-            return getName();
-        }
-
-        public String getName() {
-            return name.get();
-        }
-
-        public StringProperty nameProperty() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name.set(name);
-        }
-
-        public double getMin() {
-            return min.get();
-        }
-
-        public DoubleProperty minProperty() {
-            return min;
-        }
-
-        public void setMin(double min) {
-            this.min.set(min);
-        }
-
-        public double getMax() {
-            return max.get();
-        }
-
-        public DoubleProperty maxProperty() {
-            return max;
-        }
-
-        public void setMax(double max) {
-            this.max.set(max);
-        }
     }
 
     public RangeItem addRangeControl(String name, double min, double max) {
@@ -874,12 +688,21 @@ public class AtomBrowser implements ControllerTool {
     }
 
     public void updateChartBounds(PolyChart chart) {
+        /*if (aspectCheckBox.isSelected()) {
+            //change delta rather than layout width
+            double layoutRatio = chart.getAxis(centerDim).getWidth()/chart.getAxis(rangeDim).getWidth();
+            double centerRange = chart.getAxis(centerDim).getRange();
+            double centerShift = chart.getAxis(centerDim).getLowerBound()+centerRange/2;
+            double rangeRange = chart.getAxis(rangeDim).getRange();
+            delta = 0.5*rangeRange*aspectSlider.getValue()*layoutRatio;
+            chart.getAxis(centerDim).setLowerBound(centerShift - delta);
+            chart.getAxis(centerDim).setUpperBound(centerShift + delta);
+        }
+         */
         chart.refresh();
     }
     public void updateAllBounds() {
-        controller.getCharts().stream().forEach(chart -> {
-                updateChartBounds(chart);
-        });
+        controller.getCharts().forEach(this::updateChartBounds);
     }
 
     public void updateRange() {
@@ -888,121 +711,15 @@ public class AtomBrowser implements ControllerTool {
             double min = rangeItem.getMin();
             double max = rangeItem.getMax();
 
-            controller.getCharts().stream().forEach(chart -> {
+            controller.getCharts().forEach(chart -> {
                 try {
                     chart.getAxis(rangeDim).setLowerBound(min);
                     chart.getAxis(rangeDim).setUpperBound(max);
-                } catch (NumberFormatException nfE) {
+                } catch (NumberFormatException ignored) {
 
                 }
             });
         }
     }
-
-    public class DrawItem implements Comparator<DrawItem> {
-        final SpectralDim centerSpectralDim;
-        final SpectralDim rangeSpectralDim;
-        final Nuclei centerNucleus;
-        final Nuclei rangeNucleus;
-        final Dataset dataset;
-        final PeakList peakList;
-        final int centerDimNo;
-        final int rangeDimNo;
-        HashMap<Integer,List<PeakDim>> dims = new HashMap<>();
-        List<Peak> peaks=new ArrayList<>();
-        Project project;
-
-        DrawItem(PeakDim centerDim,PeakDim rangeDim,Project project) {
-            this.project=project;
-            Peak peak = centerDim.getPeak();
-            peakList = peak.getPeakList();
-            dataset = (Dataset) project.getDataset(peakList.getDatasetName());
-            centerDimNo=centerDim.getSpectralDimObj().getDataDim();
-            rangeDimNo=rangeDim.getSpectralDimObj().getDataDim();
-            centerSpectralDim =peakList.getSpectralDim(centerDimNo);
-            rangeSpectralDim=peakList.getSpectralDim(rangeDimNo);
-            centerNucleus=Nuclei.findNuclei(centerSpectralDim.getNucleus());
-            rangeNucleus=Nuclei.findNuclei(peakList.getSpectralDim(rangeDimNo).getNucleus());
-            this.add(peak);
-        }
-
-        public void add(Peak peak) {
-            this.peaks.add(peak);
-            for (PeakDim peakDim : peak.getPeakDims()) {
-                dims.putIfAbsent(peakDim.getSpectralDimObj().getDataDim(),new ArrayList<>());
-                List<PeakDim> list=dims.get(peakDim.getSpectralDimObj().getDataDim());
-                if (!list.contains(peakDim)) {
-                    list.add(peakDim);
-                }
-            }
-        }
-
-        public boolean addIfMatch(PeakDim centerDim, PeakDim rangeDim) {
-            if (centerDim.getSpectralDimObj()!=centerSpectralDim || rangeDim.getSpectralDimObj()!=rangeSpectralDim) {
-                return false;
-            }
-            Peak peak=centerDim.getPeak();
-            for (PeakDim peakDim : peak.getPeakDims()) {
-                int dim=peakDim.getSpectralDimObj().getDataDim();
-                if (dim==centerDimNo || dim==rangeDimNo) {
-                    continue;
-                }
-                if (peakDim.getResonance()!=dims.get(dim).get(0).getResonance()) {
-                    return false;
-                }
-            }
-            add(peak);
-            return true;
-        }
-
-        @Override
-        public int compare(DrawItem o1, DrawItem o2) {
-            return o1.getShift().compareTo(o2.getShift());
-        }
-
-        Double getMinShift(List<PeakDim> peakDims) {
-            return peakDims.stream().mapToDouble(val -> Double.parseDouble(val.getChemShift().toString())).min().orElse(Double.MIN_VALUE);
-        }
-        Double getMaxShift(List<PeakDim> peakDims) {
-            return peakDims.stream().mapToDouble(val -> Double.parseDouble(val.getChemShift().toString())).max().orElse(Double.MAX_VALUE);
-        }
-        Double getShift() {
-            return getAverageShift(centerDimNo);
-        }
-        Double getMinRange() {
-            return getMinRange(dims.get(rangeDimNo));
-        }
-        Double getMinRange(List<PeakDim> peakDims) {
-            return peakDims.stream().mapToDouble(val -> Double.parseDouble(((Float) (val.getChemShift()-val.getLineWidth()/2)).toString())).min().orElse(Double.MIN_VALUE);
-        }
-
-        Double getMaxRange(List<PeakDim> peakDims) {
-            return peakDims.stream().mapToDouble(val -> Double.parseDouble(((Float) (val.getChemShift()+val.getLineWidth()/2)).toString())).max().orElse(Double.MAX_VALUE);
-        }
-
-        Double getMaxRange() {
-            return getMaxRange(dims.get(rangeDimNo));
-        }
-        Double getAverageShift(int n) {
-            return dims.get(n).stream().mapToDouble(val -> Double.parseDouble(val.getChemShift().toString())).average().orElse(0.0);
-        }
-        Double getMinShift(int n) {
-            return getMinShift(dims.get(n));
-        }
-        Double getMaxShift(int n) {
-            return getMaxShift(dims.get(n));
-        }
-        List<Double> getShifts (List<PeakDim> peakDims) {
-            List<Double> shifts = new ArrayList<>();
-            for (PeakDim peakDim :peakDims) {
-                if (!shifts.contains(Double.parseDouble(peakDim.getChemShift().toString()))) {
-                    shifts.add(Double.parseDouble(peakDim.getChemShift().toString()));
-                }
-            }
-            return shifts;
-        }
-
-    }
-*/
 }
 

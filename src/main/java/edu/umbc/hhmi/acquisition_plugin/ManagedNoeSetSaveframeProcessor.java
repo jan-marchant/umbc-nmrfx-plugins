@@ -20,9 +20,9 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
     private static final Logger log = LoggerFactory.getLogger(ManagedNoeSetSaveframeProcessor.class);
 
     @Override
-    public void process(Saveframe saveframe) throws ParseException, IOException {
+    public void process(Saveframe saveframe) throws ParseException {
         // At the moment this process both "general_distance_constraints2" and "peak_constraint_links"
-        System.out.println(String.format("process %s",saveframe.getCategoryName()));
+        System.out.printf("process %s%n",saveframe.getCategoryName());
         if (saveframe.getCategoryName().equals("general_distance_constraints2")) {
             processGenDistConstraints2(saveframe);
         } else if (saveframe.getCategoryName().equals("peak_constraint_links")) {
@@ -65,7 +65,7 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
         PeakList peakList = null;
         String lastPeakListIDStr = "";
 
-        ManagedNoeSet noeSet = ManagedNoeSetup.addSet(saveframe.getName().substring(5));
+        ManagedNoeSet noeSet = ManagedNoeSet.addSet(saveframe.getName().substring(5));
 
         for (int i = 0; i < entityAssemblyIDColumns[0].size(); i++) {
             for (int iAtom = 0; iAtom < 2; iAtom++) {
@@ -154,8 +154,9 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
                 //NB: Resonances should be set correctly during construction
                 ManagedNoe noe = new ManagedNoe(peak, spSets[0], spSets[1], weight);
                 //Maybe only do this if peak is null?
-                noe.setResonance1(spSets[0].getAnAtom().getResonance());
-                noe.setResonance2(spSets[1].getAnAtom().getResonance());
+                noe.setResonance1(spSets[0] != null ? spSets[0].getAnAtom().getResonance() : null);
+                noe.setResonance2(spSets[1] != null ? spSets[1].getAnAtom().getResonance() : null);
+
                 double upper = 1000000.0;
                 if (upperValue.equals(".")) {
                     log.warn("Upper value is a \".\" at line {}", i);
@@ -188,11 +189,11 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
         }
         String noeSetName = saveframe.getValue("_Peak_constraint_link_list", "Name");
 
-        ManagedNoeSet noeSet = ManagedNoeSetup.getNoeSet(noeSetName);
-        List<String> constraintIDColumn = new ArrayList<>();
+        ManagedNoeSet noeSet = ManagedNoeSet.getManagedNoeSet(noeSetName);
+        List<String> constraintIDColumn;
         List<String> constraintListIDColumn = new ArrayList<>();
-        List<String> peakListIDColumn = new ArrayList<>();
-        List<String> peakIDColumn = new ArrayList<>();
+        List<String> peakListIDColumn;
+        List<String> peakIDColumn;
         List<String> peakListNameColumn = new ArrayList<>();
 
         constraintIDColumn = loop.getColumnAsList("Constraint_ID");

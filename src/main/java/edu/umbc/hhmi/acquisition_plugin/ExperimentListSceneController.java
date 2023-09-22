@@ -6,7 +6,6 @@
 package edu.umbc.hhmi.acquisition_plugin;
 
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -15,7 +14,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -87,29 +85,19 @@ public class ExperimentListSceneController implements Initializable {
         tableView.getColumns().setAll(nameCol,dimCol,descCol);
         //tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-        tableView.setOnKeyPressed( new EventHandler<KeyEvent>()
-        {
-            @Override
-            public void handle( final KeyEvent keyEvent )
-            {
-                final Experiment selectedItem = tableView.getSelectionModel().getSelectedItem();
+        tableView.setOnKeyPressed(keyEvent -> {
+            final Experiment selectedItem = tableView.getSelectionModel().getSelectedItem();
 
-                if ( selectedItem != null )
+            if ( selectedItem != null )
+            {
+                if ( keyEvent.getCode().equals( KeyCode.DELETE ) | keyEvent.getCode().equals( KeyCode.BACK_SPACE ))
                 {
-                    if ( keyEvent.getCode().equals( KeyCode.DELETE ) | keyEvent.getCode().equals( KeyCode.BACK_SPACE ))
-                    {
-                        selectedItem.remove(true);
-                    }
+                    selectedItem.remove(true);
                 }
             }
-        } );
-
-        addButton.setOnAction(new EventHandler<javafx.event.ActionEvent>() {
-            @Override
-            public void handle(javafx.event.ActionEvent event) {
-                Experiment.addNew();
-            }
         });
+
+        addButton.setOnAction(event -> Experiment.addNew());
 
     }
 
