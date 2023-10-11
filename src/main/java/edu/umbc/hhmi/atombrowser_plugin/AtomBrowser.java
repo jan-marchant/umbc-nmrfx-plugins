@@ -25,6 +25,7 @@ import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.Entity;
 import org.nmrfx.datasets.DatasetBase;
 import org.nmrfx.datasets.Nuclei;
+import org.nmrfx.fxutil.Fx;
 import org.nmrfx.graphicsio.GraphicsContextInterface;
 import org.nmrfx.graphicsio.GraphicsContextProxy;
 import org.nmrfx.peaks.*;
@@ -255,7 +256,7 @@ public class AtomBrowser implements ControllerTool {
         widthSlider = new Slider();
         widthValue= new Label(String.valueOf(initialWidth));
         widthCheckBox.selectedProperty().addListener(e -> updateWidth());
-        widthSlider.setMin(0.1);
+        widthSlider.setMin(0.05);
         widthSlider.setMax(3.0);
         widthSlider.setValue(initialWidth);
         widthSlider.setBlockIncrement(0.05);
@@ -301,7 +302,7 @@ public class AtomBrowser implements ControllerTool {
         addFiller(browserToolBar);
         browserToolBar.getItems().add(orientationComboBox);
 
-        addRangeControl("Aro", 6.5, 8.2);
+        addRangeControl("Aro", 6.5, 8.6);
         rangeSelector.setValue(addRangeControl("H1'", 5.1, 6.2));
         addRangeControl("H2'", 3.8, 5.1);
         updateRange();
@@ -414,10 +415,16 @@ public class AtomBrowser implements ControllerTool {
     }
 
     public void setAtom(Atom atom) {
+        if (atom == null) {
+            return;
+        }
         LocateItem locateItem = new LocateItem(this, currentAtom);
         if (locateItems.contains(locateItem)) {
             locateItems.get(locateItems.indexOf(locateItem)).remove();
             locateItems.remove(locateItem);
+        }
+        for (DrawItem item : drawItems) {
+            item.remove();
         }
         drawItems.clear();
         //atom guaranteed to be not null
@@ -602,7 +609,7 @@ public class AtomBrowser implements ControllerTool {
                         chart.getAxes().get(rangeDim).upperBoundProperty().bindBidirectional(previousChart.getAxes().get(rangeDim).upperBoundProperty());
                     }
 
-                    item.peakList.registerPeakChangeListener(e -> {
+                    item.addPeakChangeListener(e -> {
                         boolean dirty = false;
                         Double newPpm = item.getShift();
                         if (newPpm != null && !newPpm.equals(ppm.get())) {
@@ -629,6 +636,7 @@ public class AtomBrowser implements ControllerTool {
 
                         if (dirty && !scheduled) {
                             service.schedule(() -> Platform.runLater(() -> {
+                            //Fx.runOnFxThread(() -> {
                                 //updateChartBounds(chart);
                                 updateAllBounds();
                                 drawLocateItems();
@@ -690,17 +698,6 @@ public class AtomBrowser implements ControllerTool {
     }
 
     public void updateChartBounds(PolyChart chart) {
-        /*if (aspectCheckBox.isSelected()) {
-            //change delta rather than layout width
-            double layoutRatio = chart.getAxis(centerDim).getWidth()/chart.getAxis(rangeDim).getWidth();
-            double centerRange = chart.getAxis(centerDim).getRange();
-            double centerShift = chart.getAxis(centerDim).getLowerBound()+centerRange/2;
-            double rangeRange = chart.getAxis(rangeDim).getRange();
-            delta = 0.5*rangeRange*aspectSlider.getValue()*layoutRatio;
-            chart.getAxis(centerDim).setLowerBound(centerShift - delta);
-            chart.getAxis(centerDim).setUpperBound(centerShift + delta);
-        }
-         */
         chart.refresh();
     }
     public void updateAllBounds() {

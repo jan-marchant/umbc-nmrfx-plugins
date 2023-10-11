@@ -31,9 +31,24 @@ public class ManagedPeak extends Peak {
         this.noes=noes;
 
         float scale=1f;
+
+        for (int i = 0; i < nDim; i++) {
+            AtomResonance resonance=getAtomResonance(atoms.get(i));
+
+            if (resonance.getPeakDims().size()>0 && resonance.getPeakDims().get(0).isFrozen()) {
+                this.getPeakDim(i).setFrozen(true);
+            }
+
+            resonance.add(this.getPeakDim(i));
+            this.getPeakDim(i).setLabel(atoms.get(i).getShortName());
+            //atoms.get(i).setResonance(resonance);
+
+            setShiftFromAtom(atoms.get(i),getPeakDim(i));
+        }
+
         for (ManagedNoe noe : noes) {
             if (noe.getPeak()==null || !PeakList.peakLists().contains(noe.getPeak().peakList)) {
-                initializeNoe(nDim, noe, atoms);
+                noe.setPeak(this);
             }
         }
 
@@ -122,23 +137,6 @@ public class ManagedPeak extends Peak {
         }
     }
 
-    private void initializeNoe(int nDim, ManagedNoe noe, HashMap<Integer, Atom> atoms) {
-        for (int i = 0; i < nDim; i++) {
-            AtomResonance resonance=getAtomResonance(atoms.get(i));
-
-            if (resonance.getPeakDims().size()>0 && resonance.getPeakDims().get(0).isFrozen()) {
-                this.getPeakDim(i).setFrozen(true);
-            }
-
-            resonance.add(this.getPeakDim(i));
-            this.getPeakDim(i).setLabel(atoms.get(i).getShortName());
-            atoms.get(i).setResonance(resonance);
-
-            setShiftFromAtom(atoms.get(i),getPeakDim(i));
-        }
-        noe.setPeak(this);
-    }
-
     private void setShiftFromAtom(Atom atom,PeakDim peakDim) {
         PPMv ppm;
         ppm = atom.getPPM(((ManagedList) getPeakList()).getPpmSet());
@@ -174,6 +172,8 @@ public class ManagedPeak extends Peak {
         }
         if (resonance==null) {
             resonance = (AtomResonance) SubProject.resFactory().build();
+            resonance.setAtom(atom);
+            atom.setResonance(resonance);
         }
         return resonance;
     }
@@ -253,8 +253,16 @@ public class ManagedPeak extends Peak {
     public void setResonanceAtoms() {
         for (PeakDim peakDim : getPeakDims()) {
             AtomResonance res = (AtomResonance) peakDim.getResonance();
-            if (res.getAtom() == null) {
-                res.setAtom(res.getPossibleAtom());
+            Atom atom = res.getAtom();
+            if (atom == null) {
+                atom = res.getPossibleAtom();
+            }
+            if (atom!=null) {
+                if (atom.getResonance() == null) {
+                    atom.setResonance(res);
+                } else {
+                    getAtomResonance(atom).add(peakDim);
+                }
             }
         }
     }

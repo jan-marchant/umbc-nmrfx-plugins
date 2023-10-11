@@ -90,7 +90,7 @@ public class RNALabelsSceneController implements Initializable {
     String[][] baseAtoms = {
             {"H2", "C2", "H8", "C8", "N1", "N3", "N7", "N9"}, // Adenine
             {"H61", "H62", "N6"},
-            {"H8", "C8", "N7", "N8"},// Guanine
+            {"H8", "C8", "N7", "N9"},// Guanine
             {"H21", "H22", "N2"},
             {"H5", "C5", "H6", "C6"},// Uridine
             {"H3", "N3"},

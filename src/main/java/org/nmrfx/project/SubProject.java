@@ -39,14 +39,15 @@ public class SubProject extends GUIProject {
         if (!(ProjectBase.getActive() instanceof SubProject)) {
             return PeakList.resFactory();
         }
-        ResonanceFactory resFactory = resFactoryMap.get(ProjectBase.getActive());
+        /*ResonanceFactory resFactory = resFactoryMap.get(ProjectBase.getActive());
         if (resFactory == null) {
             resFactory = new ResonanceFactory();
             resFactoryMap.put(ProjectBase.getActive(),resFactory);
         }
-        return resFactory;
+         */
+        return resFactoryMap.computeIfAbsent(ProjectBase.getActive(),k -> new ResonanceFactory());
+        //return resFactory;
     }
-
 
     //All this just to avoid opening windows...
     //Will we have issues using a single ResonanceFactory for all projects

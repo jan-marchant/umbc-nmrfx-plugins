@@ -43,6 +43,7 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
         List<String>[] compIdxIDColumns = new ArrayList[2];
         List<String>[] atomColumns = new ArrayList[2];
         List<String>[] resonanceColumns = new ArrayList[2];
+        List<String> iDColumn = loop.getColumnAsList("ID");
         entityAssemblyIDColumns[0] = loop.getColumnAsList("Entity_assembly_ID_1");
         entityIDColumns[0] = loop.getColumnAsList("Entity_ID_1");
         compIdxIDColumns[0] = loop.getColumnAsList("Comp_index_ID_1");
@@ -173,6 +174,9 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
                 noe.setIntensity(Math.pow(upper, -6.0) * 10000.0);
                 noe.setVolume(Math.pow(upper, -6.0) * 10000.0);
                 noeSet.add(noe);
+                try {
+                    noe.setID(Integer.parseInt(iDColumn.get(i)));
+                } catch (Exception ignored) {}
             }
         }
         //  noeSet.updateNPossible(null);
@@ -209,20 +213,23 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
             String peakListIDStr = peakListIDColumn.get(i);
             String peakID = peakIDColumn.get(i);
             String constraintID = constraintIDColumn.get(i);
-            //NOE idNums start at 1. todo: implement getConstraintById?
-            noe = noeSet.get(Integer.parseInt(constraintID)-1);
+            try {
+                noe = noeSet.getConstraintByID(Integer.parseInt(constraintID));
+            } catch (Exception ex) {
+                noe = null;
+            }
 
             int peakListID = Integer.parseInt(peakListIDStr);
             Optional<PeakList> peakListOpt = PeakList.get(peakListID);
             if (peakListOpt.isPresent()) {
                 peakList = (ManagedList) peakListOpt.get();
-                int idNum = Integer.parseInt(peakID);
-                peak = (ManagedPeak) peakList.getPeakByID(idNum);
-                if (peak != null) {
+                peakList.setNoeSet(noeSet);
+                //peakList.setupListener();
+                try {
+                    int idNum = Integer.parseInt(peakID);
+                    peak = (ManagedPeak) peakList.getPeakByID(idNum);
                     peak.addNoe(noe);
-                    peakList.setNoeSet(noeSet);
-                    peakList.setupListener();
-                }
+                } catch (Exception ignored) {}
             }
         }
     }

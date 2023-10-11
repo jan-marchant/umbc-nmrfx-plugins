@@ -337,6 +337,7 @@ public class ManagedListSetup {
         if (acquisition.getDataset()==null || acquisition.getSample()==null || acquisition.getExperiment()==null) {
             GUIUtils.warn("Cannot add list", "You must define all acquisition parameters before adding any lists.");
         } else {
+            acquisition.setSampleLoaded();
             HashMap<ExpDim,Integer> dimMap=new HashMap<>();
             for (Map.Entry<ExpDim,ComboBox<Integer>> entry : dimBoxes.entrySet()) {
                 dimMap.put(entry.getKey(),entry.getValue().getValue());

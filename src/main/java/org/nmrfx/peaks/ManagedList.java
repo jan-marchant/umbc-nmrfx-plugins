@@ -493,7 +493,10 @@ public class ManagedList extends PeakList {
                 ManagedPeak peak2 = (ManagedPeak) peak;
                 for (ManagedNoe noe : peak2.getNoes()) {
                     //todo: investigate NoeSet.getID() replaced with NoeSet.ID
-                    chan.write(String.format("%d %s %d %s %s %d %d %d %d spectral_peak_list %s\n", noe.starID, noeSet.getType(), noeSet.getSetId(), noeSet.getCategory(), noeSet.getCategory() + noeSet.getName().replaceAll("\\W", ""), ID++, getId(), peak.getIdNum(), getId(), getName()));
+                    if (noe != null) {
+                        chan.write(String.format("%d %s %d %s %s %d %d %d %d spectral_peak_list %s\n", noe.getID(), noeSet.getType(), noeSet.getSetId(), noeSet.getCategory(), noeSet.getCategory() + noeSet.getName().replaceAll("\\W", ""), ID++, getId(), peak.getIdNum(), getId(), getName()));
+                        ID++;
+                    }
                 }
             }
             //a bit hacky to ensure peaklist read in OK if no NOEs

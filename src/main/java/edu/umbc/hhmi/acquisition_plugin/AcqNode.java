@@ -18,6 +18,7 @@ public class AcqNode {
     private Atom atom;
     private final Set<AcqTree.Edge> edges=new HashSet<>();
     private ExpDim expDim;
+    private Double deltaPPM = null;
 
     public AcqNode(AcqTree acqTree, int id) {
         this.id=id;
@@ -39,6 +40,9 @@ public class AcqNode {
     }
 
     public double getDeltaPPM (double ppm) {
+        if (deltaPPM!=null) {
+            return deltaPPM;
+        }
         double toReturn=1000;
         for (double candidate : getPPMs()) {
             if (Math.abs(candidate-ppm)<toReturn) {
@@ -161,5 +165,9 @@ public class AcqNode {
 
     public Set<AcqTree.Edge> getEdgeSet() {
         return edges;
+    }
+
+    public void resetDeltaPPM() {
+        deltaPPM = null;
     }
 }

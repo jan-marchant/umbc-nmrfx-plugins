@@ -6,6 +6,7 @@ import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakDim;
 import org.nmrfx.peaks.PeakList;
 import org.nmrfx.peaks.SpectralDim;
+import org.nmrfx.peaks.events.PeakListener;
 import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.project.ProjectBase;
 
@@ -26,6 +27,7 @@ public class DrawItem implements Comparator<DrawItem> {
     HashMap<Integer, List<PeakDim>> dims = new HashMap<>();
     List<Peak> peaks=new ArrayList<>();
     ProjectBase project;
+    PeakListener peakListener;
 
     DrawItem(PeakDim centerDim,PeakDim rangeDim,ProjectBase project) {
         this.project=project;
@@ -124,6 +126,17 @@ public class DrawItem implements Comparator<DrawItem> {
             }
         }
         return true;
+    }
+
+    public void remove() {
+        peakList.removePeakChangeListener(peakListener);
+    }
+
+    public void addPeakChangeListener(PeakListener listener) {
+        if (peakListener == null) {
+            peakListener = listener;
+            peakList.registerPeakChangeListener(listener);
+        }
     }
 }
 

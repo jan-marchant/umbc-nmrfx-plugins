@@ -21,6 +21,7 @@ package edu.umbc.hhmi.acquisition_plugin;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.io.output.UncheckedFilterWriter;
 import org.nmrfx.chemistry.*;
 import org.nmrfx.chemistry.constraints.Constraint;
 import org.nmrfx.chemistry.constraints.ConstraintSet;
@@ -43,15 +44,12 @@ import java.io.Writer;
 import java.util.*;
 import java.util.Map.Entry;
 
-/**
- *
- * @author brucejohnson
- */
-
 public class ManagedNoeSet implements ConstraintSet, Iterable<Constraint>, SaveframeWriter, Comparable<ManagedNoeSet> {
 
+    private static final double MIN_DIST = 5.5;
     static HashMap<ProjectBase, HashMap<String, ManagedNoeSet>> projectNoeSetsMap= new HashMap<>();
     private final MolecularConstraints molecularConstraints;
+    private HashMap<Integer,ManagedNoe> noeMap = new HashMap<>();
 
     private final ObservableList<ManagedNoe> constraints = FXCollections.observableArrayList();
     private final Map<Peak, List<ManagedNoe>> peakMap = new TreeMap<>();
@@ -169,12 +167,14 @@ public class ManagedNoeSet implements ConstraintSet, Iterable<Constraint>, Savef
     public void clear() {
         constraints.clear();
         peakMap.clear();
+        noeMap.clear();
     }
 
     @Override
     public void add(Constraint constraint) {
         ManagedNoe noe = (ManagedNoe) constraint;
         noe.setID(constraints.size());
+        noeMap.put(constraints.size(),noe);
         constraints.add(noe);
         noe.setNoeSet(this);
         if (noe.getPeak() != null) {
@@ -415,7 +415,7 @@ public class ManagedNoeSet implements ConstraintSet, Iterable<Constraint>, Savef
                     if (index != -1) {
                         for (Map.Entry<String[], double[]> entry : ResidueDistances.distancesList.get(index).distances.entrySet()) {
                             double dist = entry.getValue()[0] / entry.getValue()[1];
-                            if (dist < 5.25 && entry.getValue()[1] > 10) {
+                            if (dist < MIN_DIST && entry.getValue()[1] > 10) {
                                 //add new NOE!!
                                 String aString1 = entry.getKey()[0];
                                 String aString2 = entry.getKey()[1];
@@ -492,5 +492,7 @@ public class ManagedNoeSet implements ConstraintSet, Iterable<Constraint>, Savef
     }
 
 
-
+    public ManagedNoe getConstraintByID(int id) {
+        return noeMap.get(id);
+    }
 }

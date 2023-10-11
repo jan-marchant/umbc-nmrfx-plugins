@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.BorderPane?>
+<?import org.controlsfx.control.MasterDetailPane?>
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+            prefHeight="350.0" prefWidth="600" styleClass="mainFxmlClass"
+            fx:id="attrBorderPane"
+            fx:controller="edu.umbc.hhmi.acquisition_plugin.ManagedNOETableController">
+    <top>
+        <ToolBar fx:id="toolBar" prefHeight="40.0" prefWidth="600"
+                 BorderPane.alignment="CENTER">
+            <items>
+            </items>
+        </ToolBar>
+    </top>
+    <center>
+        <MasterDetailPane fx:id="masterDetailPane">
+        </MasterDetailPane>
+    </center>
+</BorderPane>

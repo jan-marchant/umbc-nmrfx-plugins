@@ -33,6 +33,7 @@ import java.util.*;
 public class Acquisition {
     static HashMap<ProjectBase, ObservableList<Acquisition>> projectAcquisitionsMap = new HashMap<>();
     static HashMap<ProjectBase, ObservableList<DatasetBase>> projectDatasetMap = new HashMap<>();
+    private boolean sampleLoaded = false;
 
     static public ObservableList<Acquisition> getActiveAcquisitionList() {
         return projectAcquisitionsMap.computeIfAbsent(ProjectBase.getActive(), k -> FXCollections.observableArrayList());
@@ -268,6 +269,17 @@ public class Acquisition {
 
     public void setSample(Sample sample) {
         this.sample.set(sample);
+        sample.addAcqusition(this);
+    }
+
+    public void setSampleLoaded() {
+        sampleLoaded = true;
+        getAcqTree(true).initializeAllNoeSets();
+        setupListeners();
+    }
+
+    public boolean isSampleLoaded() {
+        return sampleLoaded;
     }
 
     public Condition getCondition() {
@@ -393,15 +405,26 @@ public class Acquisition {
     }
 
     public AcqTree getAcqTree() {
+        return getAcqTree(false);
+    }
+
+    public AcqTree getAcqTree(boolean sampleChanged) {
         //acquisitionTree nodes (atoms) are contained within generations (expDims) and have edges to connected
         //in the preceding (backward) and following (forward) generations. The weight of each edge is given by the
         //labeling fraction of the first node in the forward direction. If the weight is 0 then the node is not added.
         //
-        if (acqTree != null) {
+        if (acqTree == null) {
+            acqTree = new AcqTree(this);
+        } else {
+            if (!sampleChanged) {
+                return acqTree;
+            }
+        }
+
+        if (!isSampleLoaded()) {
+            //if sample is not yet set, don't set up
             return acqTree;
         }
-        acqTree = new AcqTree(this);
-
         boolean firstDim = true;
         //populate generations
         for (ExpDim expDim : getExperiment().expDims) {

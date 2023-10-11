@@ -49,6 +49,7 @@ public class Sample implements Comparable<Sample>, SaveframeWriter {
     private final StringProperty labelString = new SimpleStringProperty("");
     private final HashMap<Atom, Double> atomFraction = new HashMap<>();
     private final HashMap<Entity, String> entityLabelString = new HashMap<>();
+    private final List<Acquisition> acquisitionList = new ArrayList<>();
 
     public Sample(String name) {
         setName(name);
@@ -319,6 +320,13 @@ public class Sample implements Comparable<Sample>, SaveframeWriter {
                 updateLabelString();
             }
         }
+        setSampleLoaded();
+    }
+
+    private void setSampleLoaded() {
+        for (Acquisition acquisition : acquisitionList) {
+            acquisition.setSampleLoaded();
+        }
     }
 
     @Override
@@ -352,11 +360,17 @@ public class Sample implements Comparable<Sample>, SaveframeWriter {
 
         int entityID = 1;
         for (Entity entity : molecule.get().entityLabels.values()) {
-            chan.write(String.format("%d %d %s '%s'", getId(), entityID, entity.label, getLabelString().equals("") ? "*" : getLabelString()));
+            chan.write(String.format("%d %d %s \"%s\"", getId(), entityID, entity.label, getLabelString().equals("") ? "*" : getLabelString()));
             chan.write("\n");
             entityID++;
         }
         chan.write("stop_\n");
         chan.write("save_\n\n");
+    }
+
+    public void addAcqusition(Acquisition acquisition) {
+        if (!acquisitionList.contains(acquisition)) {
+            acquisitionList.add(acquisition);
+        }
     }
 }

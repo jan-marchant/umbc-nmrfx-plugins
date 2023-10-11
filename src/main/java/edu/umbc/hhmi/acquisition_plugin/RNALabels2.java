@@ -149,14 +149,10 @@ public class RNALabels2 {
 
         List<Atom> allAtoms = molecule.getAtomArray();
         if ((selGroups == null) || (selGroups.trim().length() == 0)) {
-            allAtoms.forEach((atom) -> {
-                atom.setActive(true);
-            });
+            allAtoms.forEach((atom) -> atom.setActive(true));
 
         } else {
-            allAtoms.forEach((atom) -> {
-                atom.setActive(false);
-            });
+            allAtoms.forEach((atom) -> atom.setActive(false));
             String[] selGroupSets = selGroups.split(";");
             for (String selGroupSet : selGroupSets) {
                 String[] groups = selGroupSet.split(" ");
@@ -218,21 +214,9 @@ public class RNALabels2 {
         final boolean exchangable;
 
         public NucleicAcidAtomType(Atom atom) {
-            if ((atom.parent != null) && (atom.getParent().getElementName().equals("O"))) {
-                hydroxyl = true;
-            } else {
-                hydroxyl = false;
-            }
-            if (atom.getName().endsWith("'") || atom.getName().endsWith("\"")) {
-                sugar = true;
-            } else {
-                sugar = false;
-            }
-            if (atom.getElementName().equals("H") && (atom.parent != null) && (atom.getParent().getElementName().equals("N") || hydroxyl)) {
-                exchangable = true;
-            } else {
-                exchangable = false;
-            }
+            hydroxyl = (atom.parent != null) && (atom.getParent().getElementName().equals("O"));
+            sugar = atom.getName().endsWith("'") || atom.getName().endsWith("\"");
+            exchangable = atom.getElementName().equals("H") && (atom.parent != null) && (atom.getParent().getElementName().equals("N") || hydroxyl);
         }
     }
 
@@ -290,8 +274,7 @@ public class RNALabels2 {
             entityStr = "*";
         }
 
-        SelGroup selGroup = new SelGroup(startRes, endRes, entityStr, resTypes, gAtomNames, labelPercent);
-        return selGroup;
+        return new SelGroup(startRes, endRes, entityStr, resTypes, gAtomNames, labelPercent);
 
     }
 
@@ -360,8 +343,7 @@ public class RNALabels2 {
         SelGroup selGroup = parseSelGroup(group);
         String entityStr = selGroup.entityStr;
         Entity entity=atom.getEntity();
-        if (entity instanceof Residue) {
-            Residue residue = (Residue) entity;
+        if (entity instanceof Residue residue) {
             Polymer polymer = residue.polymer;
             if (entityStr.equals("*") || entityStr.equals(polymer.getName())) {
                 String resName = residue.getName();
@@ -382,10 +364,7 @@ public class RNALabels2 {
                     if (naType.hydroxyl) {
                         return false;
                     }
-                    boolean ok = checkAtom(atom.getName(), atom.getElementName(), selGroup.gAtomNames, naType.sugar, naType.exchangable);
-                    if (ok) {
-                        return true;
-                    }
+                    return checkAtom(atom.getName(), atom.getElementName(), selGroup.gAtomNames, naType.sugar, naType.exchangable);
                 }
             }
         }
@@ -415,8 +394,7 @@ public class RNALabels2 {
         SelGroup selGroup = parseSelGroup(group);
         String entityStr = selGroup.entityStr;
         Entity entity=atom.getEntity();
-        if (entity instanceof Residue) {
-            Residue residue = (Residue) entity;
+        if (entity instanceof Residue residue) {
             Polymer polymer = residue.polymer;
             if (entityStr.equals("*") || entityStr.equals(polymer.getName())) {
                 String resName = residue.getName();

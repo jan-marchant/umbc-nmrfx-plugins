@@ -39,12 +39,13 @@ public class AcqNodeChooser {
      * where pickedNodes describes the nodes selected.
      */
     HashMap<ExpDim, ObservableList<AcqNode>> possibleNodes=new HashMap<>();
+
     HashMap<ExpDim,ComboBox<AcqNode>> combos=new HashMap<>();
     Acquisition acquisition;
     Stage stage;
     GridPane grid;
     ArrayList<ExpDim> expDims=new ArrayList<>();
-    double tol = 0.04;
+    double tol = 0.1;
     HashMap<AcqNode,String> nodeLabs=new HashMap<>();
     ManagedList list;
     Peak peak;
@@ -70,9 +71,7 @@ public class AcqNodeChooser {
         @Override
         public int compare(AcqNode a, AcqNode b) {
             if (shift==null) {return 0;}
-            double aDelta=a.getDeltaPPM(shift);
-            double bDelta=b.getDeltaPPM(shift);
-            return Double.compare(aDelta, bDelta);
+            return Double.compare(a.getDeltaPPM(shift), b.getDeltaPPM(shift));
         }
     }
 
@@ -94,9 +93,18 @@ public class AcqNodeChooser {
                 } catch (Exception e) {
                     shift=null;
                 }
-                NodeComparator comparator = new NodeComparator(shift);
 
-                possibleNodes.get(expDim).sort(comparator);
+                NodeComparator comparator = new NodeComparator(shift);
+                //May be slow depending on number of matches within tolerance
+                ObservableList<AcqNode> comboNodes = FXCollections.observableArrayList();
+                for (AcqNode node : possibleNodes.get(expDim)) {
+                    if (node.getDeltaPPM(shift)<tol) {
+                        comboNodes.add(node);
+                    }
+                }
+                //possibleNodes.get(expDim).sort(comparator);
+                comboNodes.sort(comparator);
+
                 Label label=new Label(expDim.toString());
                 String shiftString;
                 if (shift!=null) {
@@ -107,7 +115,7 @@ public class AcqNodeChooser {
                 Label label2=new Label(shiftString);
                 ComboBox<AcqNode> comboBox = new ComboBox<>();
                 combos.put(expDim, comboBox);
-                comboBox.setItems(possibleNodes.get(expDim));
+                comboBox.setItems(comboNodes);
                 comboBox.setEditable(false);
 
                 Float finalShift = shift;
@@ -116,10 +124,10 @@ public class AcqNodeChooser {
                     @Override
                     public String toString(AcqNode node) {
                         if (node == null) {
-                            return "";
+                            return "                ";
                         }
                         if (finalShift==null) {
-                            return String.format("%-10.10s", node);
+                            return String.format("%-10.10s      ", node);
                         } else {
                             return String.format("%-10.10s %5.3f", node, node.getDeltaPPM(finalShift));
                         }
@@ -151,12 +159,15 @@ public class AcqNodeChooser {
                                 && !suggestionStr.equals(userTextLower);
                     }
                 };
-                provider.addPossibleSuggestions(comboBox.getItems());
+                provider.addPossibleSuggestions(possibleNodes.get(expDim));
                 AutoCompletionBinding<AcqNode> acb = new AutoCompletionTextFieldBinding<>(textField, provider);
                 acb.setOnAutoCompleted(event -> {
                     AcqNode node = event.getCompletion();
                     expDims.clear();
                     textField.clear();
+                    if(!comboBox.getItems().contains(node)) {
+                        comboBox.getItems().add(node);
+                    }
                     comboBox.setValue(node);
                 });
                 acb.setVisibleRowCount(10);
@@ -264,6 +275,7 @@ public class AcqNodeChooser {
 
     private void initPossibleNodes() {
         possibleNodes = acquisition.getAcqTree().getPossiblePathNodes(null);
+
     }
 
     private void updatePossibleNodes(AcqNode node) {

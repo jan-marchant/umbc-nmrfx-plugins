@@ -61,11 +61,11 @@ enum DisTypes {
 
 public class ManagedNoe extends DistanceConstraint implements Serializable {
 
-    private static boolean useDistances = false;
-    private static int nStructures = 0;
+    private static final boolean useDistances = false;
+    private static final int nStructures = 0;
     private static double tolerance = 0.2;
     //below change only necessary because of package change - do not include in any pull request
-    private static DistanceStat defaultStat = new DistanceStat(0.0D,0.0D,0.0D,0.0D,0.0D,null);
+    private static final DistanceStat defaultStat = new DistanceStat(0.0D,0.0D,0.0D,0.0D,0.0D,null);
     private int idNum = 0;
     public SpatialSetGroup spg1;
     public SpatialSetGroup spg2;
@@ -86,9 +86,9 @@ public class ManagedNoe extends DistanceConstraint implements Serializable {
     private double networkValue = 1;
     private boolean swapped = false;
     private boolean filterSwapped = false;
-    public Map resMap = null;
-    public EnumSet<Flags> activeFlags = null;
-    private static DisTypes distanceType = DisTypes.MINIMUM;
+    //public Map resMap = null;
+    public EnumSet<Flags> activeFlags;
+    private static final DisTypes distanceType = DisTypes.MINIMUM;
     private GenTypes genType = GenTypes.MANUAL;
     public static int ppmSet = 0;
     private AtomResonance resonance1 =null;
@@ -160,21 +160,19 @@ public class ManagedNoe extends DistanceConstraint implements Serializable {
     @Override
     public String toString() {
         char sepChar = '\t';
-        StringBuilder sBuild = new StringBuilder();
-        sBuild.append(spg1.getFullName()).append(sepChar);
-        sBuild.append(spg2.getFullName()).append(sepChar);
-        sBuild.append(String.format("%.1f", lower)).append(sepChar).append(String.format("%.1f", upper)).append(sepChar);
-        sBuild.append(peak != null ? peak.getName() : "").append(sepChar);
-        sBuild.append(idNum).append(sepChar);
-        sBuild.append(genType).append(sepChar);
-        sBuild.append(String.format("%3d", getDeltaRes())).append(sepChar);
-        sBuild.append(String.format("%.2f", ppmError)).append(sepChar);
-        sBuild.append(String.format("%b", symmetrical)).append(sepChar);
-        sBuild.append(String.format("%.2f", networkValue)).append(sepChar);
-        sBuild.append(String.format("%.2f", disContrib)).append(sepChar);
-        sBuild.append(String.format("%10s", getActivityFlags())).append(sepChar);
-        sBuild.append(String.format("%.2f", contribution));
-        return sBuild.toString();
+        return spg1.getFullName() + sepChar +
+                spg2.getFullName() + sepChar +
+                String.format("%.1f", lower) + sepChar + String.format("%.1f", upper) + sepChar +
+                (peak != null ? peak.getName() : "") + sepChar +
+                idNum + sepChar +
+                genType + sepChar +
+                String.format("%3d", getDeltaRes()) + sepChar +
+                String.format("%.2f", ppmError) + sepChar +
+                String.format("%b", symmetrical) + sepChar +
+                String.format("%.2f", networkValue) + sepChar +
+                String.format("%.2f", disContrib) + sepChar +
+                String.format("%10s", getActivityFlags()) + sepChar +
+                String.format("%.2f", contribution);
     }
 
     @Override
@@ -365,7 +363,7 @@ public class ManagedNoe extends DistanceConstraint implements Serializable {
             if (entity instanceof Residue) {
                 value = ((Residue) entity).polymer.getName();
             } else {
-                value = ((Compound) entity).getName();
+                value = entity.getName();
             }
         }
         return value;
@@ -487,8 +485,9 @@ public class ManagedNoe extends DistanceConstraint implements Serializable {
         char stringQuote = '"';
 
         //        Gen_dist_constraint.ID
-        result.append(ManagedNoeSet.ID);
-        starID= ManagedNoeSet.ID;
+        //result.append(ManagedNoeSet.ID);
+        result.append(getID());
+        //starID= ManagedNoeSet.ID;
         result.append(sep);
         //_Gen_dist_constraint.Member_ID
         result.append(ManagedNoeSet.memberID);

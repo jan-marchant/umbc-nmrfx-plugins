@@ -15,6 +15,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Popup;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -24,6 +25,7 @@ import javafx.util.converter.DefaultStringConverter;
 import org.nmrfx.chemistry.constraints.NoeSet;
 import org.nmrfx.utils.GUIUtils;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
@@ -31,6 +33,7 @@ import java.util.function.UnaryOperator;
 public class ManagedNoeSetController {
 
     public static ManagedNoeSetController noeSetController;
+    private ManagedNOETableController noeTableController;
 
     @FXML
     static public void showNoeSetup(ActionEvent event) {
@@ -54,6 +57,7 @@ public class ManagedNoeSetController {
     ButtonBase bButton;
     Popup popup;
     MenuButton generate;
+    Button show;
 
     ComboBox<ManagedNoeSet> noeSetCombo = new ComboBox<>();
 
@@ -160,6 +164,12 @@ public class ManagedNoeSetController {
         HBox hBox=new HBox(nameLabel,noeSetCombo,bButton);
         hBox.setAlignment(Pos.CENTER_LEFT);
 
+        show = new Button("Show NOEs");
+        show.setOnAction(e-> showManagedNOETable());
+        show.disableProperty().bind(noeSetCombo.getSelectionModel().selectedItemProperty().isNull());
+
+
+        VBox vBox = new VBox(show,generate);
         Button ok = new Button("Close");
         ok.setOnAction((event) -> stage.close());
 
@@ -168,9 +178,25 @@ public class ManagedNoeSetController {
         buttonBar.getButtons().addAll(ok);
 
         borderPane.setTop(hBox);
-        borderPane.setCenter(generate);
+        borderPane.setCenter(vBox);
         borderPane.setBottom(buttonBar);
         stage.setOnCloseRequest(e -> cancel());
+    }
+
+    private void showManagedNOETable() {
+        if (noeTableController == null) {
+            noeTableController = ManagedNOETableController.create();
+            if (noeTableController == null) {
+                return;
+            }
+            Collection<ManagedNoeSet> noeSets = ManagedNoeSet.getManagedNoeSetsMap().values();
+
+            noeSets.stream().findFirst().ifPresent(noeTableController::setNoeSet);
+        }
+        noeTableController.getStage().show();
+        noeTableController.getStage().toFront();
+        noeTableController.updateNoeSetMenu();
+
     }
 
     public void show(double x, double y) {

@@ -19,7 +19,7 @@ public class MoleculeCouplingList {
         return moleculeCouplingMap.get(molecule);
     }
 
-    private Molecule mol;
+    private final Molecule mol;
 
     MTree bondTree;
     MTree tocsyTree;
@@ -230,7 +230,7 @@ public class MoleculeCouplingList {
             tocsyTree = new MTree();
             int i = 0;
             for (Atom atom : mol.getAtoms()) {
-                atomNode.put(atom, Integer.valueOf(i));
+                atomNode.put(atom, i);
                 MNode mNode = bondTree.addNode();
                 MNode tNode = tocsyTree.addNode();
                 mNode.setAtom(atom);
@@ -240,12 +240,12 @@ public class MoleculeCouplingList {
             for (Atom atom : mol.getAtoms()) {
                 for (int iBond = 0; iBond < atom.bonds.size(); iBond++) {
                     Bond bond = atom.bonds.get(iBond);
-                    Integer iNodeBegin = (Integer) atomNode.get(bond.begin);
-                    Integer iNodeEnd = (Integer) atomNode.get(bond.end);
+                    Integer iNodeBegin = atomNode.get(bond.begin);
+                    Integer iNodeEnd = atomNode.get(bond.end);
 
-                    if ((iNodeBegin != null) && (iNodeEnd != null) && (iNodeBegin.intValue()<iNodeEnd.intValue())) {
+                    if ((iNodeBegin != null) && (iNodeEnd != null) && (iNodeBegin < iNodeEnd)) {
 
-                        bondTree.addEdge(iNodeBegin.intValue(), iNodeEnd.intValue(),true);
+                        bondTree.addEdge(iNodeBegin, iNodeEnd,true);
                     }
                 }
             }
@@ -254,7 +254,7 @@ public class MoleculeCouplingList {
     }
 
     private MTree getTocsyTree(int maxCouplingDistance) {
-        if (tocsyProcessed==false) {
+        if (!tocsyProcessed) {
             //for (int j = 1; j <= maxCouplingDistance; j++) {
             //   if (homoCouplingMap.containsKey(j)) {
             //       for (JCoupling jCoupling : homoCouplingMap.get(j)) {
@@ -267,10 +267,10 @@ public class MoleculeCouplingList {
                             Integer iNodeEnd = (Integer) atomNode.get(atom2);
                             if ((iNodeBegin != null) && (iNodeEnd != null)) {
                                 //tocsyTree.addEdge(iNodeBegin.intValue(), iNodeEnd.intValue(), false,j);
-                                tocsyTree.addEdge(iNodeBegin.intValue(), iNodeEnd.intValue(), false);
+                                tocsyTree.addEdge(iNodeBegin, iNodeEnd, false);
                             }
                         }
-                    } catch (Exception e) {
+                    } catch (Exception ignored) {
                     }
                 }
             }

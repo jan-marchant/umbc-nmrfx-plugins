@@ -145,17 +145,29 @@ public class AcqTree {
                 System.out.println("null set");
             } else {
                 noeSets.add(noeSet);
-                for (ManagedNoe noe : noeSet.getConstraints()) {
-                    addNoeToTree(noeSet, noe);
+                if (acquisition.isSampleLoaded()) {
+                    initializeNoeSet(noeSet);
                 }
-                noeSet.getConstraints().addListener((ListChangeListener.Change<? extends ManagedNoe> c) -> {
-                    while (c.next()) {
-                        for (ManagedNoe addedNoe : c.getAddedSubList()) {
-                            addNoeToTree(noeSet, addedNoe);
-                        }
-                    }
-                });
             }
+        }
+    }
+
+    public void initializeNoeSet(ManagedNoeSet noeSet) {
+        for (ManagedNoe noe : noeSet.getConstraints()) {
+            addNoeToTree(noeSet, noe);
+        }
+        noeSet.getConstraints().addListener((ListChangeListener.Change<? extends ManagedNoe> c) -> {
+            while (c.next()) {
+                for (ManagedNoe addedNoe : c.getAddedSubList()) {
+                    addNoeToTree(noeSet, addedNoe);
+                }
+            }
+        });
+    }
+
+    public void initializeAllNoeSets() {
+        for (ManagedNoeSet noeSet : noeSets) {
+            initializeNoeSet(noeSet);
         }
     }
 
@@ -310,6 +322,7 @@ public class AcqTree {
     public HashMap<ExpDim, ObservableList<AcqNode>> getPossiblePathNodes(AcqNode pickedNode) {
         HashMap<ExpDim, ObservableList<AcqNode>> possibleNodes = new HashMap<>();
         for (ExpDim expDim : acquisition.getExperiment().expDims) {
+            expDimNodeMap.get(expDim).forEach(AcqNode::resetDeltaPPM);
             possibleNodes.putIfAbsent(expDim, FXCollections.observableArrayList());
             possibleNodes.get(expDim).addAll(expDimNodeMap.get(expDim));
         }

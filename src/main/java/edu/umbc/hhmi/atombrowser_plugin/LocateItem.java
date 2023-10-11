@@ -65,6 +65,7 @@ public class LocateItem {
     }
 
     public void add(PolyChart chart) {
+        //todo: don't draw more than one line
         if (atom.getResonance() != null) {
             for (PeakDim peakDim : atom.getResonance().getPeakDims()) {
                 for (PeakListAttributes peakAttr : chart.getPeakListAttributes()) {
