@@ -6,7 +6,7 @@
     <groupId>edu.umbc.hhmi</groupId>
     <artifactId>nmrfx_acq_plugin</artifactId>
     <packaging>jar</packaging>
-    <version>11.4.0-SNAPSHOT</version>
+    <version>11.4.1-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -19,12 +19,12 @@
         <dependency>
             <groupId>org.nmrfx</groupId>
             <artifactId>nmrfx-analyst-gui</artifactId>
-            <version>11.4.0</version>
+            <version>11.4.1</version>
         </dependency>
         <dependency>
             <groupId>org.nmrfx</groupId>
             <artifactId>nmrfx-plugin-api</artifactId>
-            <version>11.4.0</version>
+            <version>11.4.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.auto.service</groupId>

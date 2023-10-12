@@ -35,4 +35,24 @@ public class AnnoLineWithText extends AnnoLine {
         gC.setLineWidth(getLineWidth());
         gC.fillText(text, xp1, yp1);
     }
+
+    public void setX(double x) {
+        setX1(x);
+        setX2(x);
+        setTextX(x);
+    }
+
+    public void setY(double y) {
+        setY1(y);
+        setY2(y);
+        setTextY(y);
+    }
+
+    public void setTextX(double textX) {
+        this.textX = textX;
+    }
+
+    public void setTextY(double textY) {
+        this.textY = textY;
+    }
 }

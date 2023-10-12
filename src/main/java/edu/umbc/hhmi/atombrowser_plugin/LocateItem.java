@@ -7,7 +7,6 @@ import org.nmrfx.peaks.PeakDim;
 import org.nmrfx.peaks.PeakList;
 import org.nmrfx.processor.gui.CanvasAnnotation;
 import org.nmrfx.processor.gui.PolyChart;
-import org.nmrfx.processor.gui.annotations.AnnoLine;
 import org.nmrfx.processor.gui.spectra.PeakListAttributes;
 
 import java.util.ArrayList;
@@ -17,7 +16,7 @@ import java.util.List;
 public class LocateItem {
     private final AtomBrowser atomBrowser;
     Atom atom;
-    HashMap<PolyChart, List<AnnoLine>> annotations;
+    HashMap<DrawItem, List<AnnoLineWithText>> annotations;
 
     LocateItem(AtomBrowser atomBrowser, Atom atom) {
         this.atomBrowser = atomBrowser;
@@ -39,60 +38,140 @@ public class LocateItem {
     }
 
     public void remove() {
-        annotations.forEach((chart, annoList) -> {
-            for (AnnoLine anno : annoList) {
-                chart.removeAnnotation(anno);
-                chart.refresh();
-                //refresh chart?
-                //GraphicsContextProxy gcPeaks = new GraphicsContextProxy(chart.peakCanvas.getGraphicsContext2D());
-                //chart.drawPeakLists(true, gcPeaks);
-                //chart.drawAnnotations(gcPeaks);
+        for (DrawItem drawItem : annotations.keySet()) {
+            //can't reuse remove(drawItem) because of concurrent access issues
+            for (AnnoLineWithText anno : annotations.get(drawItem)) {
+                drawItem.removeAnnotation(anno);
             }
-        });
+            drawItem.removeLocateItem(this);
+        }
         annotations.clear();
     }
 
-    public void update() {
-        remove();
-        add();
+    public void remove(DrawItem drawItem) {
+        for (AnnoLineWithText anno : annotations.get(drawItem)) {
+            drawItem.removeAnnotation(anno);
+        }
+        drawItem.removeLocateItem(this);
+        annotations.remove(drawItem);
     }
 
-    public void add() {
-        for (int i = 0; i < atomBrowser.controller.getCharts().size(); i++) {
-            PolyChart chart = atomBrowser.controller.getCharts().get(i);
-            add(chart);
+    public void update(DrawItem drawItem) {
+        //remove(drawItem);
+        //add(drawItem);
+        for (AnnoLineWithText anno : annotations.get(drawItem)) {
+            setPositions(anno, drawItem);
         }
     }
 
-    public void add(PolyChart chart) {
-        //todo: don't draw more than one line
-        if (atom.getResonance() != null) {
+    private void setPositions(AnnoLineWithText anno, DrawItem drawItem) {
+        ShiftColor shiftColor;
+        if (anno.getXPosType()==CanvasAnnotation.POSTYPE.WORLD) {
+            shiftColor = getShiftColor(atomBrowser.centerDim, drawItem);
+            if (shiftColor.getShift() != null) {
+                anno.setX(shiftColor.getShift());
+                anno.setStroke(shiftColor.getColor());
+            }
+        } else if (anno.getYPosType()==CanvasAnnotation.POSTYPE.WORLD) {
+            shiftColor = getShiftColor(atomBrowser.rangeDim, drawItem);
+            if (shiftColor.getShift() != null) {
+                anno.setY(shiftColor.getShift());
+                anno.setTextY(shiftColor.getShift());
+            }
+        }
+    }
+
+    public void update() {
+        for (DrawItem drawItem : annotations.keySet()) {
+            update(drawItem);
+        }
+    }
+
+    public void add() {
+        for (DrawItem drawItem : atomBrowser.drawItems) {
+            add(drawItem);
+        }
+    }
+
+    private static class ShiftColor {
+        private Float shift;
+        private Color color;
+        public ShiftColor() {
+            this(null,null);
+        }
+        public ShiftColor(Float shift, Color color) {
+            this.shift = shift;
+            this.color = color;
+        }
+
+        public Float getShift() {
+            return shift;
+        }
+
+        public void setShift(Float shift) {
+            this.shift = shift;
+        }
+
+        public Color getColor() {
+            return color;
+        }
+
+        public void setColor(Color color) {
+            this.color = color;
+        }
+    }
+
+    public ShiftColor getShiftColor(int dimno, DrawItem drawItem) {
+        ShiftColor shiftColor = new ShiftColor();
+
+        PolyChart chart = drawItem.getChart();
+
+        if (atom.getResonance() == null || chart == null) {
+            return shiftColor;
+        }
+
+        for (PeakListAttributes peakAttr : chart.getPeakListAttributes()) {
+            PeakList peakList = peakAttr.getPeakList();
+
             for (PeakDim peakDim : atom.getResonance().getPeakDims()) {
-                for (PeakListAttributes peakAttr : chart.getPeakListAttributes()) {
-                    PeakList peakList = peakAttr.getPeakList();
-                    if (peakDim.getPeakList() == peakList) {
-                        AnnoLineWithText annoLine;
-                        if (peakDim.getSpectralDim() == atomBrowser.centerDim) {
-                            annoLine = new AnnoLineWithText(atom.getShortName(), peakDim.getChemShiftValue(), 0.99, peakDim.getChemShiftValue(), 0, peakDim.getChemShiftValue(), 1, CanvasAnnotation.POSTYPE.WORLD, CanvasAnnotation.POSTYPE.FRACTION);
-                        } else if (peakDim.getSpectralDim() == atomBrowser.rangeDim) {
-                            annoLine = new AnnoLineWithText(atom.getShortName(), 0.01, peakDim.getChemShiftValue(), 0, peakDim.getChemShiftValue(), 1, peakDim.getChemShiftValue(), CanvasAnnotation.POSTYPE.FRACTION, CanvasAnnotation.POSTYPE.WORLD);
-                        } else {
-                            continue;
-                        }
+                if (peakDim.getPeakList() == peakList) {
+                    if (peakDim.getSpectralDim() == dimno) {
+                        shiftColor.setShift(peakDim.getChemShiftValue());
                         if (peakDim.isFrozen()) {
-                            annoLine.setStroke(Color.RED);
+                            shiftColor.setColor(Color.RED);
                         } else {
-                            annoLine.setStroke(Color.GRAY);
+                            shiftColor.setColor(Color.BLACK);
                         }
-                        annotations.putIfAbsent(chart, new ArrayList<>());
-                        if (!annotations.get(chart).contains(annoLine)) {
-                            annotations.get(chart).add(annoLine);
-                            chart.addAnnotation(annoLine);
-                            chart.refresh();
-                        }
+                        return shiftColor;
                     }
                 }
             }
+        }
+        return shiftColor;
+    }
+
+    private void addAnnotation(AnnoLineWithText annoLine, DrawItem drawItem) {
+        annotations.putIfAbsent(drawItem, new ArrayList<>());
+        if (!annotations.get(drawItem).contains(annoLine)) {
+            annotations.get(drawItem).add(annoLine);
+            drawItem.addAnnotation(annoLine);
+            drawItem.addLocateItem(this);
+        }
+    }
+
+    public void add(DrawItem drawItem) {
+        ShiftColor shiftColor = getShiftColor(atomBrowser.centerDim, drawItem);
+        AnnoLineWithText annoLine;
+        if (shiftColor.getShift() != null) {
+            annoLine = new AnnoLineWithText(atom.getShortName(), shiftColor.getShift(), 0.99, shiftColor.getShift(), 0, shiftColor.getShift(), 1, CanvasAnnotation.POSTYPE.WORLD, CanvasAnnotation.POSTYPE.FRACTION);
+            annoLine.setStroke(shiftColor.getColor());
+            addAnnotation(annoLine, drawItem);
+        }
+        shiftColor = getShiftColor(atomBrowser.rangeDim, drawItem);
+        if (shiftColor.getShift() != null) {
+            annoLine = new AnnoLineWithText(atom.getShortName(), 0.01, shiftColor.getShift(), 0, shiftColor.getShift(), 1, shiftColor.getShift(), CanvasAnnotation.POSTYPE.FRACTION, CanvasAnnotation.POSTYPE.WORLD);
+            annoLine.setStroke(shiftColor.getColor());
+            addAnnotation(annoLine, drawItem);
         }
     }
 }

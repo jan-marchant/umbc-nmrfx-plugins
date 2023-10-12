@@ -266,4 +266,9 @@ public class ManagedPeak extends Peak {
             }
         }
     }
+
+    @Override
+    public void peakUpdated(Object object) {
+        super.peakUpdated(object);
+    }
 }
