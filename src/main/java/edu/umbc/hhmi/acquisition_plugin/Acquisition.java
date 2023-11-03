@@ -483,9 +483,19 @@ public class Acquisition {
             defaultPeakWidths.clear();
             return;
         }
-        Float defaultWidth = 0.1f;
+
+        float defaultWidth;
 
         int nDim = getDataset().getNDim();
+
+        float[] defaultWidths = new float[nDim];
+
+        for (int j = 0; j < nDim; j++) {
+            int nPoints;
+            nPoints = 5;
+            defaultWidths[j] = (float) Math.abs(theDataset.pointToPPM(j,0)-theDataset.pointToPPM(j,nPoints));
+        }
+
         if (nDim < 3) {
             int[][] pt = new int[nDim][2];
             int[] cpt = new int[nDim];
@@ -546,7 +556,7 @@ public class Acquisition {
             //(approximate) median
             for (int j = 0; j < nDim; j++) {
                 //Collections.sort(widths[j]);
-                defaultWidth = widths[j].get(widths[j].size() / 2);
+                defaultWidth = Math.min(widths[j].get(widths[j].size() / 2),defaultWidths[j]);
                 try {
                     defaultPeakWidths.set(j, defaultWidth);
                 } catch (IndexOutOfBoundsException e) {
@@ -556,9 +566,9 @@ public class Acquisition {
         } else {
             for (int j = 0; j < nDim; j++) {
                 try {
-                    defaultPeakWidths.set(j, defaultWidth);
+                    defaultPeakWidths.set(j, defaultWidths[j]);
                 } catch (IndexOutOfBoundsException e) {
-                    defaultPeakWidths.add(j, defaultWidth);
+                    defaultPeakWidths.add(j, defaultWidths[j]);
                 }
             }
         }

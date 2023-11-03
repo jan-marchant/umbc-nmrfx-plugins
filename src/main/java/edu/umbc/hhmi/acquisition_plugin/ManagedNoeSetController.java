@@ -139,6 +139,7 @@ public class ManagedNoeSetController {
         Menu attr = new Menu("By Attributes");
         Menu struct = new Menu("From Structure");
         MenuItem sub = new MenuItem("From SubProject NOEs");
+        MenuItem peaks = new MenuItem("From PeakList");
 
         //MenuItem setVienna = new MenuItem("Setup Vienna");
         //MenuItem setShifts = new MenuItem("Predict shifts");
@@ -147,7 +148,7 @@ public class ManagedNoeSetController {
         gen.setOnAction(e -> noeSetCombo.getValue().generateNOEsByAttributes());
 
         sub.setOnAction(ProjectRelations::showSubProjNoeTransfer);
-
+        peaks.setOnAction(NoeSetPeakController::showController);
 
         //attr.getItems().addAll(setVienna,setShifts,gen);
         attr.getItems().addAll(gen);
@@ -155,7 +156,7 @@ public class ManagedNoeSetController {
         MenuItem notYet = new MenuItem("Not Implemented Yet");
         struct.getItems().add(notYet);
 
-        generate.getItems().addAll(attr,struct);
+        generate.getItems().addAll(attr,struct, peaks);
         if (SubProjMenu.isSubProjectPresent()) {
             generate.getItems().add(sub);
         }

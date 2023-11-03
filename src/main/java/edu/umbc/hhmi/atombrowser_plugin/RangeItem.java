@@ -4,6 +4,8 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import org.nmrfx.processor.gui.PolyChart;
+import org.nmrfx.processor.gui.spectra.KeyBindings;
 
 public class RangeItem {
 

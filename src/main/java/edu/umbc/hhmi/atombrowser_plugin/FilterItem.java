@@ -12,6 +12,7 @@ import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.PeakList;
 import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.processor.project.Project;
+import org.nmrfx.project.ProjectBase;
 
 public class FilterItem {
 
@@ -89,7 +90,7 @@ public class FilterItem {
             return drawItem.dataset == getObject();
         } else if (object instanceof PeakList) {
             return drawItem.peakList == getObject();
-        } else if (object instanceof Project) {
+        } else if (object instanceof ProjectBase) {
             return drawItem.project == getObject();
         } else if (object instanceof Acquisition) {
             return ((ManagedList) drawItem.peakList).getAcquisition() == object;

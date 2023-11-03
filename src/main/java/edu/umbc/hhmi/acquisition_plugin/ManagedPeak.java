@@ -42,8 +42,8 @@ public class ManagedPeak extends Peak {
             resonance.add(this.getPeakDim(i));
             this.getPeakDim(i).setLabel(atoms.get(i).getShortName());
             //atoms.get(i).setResonance(resonance);
-
-            setShiftFromAtom(atoms.get(i),getPeakDim(i));
+            //Need to remove this for peak picker to work. But I probably added it for some reason....
+            //setShiftFromAtom(atoms.get(i),getPeakDim(i));
         }
 
         for (ManagedNoe noe : noes) {
@@ -107,7 +107,11 @@ public class ManagedPeak extends Peak {
                     }
                 }
                 for (PeakDim peakDim : updateMe) {
-                    peakDim.setChemShift(pickedShift);
+                    if (pickedShift != null) {
+                        peakDim.setChemShift(pickedShift);
+                    } else {
+                        setShiftFromAtom(atoms.get(i),getPeakDim(i));
+                    }
                 }
                 thisPeakDim.setFrozen(freezeMe);
             } else {

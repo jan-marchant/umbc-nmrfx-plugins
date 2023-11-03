@@ -21,13 +21,13 @@ package edu.umbc.hhmi.acquisition_plugin;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.apache.commons.collections4.BidiMap;
-import org.apache.commons.io.output.UncheckedFilterWriter;
 import org.nmrfx.chemistry.*;
 import org.nmrfx.chemistry.constraints.Constraint;
 import org.nmrfx.chemistry.constraints.ConstraintSet;
 import org.nmrfx.chemistry.constraints.MolecularConstraints;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
+import org.nmrfx.peaks.PeakList;
 import org.nmrfx.project.ProjectBase;
 import org.nmrfx.project.ProjectUtilities;
 import org.nmrfx.project.SubProject;
@@ -491,8 +491,67 @@ public class ManagedNoeSet implements ConstraintSet, Iterable<Constraint>, Savef
         }
     }
 
-
     public ManagedNoe getConstraintByID(int id) {
         return noeMap.get(id);
+    }
+
+    public void getNoesFromPeakList(PeakList peakList) {
+        for (Peak peak : peakList.peaks()) {
+            try {
+                Atom toAtom1 = ((AtomResonance) peak.getPeakDim(0).getResonance()).getAtom();
+                Atom toAtom2 = ((AtomResonance) peak.getPeakDim(1).getResonance()).getAtom();
+                if (toAtom1.getSpatialSet() != null && toAtom2.getSpatialSet() != null) {
+                    if (!noeExists(toAtom1, toAtom2)) {
+                        //might want to worry about the scale?
+                        ManagedNoe newNoe = new ManagedNoe(null, toAtom1.getSpatialSet(), toAtom2.getSpatialSet(), peak.getIntensity());
+                        add(newNoe);
+                        System.out.println("Added NOE from " + toAtom1.getFullName() + " to " + toAtom2.getFullName());
+                    } else {
+                        System.out.println("NOE already exists: " + toAtom1.getFullName() + " to " + toAtom2.getFullName());
+                    }
+                }
+            } catch (Exception ignored) {}
+
+        }
+    }
+    public void getNoesFromSubPeakList(PeakList peakList, BidiMap<Entity, Entity> map) {
+        if (map != null && map.size()>0) {
+            for (Peak peak : peakList.peaks()) {
+                try {
+                    Atom a1 = ((AtomResonance) peak.getPeakDim(0).getResonance()).getAtom();
+                    Atom a2 = ((AtomResonance) peak.getPeakDim(1).getResonance()).getAtom();
+                    Entity toEntity1;
+                    Entity toEntity2;
+                    Atom toAtom1;
+                    Atom toAtom2;
+
+                    if (a1.getEntity() instanceof Residue && a2.getEntity() instanceof Residue) {
+                        toEntity1 = map.getKey(a1.getEntity());
+                        toEntity2 = map.getKey(a2.getEntity());
+                    } else {
+                        continue;
+                    }
+                    if (toEntity1 instanceof Residue
+                            && toEntity1.getName().equals(a1.getEntity().getName())
+                            && toEntity2 instanceof Residue
+                            && toEntity2.getName().equals(a2.getEntity().getName())) {
+                        toAtom1 = ((Residue) toEntity1).getAtom(a1.getName());
+                        toAtom2 = ((Residue) toEntity2).getAtom(a2.getName());
+                    } else {
+                        continue;
+                    }
+                    if (toAtom1.getSpatialSet() != null && toAtom2.getSpatialSet() != null) {
+                        if (!noeExists(toAtom1, toAtom2)) {
+                            //might want to worry about the scale?
+                            ManagedNoe newNoe = new ManagedNoe(null, toAtom1.getSpatialSet(), toAtom2.getSpatialSet(), peak.getIntensity());
+                            add(newNoe);
+                            System.out.println("Added NOE from " + toAtom1.getFullName() + " to " + toAtom2.getFullName());
+                        } else {
+                            System.out.println("NOE already exists: " + toAtom1.getFullName() + " to " + toAtom2.getFullName());
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
     }
 }

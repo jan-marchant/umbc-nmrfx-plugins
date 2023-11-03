@@ -9,10 +9,11 @@ import javafx.scene.control.MenuItem;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.controlsfx.dialog.ExceptionDialog;
-import org.nmrfx.chemistry.Entity;
-import org.nmrfx.chemistry.MoleculeBase;
-import org.nmrfx.chemistry.Polymer;
-import org.nmrfx.chemistry.Residue;
+import org.nmrfx.chemistry.*;
+import org.nmrfx.peaks.ManagedList;
+import org.nmrfx.peaks.Peak;
+import org.nmrfx.peaks.PeakDim;
+import org.nmrfx.peaks.PeakList;
 import org.nmrfx.project.ProjectBase;
 import org.nmrfx.project.ProjectUtilities;
 import org.nmrfx.project.SubProject;
@@ -35,6 +36,8 @@ import java.util.stream.Collectors;
 public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRelations> {
     private static SubProjectSceneController subProjController;
     private static SubProjectNoeController subProjNoeController;
+    private static SubProjectAssignmentController subProjAssignmentController;
+    private static SubProjectPeakController subProjPeakController;
 
     private final ProjectBase parentProject;
     private final SubProject subProject;
@@ -168,6 +171,33 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
         }
     }
 
+    @FXML
+    public static void showSubProjAssignmentTransfer(ActionEvent actionEvent) {
+        if (subProjAssignmentController == null) {
+            subProjAssignmentController = new SubProjectAssignmentController();
+            subProjAssignmentController.show(400,400);
+        }
+        if (subProjAssignmentController != null) {
+            subProjAssignmentController.getStage().show();
+            subProjAssignmentController.getStage().toFront();
+        } else {
+            System.out.println("Couldn't make SubProjectAssignmentController ");
+        }
+    }
+
+    @FXML
+    public static void showSubProjPeakTransfer(ActionEvent actionEvent) {
+        if (subProjPeakController == null) {
+            subProjPeakController = new SubProjectPeakController();
+            subProjPeakController.show(400,400);
+        }
+        if (subProjPeakController != null) {
+            subProjPeakController.getStage().show();
+            subProjPeakController.getStage().toFront();
+        } else {
+            System.out.println("Couldn't make SubProjectAssignmentController ");
+        }
+    }
 
     public void remove() {
         ProjectUtilities.removeExtraSaveFrame(getParentProject(),this);
@@ -386,4 +416,90 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
         return null;
     }
 
+    public static void transferAssignments(int fromSet, int toSet, boolean fromRef, boolean toRef, BidiMap<Entity, Entity> map) {
+        if (map != null && map.size()>0) {
+            for (Map.Entry<Entity,Entity> entry : map.entrySet()) {
+                if (entry.getKey() instanceof Residue parentRes) {
+                    if (entry.getValue() instanceof Residue subRes) {
+                        for (Atom parentAtom : parentRes.getAtoms()) {
+                            Atom subAtom = subRes.getAtom(parentAtom.getName());
+                            double fromPPM;
+                            try {
+                                if (fromRef) {
+                                    fromPPM = subAtom.getRefPPM(fromSet).getValue();
+                                } else {
+                                    fromPPM = subAtom.getPPM(fromSet).getValue();
+                                }
+                                if (toRef) {
+                                    parentAtom.setRefPPM(toSet, fromPPM);
+                                } else {
+                                    parentAtom.setPPM(toSet, fromPPM);
+                                }
+                                try {
+                                    //for (PeakDim peakDim1 : parentAtom.getResonance().getPeakDims()) {
+                                        PeakDim peakDim1 = parentAtom.getResonance().getPeakDims().get(0);
+                                        if (peakDim1.getPeakList() instanceof ManagedList list) {
+                                            if (list.getRPpmSet() == toSet && toRef) {
+                                                if (!peakDim1.isFrozen()) {
+                                                    //todo: consider clash detection
+                                                    //todo: add user option for this behaviour
+                                                    //todo: consider behaviour when PPM set (rather than refPPM)
+                                                    peakDim1.setChemShift((float) fromPPM);
+                                                }
+                                            }
+                                        }
+                                    //}
+                                } catch (Exception ignored) {}
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static void transferAssignmentsFromPeaklist(PeakList peakList, int toSet, boolean toRef, BidiMap<Entity, Entity> map, boolean requireFrozen) {
+        if (map != null && map.size() > 0) {
+            for (Peak peak : peakList.peaks()) {
+                for (PeakDim peakDim : peak.getPeakDims()) {
+                    if (peakDim.isFrozen() || !requireFrozen) {
+                        Atom atom = ((AtomResonance) peakDim.getResonance()).getAtom();
+                        Float shift = peakDim.getChemShift();
+                        for (Map.Entry<Entity, Entity> entry : map.entrySet()) {
+                            if (entry.getValue() instanceof Residue subRes) {
+                                if (subRes.getAtoms().contains(atom)) {
+                                    if (entry.getKey() instanceof Residue parentRes) {
+                                        Atom parentAtom = parentRes.getAtom(atom.getName());
+                                        if (toRef) {
+                                            parentAtom.setRefPPM(toSet, shift);
+                                        } else {
+                                            parentAtom.setPPM(toSet, shift);
+                                        }
+                                        try {
+                                            //only need to do once - sliding takes care of the rest
+                                            //for (PeakDim peakDim1 : parentAtom.getResonance().getPeakDims()) {
+                                            PeakDim peakDim1 = parentAtom.getResonance().getPeakDims().get(0);
+                                                if (peakDim1.getPeakList() instanceof ManagedList list) {
+                                                    //todo: is RPpmSet maintained across saves?
+                                                    if (list.getRPpmSet() == toSet && toRef) {
+                                                        if (!peakDim1.isFrozen()) {
+                                                            //todo: consider clash detection
+                                                            //todo: add user option for this behaviour
+                                                            //todo: consider behaviour when PPM set (rather than refPPM)
+                                                            peakDim1.setChemShift(shift);
+                                                        }
+                                                    }
+                                                }
+                                            //}
+                                        } catch (Exception ignored) {}
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

@@ -24,13 +24,13 @@ import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.Entity;
 import org.nmrfx.datasets.DatasetBase;
 import org.nmrfx.datasets.Nuclei;
-import org.nmrfx.fxutil.Fx;
 import org.nmrfx.peaks.PeakDim;
 import org.nmrfx.processor.gui.ControllerTool;
 import org.nmrfx.processor.gui.FXMLController;
 import org.nmrfx.processor.gui.PolyChart;
 import org.nmrfx.processor.gui.controls.GridPaneCanvas;
 import org.nmrfx.processor.gui.spectra.DatasetAttributes;
+import org.nmrfx.processor.gui.spectra.KeyBindings;
 import org.nmrfx.project.ProjectBase;
 import org.nmrfx.structure.chemistry.Molecule;
 import org.nmrfx.utils.GUIUtils;
@@ -83,23 +83,26 @@ public class AtomBrowser implements ControllerTool {
     private Atom currentAtom=null;
 
     private double yMax;
+    private List<AtomBrowser> linkedBrowsers = new ArrayList<>();
 
     public AtomBrowser(FXMLController controller, Consumer<AtomBrowser> closeAction) {
         this.controller = controller;
         this.closeAction = closeAction;
-        if (controller.getActiveChart()!=null) {
+        try {
             xLabel = controller.getActiveChart().getDimNames().get(0);
             yLabel = controller.getActiveChart().getDimNames().get(1);
-        } else {
+        } catch (Exception e) {
             xLabel = "1H";
             yLabel = "H";
         }
+
         int suffix = 1;
         boolean seen;
         do {
             seen = false;
             for (FXMLController test : AnalystApp.getFXMLControllerManager().getControllers()) {
-                if (test.getStage().getTitle().equalsIgnoreCase("Browser " + suffix)) {
+                String title = test.getStage().getTitle();
+                if (title != null && title.equalsIgnoreCase("Browser " + suffix)) {
                     suffix += 1;
                     seen = true;
                 }
@@ -109,12 +112,104 @@ public class AtomBrowser implements ControllerTool {
         controller.getStage().setTitle("Browser "+suffix);
     }
 
+    private void unlinkAll() {
+        for (AtomBrowser linkBrowser : linkedBrowsers) {
+            removeLink(linkBrowser);
+            linkBrowser.removeLink(this);
+        }
+    }
+
+    public void toggleLink(AtomBrowser linkBrowser) {
+        if (linkedBrowsers.contains(linkBrowser)) {
+            removeLink(linkBrowser);
+            linkBrowser.removeLink(this);
+        } else {
+            addLink(linkBrowser);
+            linkBrowser.addLink(this);
+        }
+    }
+
+    private void addLink(AtomBrowser linkBrowser) {
+        if (!linkedBrowsers.contains(linkBrowser)) {
+            linkedBrowsers.add(linkBrowser);
+        }
+    }
+
+    private void removeLink(AtomBrowser linkBrowser) {
+        linkedBrowsers.remove(linkBrowser);
+    }
+
     public ToolBar getToolBar() {
         return browserToolBar;
     }
 
     public void close() {
+        unlinkAll();
+        removeListeners();
         closeAction.accept(this);
+    }
+
+    private void addKeyBindingsToChart(PolyChart chart) {
+        KeyBindings keyBindings = chart.getKeyBindings();
+        keyBindings.registerKeyAction("r1",this::selectRangeItem1);
+        keyBindings.registerKeyAction("r2",this::selectRangeItem2);
+        keyBindings.registerKeyAction("r3",this::selectRangeItem3);
+        keyBindings.registerKeyAction("r4",this::selectRangeItem4);
+        keyBindings.registerKeyAction("r5",this::selectRangeItem5);
+        keyBindings.registerKeyAction("r6",this::selectRangeItem6);
+        keyBindings.registerKeyAction("r7",this::selectRangeItem7);
+        keyBindings.registerKeyAction("r8",this::selectRangeItem8);
+        keyBindings.registerKeyAction("r9",this::selectRangeItem9);
+    }
+
+    private void selectRangeItem1(PolyChart polyChart) {
+        selectRangeItem(1);
+    }
+    private void selectRangeItem2(PolyChart polyChart) {
+        selectRangeItem(2);
+    }
+    private void selectRangeItem3(PolyChart polyChart) {
+        selectRangeItem(3);
+    }
+    private void selectRangeItem4(PolyChart polyChart) {
+        selectRangeItem(4);
+    }
+    private void selectRangeItem5(PolyChart polyChart) {
+        selectRangeItem(5);
+    }
+    private void selectRangeItem6(PolyChart polyChart) {
+        selectRangeItem(6);
+    }
+    private void selectRangeItem7(PolyChart polyChart) {
+        selectRangeItem(7);
+    }
+    private void selectRangeItem8(PolyChart polyChart) {
+        selectRangeItem(8);
+    }
+    private void selectRangeItem9(PolyChart polyChart) {
+        selectRangeItem(9);
+    }
+
+    private void selectRangeItem(int i) {
+        if ((i-1)<rangeSelector.getItems().size()) {
+            rangeSelector.setValue(rangeSelector.getItems().get(i - 1));
+            updateRange();
+        }
+    }
+
+
+    public void removeListeners(PolyChart chart) {
+        KeyBindings keyBindings = chart.getKeyBindings();
+        for (int i = 1; i<10; i++) {
+            keyBindings.deregisterKeyAction("r"+i);
+        }
+    }
+
+
+    public void removeListeners() {
+        for (PolyChart chart : controller.getCharts()) {
+            removeListeners(chart);
+        }
     }
 
     public void initialize() {
@@ -148,6 +243,7 @@ public class AtomBrowser implements ControllerTool {
             @Override
             public void selectAtom (Atom atom) {
                 setAtom(atom);
+                Platform.runLater(() -> updateLinkedBrowsers(atom, new ArrayList<>(List.of(this.atomBrowser))));
             }
 
             @Override
@@ -155,19 +251,13 @@ public class AtomBrowser implements ControllerTool {
 
             }
         };
+        //atomSelector1.setFilterString();
 
         atomSelector2 = new AtomSelector(this, "Locate",true) {
             @Override
             public void selectAtom(Atom atom) {
                 if (atom!=null) {
-                    LocateItem locateItem = new LocateItem(atomBrowser, atom);
-                    if (!locateItems.contains(locateItem)) {
-                        locateItems.add(locateItem);
-                        locateItem.add();
-                    } else {
-                        locateItems.get(locateItems.indexOf(locateItem)).remove();
-                        locateItems.remove(locateItem);
-                    }
+                    selectLocateItem(atom);
                 }
                 Platform.runLater(() -> this.atomComboBox.setValue(null));
             }
@@ -177,6 +267,7 @@ public class AtomBrowser implements ControllerTool {
                 clearLocates();
             }
         };
+        //atomSelector2.setFilterString();
 
         atomSelector1.prefWidthProperty().bindBidirectional(atomSelector2.prefWidthProperty());
         browserToolBar.getItems().add(atomSelector1);
@@ -211,8 +302,7 @@ public class AtomBrowser implements ControllerTool {
         });
 
         Button restore = new Button("Refresh");
-        //restore.setOnAction(e -> setAtom(currentAtom));
-        restore.setOnAction(e -> refreshAllCharts());
+        restore.setOnAction(e -> updateAllBounds());
         restore.setAlignment(Pos.BASELINE_LEFT);
 
         VBox vBox3 = new VBox(rangeSelector,restore);
@@ -299,11 +389,39 @@ public class AtomBrowser implements ControllerTool {
         addFiller(browserToolBar);
         browserToolBar.getItems().add(orientationComboBox);
 
+        addRangeControl("Full", -1000, 1000);
         addRangeControl("Aro", 6.5, 8.6);
         rangeSelector.setValue(addRangeControl("H1'", 5.1, 6.2));
         addRangeControl("H2'", 3.8, 5.1);
         updateRange();
         controller.getBottomBox().getChildren().add(browserToolBar);
+    }
+
+    private void selectLocateItem(Atom atom) {
+        toggleLocateItem(atom);
+
+        for (ProjectRelations projectRelation : ProjectRelations.getProjectRelations()) {
+            BidiMap<Entity, Entity> map = projectRelation.entityMap;
+            if (map.containsKey(atom.getEntity())) {
+                Entity otherEntity = map.get(atom.getEntity());
+                for (Atom otherAtom : otherEntity.getAtoms()) {
+                    if (otherAtom.getName().equals(atom.getName())) {
+                        toggleLocateItem(otherAtom);
+                    }
+                }
+            }
+        }
+    }
+
+    private void toggleLocateItem(Atom atom) {
+        LocateItem locateItem = new LocateItem(this, atom);
+        if (!locateItems.contains(locateItem)) {
+            locateItems.add(locateItem);
+            locateItem.add();
+        } else {
+            locateItems.get(locateItems.indexOf(locateItem)).remove();
+            locateItems.remove(locateItem);
+        }
     }
 
     private void updateOrientation() {
@@ -387,6 +505,14 @@ public class AtomBrowser implements ControllerTool {
     }
 
     public void addDrawItems(Atom atom, ProjectBase project) {
+        //fixme: atom resonances not set during project load
+        /*if (atom.getResonance()==null) {
+            try {
+                atom.setResonance(SubProject.resFactory(project).getLabelMap().get(atom.getName()).get(0));
+            } catch (Exception ignored) {}
+        }
+
+         */
         if (atom.getResonance()!=null) {
             for (PeakDim peakDim : atom.getResonance().getPeakDims()) {
                 if (peakDim.getSpectralDimObj().getDimName().equals(xLabel)) {
@@ -402,7 +528,8 @@ public class AtomBrowser implements ControllerTool {
                                 }
                             }
                             if (!seen) {
-                                drawItems.add(new DrawItem(this, peakDim, otherDim, project));
+                                drawItems.add(new DrawItem(this, atom, peakDim, otherDim, project));
+                                //addLocateItem(atom);
                             }
                         }
                     }
@@ -411,16 +538,38 @@ public class AtomBrowser implements ControllerTool {
         }
     }
 
-    public void setAtom(Atom atom) {
-        if (atom == null) {
-            return;
+    public void updateLinkedBrowsers(Atom atom, ArrayList<AtomBrowser> done) {
+        for (AtomBrowser linkBrowser : linkedBrowsers) {
+            if (!done.contains(linkBrowser)) {
+                done.add(linkBrowser);
+                linkBrowser.setAtom(atom);
+                linkBrowser.atomSelector1.setAtomValue(atom);
+                linkBrowser.updateLinkedBrowsers(atom, done);
+            }
         }
-        LocateItem locateItem = new LocateItem(this, currentAtom);
+    }
+
+    public void addLocateItem(Atom atom) {
+        LocateItem locateItem = new LocateItem(this, atom);
+        if (!locateItems.contains(locateItem)) {
+            locateItems.add(locateItem);
+            locateItem.add();
+        }
+    }
+
+    public void removeLocateItem(Atom atom) {
+        LocateItem locateItem = new LocateItem(this, atom);
         if (locateItems.contains(locateItem)) {
             //find the original locateItem (uses a comparator that only compares atom
             //so not the same object as locateItem
             locateItems.get(locateItems.indexOf(locateItem)).remove();
             locateItems.remove(locateItem);
+        }
+    }
+
+    public void setAtom(Atom atom) {
+        if (atom == null) {
+            return;
         }
         for (DrawItem item : drawItems) {
             item.remove();
@@ -442,11 +591,8 @@ public class AtomBrowser implements ControllerTool {
             }
         }
         layoutDrawItems();
-
-        locateItem = new LocateItem(this, atom);
-        if (!locateItems.contains(locateItem)) {
-            locateItems.add(locateItem);
-            locateItem.add();
+        for (DrawItem item : drawItems) {
+            addLocateItem(item.getAtom());
         }
     }
 
@@ -488,19 +634,32 @@ public class AtomBrowser implements ControllerTool {
     public void layoutDrawItems() {
         //can we make scrollable?
         controller.setBorderState(true);
+        //todo: setNCharts should clearDataAndPeaks for any removed charts
+        //todo: otherwise we get glitches
+        //todo: it doesn't hence:
+        for (PolyChart chart : controller.getCharts()) {
+            chart.clearDataAndPeaks();
+            removeListeners(chart);
+        }
         controller.setNCharts(0);
         int i = 1;
         setyMin(Double.MAX_VALUE);
         setyMax(Double.MIN_VALUE);
 
         PolyChart previousChart = null;
+        if (drawItems.size()==0) {
+            controller.addChart();
+        }
         for (DrawItem item : drawItems) {
+
             if (item.isAllowed(filterList)) {
                 if (controller.getCharts().size() < i) {
                     controller.addChart();
                 }
                 PolyChart chart = controller.getCharts().get(i - 1);
 
+                chart.clearDataAndPeaks();
+                chart.drawPeakLists(true);
                 item.setChart(chart);
                 item.setupChartProperties();
                 item.setChartBounds();
@@ -520,9 +679,11 @@ public class AtomBrowser implements ControllerTool {
                 chart.getAxes().get(rangeDim).upperBoundProperty().addListener(e->refreshChart(chart));
 
                 chart.autoScale();
+
                 for (DatasetAttributes datasetAt : chart.getActiveDatasetAttributes()) {
                     datasetAt.setLvl(getLevelForDataset(datasetAt));
                 }
+                addKeyBindingsToChart(chart);
                 i++;
             }
         }
@@ -531,6 +692,8 @@ public class AtomBrowser implements ControllerTool {
         drawLocateItems();
         updateWidth();
         updateAspectRatio();
+        //remove below to get an auto range showing all peaks - not actually very good imo
+        updateRange();
     }
 
     private static double getLevelForDataset(DatasetAttributes datasetAt) {
@@ -564,6 +727,13 @@ public class AtomBrowser implements ControllerTool {
         return rangeItems;
     }
 
+    public void updateAllBounds() {
+        for (DrawItem drawItem : drawItems) {
+            drawItem.updateChartBounds(false);
+        }
+        updateRange();
+    }
+
     public void refreshChart(PolyChart chart) {
         Platform.runLater(chart::refresh);
     }
@@ -578,14 +748,31 @@ public class AtomBrowser implements ControllerTool {
             double min = rangeItem.getMin();
             double max = rangeItem.getMax();
 
-            controller.getCharts().forEach(chart -> {
+            double seenMin = Double.MAX_VALUE;
+            double seenMax = Double.MIN_VALUE;
+            for (PolyChart chart : controller.getCharts()) {
+                for (DatasetAttributes attr : chart.getActiveDatasetAttributes()) {
+                    double[] limit = attr.getRange(DatasetAttributes.AXMODE.PPM,rangeDim);
+                    if (Math.min(limit[0],limit[1])<seenMin) {
+                        seenMin = Math.min(limit[0],limit[1]);
+                    }
+                    if (Math.max(limit[0],limit[1])>seenMax) {
+                        seenMax = Math.max(limit[0],limit[1]);
+                    }
+                }
+            }
+
+            if (seenMin > min) {min = seenMin;}
+            if (seenMax < max) {max = seenMax;}
+
+            for (PolyChart chart : controller.getCharts()) {
                 try {
                     chart.getAxes().get(rangeDim).setLowerBound(min);
                     chart.getAxes().get(rangeDim).setUpperBound(max);
                 } catch (NumberFormatException ignored) {
 
                 }
-            });
+            }
         }
     }
 
@@ -605,6 +792,10 @@ public class AtomBrowser implements ControllerTool {
 
     public void setyMax(double yMax) {
         this.yMax = yMax;
+    }
+
+    public boolean isLinked(AtomBrowser atomBrowser) {
+        return linkedBrowsers.contains(atomBrowser);
     }
 }
 

@@ -27,6 +27,7 @@ import javafx.util.StringConverter;
 import javafx.util.converter.NumberStringConverter;
 import org.nmrfx.analyst.gui.AnalystApp;
 import org.nmrfx.datasets.DatasetBase;
+import org.nmrfx.peaks.PeakList;
 import org.nmrfx.processor.gui.FXMLController;
 import org.nmrfx.processor.project.Project;
 import org.nmrfx.project.ProjectBase;
@@ -36,8 +37,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
-
-//import static org.nmrfx.analyst.gui.AnalystApp.getFXMLControllerManager;
 
 public class AtomBrowserSetup {
 
@@ -54,6 +53,8 @@ public class AtomBrowserSetup {
 
     MenuButton addFilterItem = new MenuButton("Add Filter Item");
     Menu projectFilter = new Menu ("Projects");
+    Menu peakListFilter = new Menu ("PeakLists");
+    Menu datasetFilter = new Menu ("Datasets");
     Menu experimentFilter = new Menu ("Experiments");
     Menu conditionFilter = new Menu ("Conditions");
     Menu sampleFilter = new Menu ("Samples");
@@ -61,6 +62,7 @@ public class AtomBrowserSetup {
 
 
     ChoiceBox<FXMLController> atomBrowserChoice = new ChoiceBox<>();
+    ChoiceBox<FXMLController> atomBrowserLink = new ChoiceBox<>();
 
     static {
         filterMap.put("RNA-H", "*.H8,H2,H6,H5,H1'");
@@ -89,6 +91,7 @@ public class AtomBrowserSetup {
         stage.setAlwaysOnTop(true);
 
         Label nameLabel=new Label("Window:");
+        Label linkLabel=new Label("Toggle Links:");
 
         ObservableList<FXMLController> controllerList = FXCollections.observableArrayList(AnalystApp.getFXMLControllerManager().getControllers().stream().filter(c -> c.containsTool(AtomBrowser.class)).collect(Collectors.toList()));
 
@@ -104,9 +107,36 @@ public class AtomBrowserSetup {
             }
         });
 
+        atomBrowserLink.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(FXMLController object) {
+                if (object == null) {
+                    return (controllerList.size()-1)+" available";
+                }
+                try {
+                    String included = (getAtomBrowser().isLinked(getAtomBrowser(object))) ? "(remove)" : "(add)";
+                    if (object == controller) {
+                        included = "(self)";
+                    }
+                    return object.getStage().getTitle() + " " + included;
+                } catch (Exception e) {
+                    return "";
+                }
+            }
+
+            @Override
+            public FXMLController fromString(String string) {
+                return null;
+            }
+        });
+
         atomBrowserChoice.setItems(controllerList);
         atomBrowserChoice.setValue(controller);
         atomBrowserChoice.setOnAction(e -> updateController());
+
+        atomBrowserLink.setItems(controllerList);
+        atomBrowserLink.setValue(null);
+        atomBrowserLink.setOnAction(e -> linkController());
 
         Label xAxis = new Label("x Axis Label: ");
         Label yAxis = new Label("y Axis Label: ");
@@ -205,11 +235,14 @@ public class AtomBrowserSetup {
             }
         });
 
-        addFilterItem.getItems().addAll(projectFilter,experimentFilter,conditionFilter,sampleFilter,acquisitionFilter);
+        addFilterItem.getItems().addAll(projectFilter,peakListFilter,datasetFilter,experimentFilter,conditionFilter,sampleFilter,acquisitionFilter);
 
         Region region1 = new Region();
         HBox.setHgrow(region1, Priority.ALWAYS);
         HBox hBox=new HBox(nameLabel,region1,atomBrowserChoice);
+        Region regionLink = new Region();
+        HBox.setHgrow(regionLink, Priority.ALWAYS);
+        HBox hBoxLink=new HBox(linkLabel,regionLink,atomBrowserLink);
         Region region2 = new Region();
         HBox.setHgrow(region2, Priority.ALWAYS);
         HBox hBox2=new HBox(xAxis,region2,xLabel);
@@ -221,6 +254,7 @@ public class AtomBrowserSetup {
         HBox hBox5=new HBox(atomFilter2,atomFilterTextField2);
 
         hBox.setAlignment(Pos.CENTER_LEFT);
+        hBoxLink.setAlignment(Pos.CENTER_LEFT);
         hBox2.setAlignment(Pos.CENTER_LEFT);
         hBox3.setAlignment(Pos.CENTER_LEFT);
         hBox4.setAlignment(Pos.CENTER_LEFT);
@@ -232,7 +266,7 @@ public class AtomBrowserSetup {
         Separator separator4 = new Separator(Orientation.HORIZONTAL);
 
 
-        VBox vBox=new VBox(hBox,hBox2,hBox3,hBox4,hBox5,separator1,rangeItemTable,addRangeItem,separator2,filterItemTable,addFilterItem,separator3);
+        VBox vBox=new VBox(hBox,hBoxLink,hBox2,hBox3,hBox4,hBox5,separator1,rangeItemTable,addRangeItem,separator2,filterItemTable,addFilterItem,separator3);
 
         //vBox.setSpacing(2);
         Button ok = new Button("OK");
@@ -260,6 +294,14 @@ public class AtomBrowserSetup {
         initialize();
     }
 
+    public void linkController () {
+        FXMLController link = atomBrowserLink.getValue();
+        if (link != controller && link !=null) {
+            getAtomBrowser().toggleLink(getAtomBrowser(link));
+        }
+        atomBrowserLink.setValue(null);
+    }
+
     public void initialize() {
         xLabel.setValue(getAtomBrowser().getxLabel());
         yLabel.setValue(getAtomBrowser().getyLabel());
@@ -281,10 +323,58 @@ public class AtomBrowserSetup {
             Menu item = new Menu(object.getSubProject().getName());
             MenuItem allow2 = new MenuItem("Allow");
             MenuItem deny2 = new MenuItem("Deny");
-            allow2.setOnAction(e-> getAtomBrowser().addFilterItem(object,true));
-            deny2.setOnAction(e-> getAtomBrowser().addFilterItem(object,false));
+            allow2.setOnAction(e-> getAtomBrowser().addFilterItem(object.getSubProject(),true));
+            deny2.setOnAction(e-> getAtomBrowser().addFilterItem(object.getSubProject(),false));
             projectFilter.getItems().add(item);
             item.getItems().addAll(allow2,deny2);
+        }
+
+        peakListFilter.getItems().clear();
+
+        for (PeakList object : ProjectBase.getActive().getPeakLists()) {
+            Menu item = new Menu(object.getName());
+            MenuItem allow2 = new MenuItem("Allow");
+            MenuItem deny2 = new MenuItem("Deny");
+            allow2.setOnAction(e-> getAtomBrowser().addFilterItem(object,true));
+            deny2.setOnAction(e-> getAtomBrowser().addFilterItem(object,false));
+            peakListFilter.getItems().add(item);
+            item.getItems().addAll(allow2,deny2);
+        }
+
+        for (ProjectRelations pr : ProjectRelations.getProjectRelations()) {
+            for (PeakList object : pr.getSubProject().getPeakLists()) {
+                Menu item = new Menu(object.getName()+" ("+pr.getSubProject().getName()+")");
+                MenuItem allow2 = new MenuItem("Allow");
+                MenuItem deny2 = new MenuItem("Deny");
+                allow2.setOnAction(e -> getAtomBrowser().addFilterItem(object, true));
+                deny2.setOnAction(e -> getAtomBrowser().addFilterItem(object, false));
+                peakListFilter.getItems().add(item);
+                item.getItems().addAll(allow2, deny2);
+            }
+        }
+
+        datasetFilter.getItems().clear();
+
+        for (DatasetBase object : ProjectBase.getActive().getDatasets()) {
+            Menu item = new Menu(object.getName());
+            MenuItem allow2 = new MenuItem("Allow");
+            MenuItem deny2 = new MenuItem("Deny");
+            allow2.setOnAction(e-> getAtomBrowser().addFilterItem(object,true));
+            deny2.setOnAction(e-> getAtomBrowser().addFilterItem(object,false));
+            datasetFilter.getItems().add(item);
+            item.getItems().addAll(allow2,deny2);
+        }
+
+        for (ProjectRelations pr : ProjectRelations.getProjectRelations()) {
+            for (DatasetBase object : pr.getSubProject().getDatasets()) {
+                Menu item = new Menu(object.getName()+" ("+pr.getSubProject().getName()+")");
+                MenuItem allow2 = new MenuItem("Allow");
+                MenuItem deny2 = new MenuItem("Deny");
+                allow2.setOnAction(e -> getAtomBrowser().addFilterItem(object, true));
+                deny2.setOnAction(e -> getAtomBrowser().addFilterItem(object, false));
+                datasetFilter.getItems().add(item);
+                item.getItems().addAll(allow2, deny2);
+            }
         }
 
         experimentFilter.getItems().clear();
@@ -390,7 +480,14 @@ public class AtomBrowserSetup {
     }
 
     AtomBrowser getAtomBrowser() {
-        return ((AtomBrowser) controller.getTool(AtomBrowser.class));
+        return getAtomBrowser(controller);
+    }
+
+    AtomBrowser getAtomBrowser(FXMLController fxmlController) {
+        if (fxmlController == null) {
+            return null;
+        }
+        return ((AtomBrowser) fxmlController.getTool(AtomBrowser.class));
     }
 
     void cancel() {

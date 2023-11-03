@@ -96,6 +96,9 @@ abstract class AtomSelector extends VBox {
 
     public abstract void selectAtom (Atom atom);
 
+    public void setAtomValue (Atom atom) {
+        atomComboBox.setValue(atom);
+    }
     public abstract void clearAction();
 
     public void setFilterString(String string) {

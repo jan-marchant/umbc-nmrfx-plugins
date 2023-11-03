@@ -3,6 +3,8 @@ package org.nmrfx.chemistry.search;
 import edu.umbc.hhmi.acquisition_plugin.JCouplingPath;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.Bond;
+import org.nmrfx.chemistry.Entity;
+import org.nmrfx.structure.chemistry.CouplingList;
 import org.nmrfx.structure.chemistry.JCoupling;
 import org.nmrfx.structure.chemistry.Molecule;
 
@@ -28,6 +30,7 @@ public class MoleculeCouplingList {
     public HashMap<Integer, List<JCoupling>> couplingMap=new HashMap<>();
     public HashMap<Integer,List<JCoupling>> homoCouplingMap=new HashMap<>();
     public HashMap<Integer,List<JCouplingPath>> transferMap=new HashMap<>();
+    public HashMap<Atom, List<JCoupling>> tocsyCouplingMap = new HashMap<>();
 
     public HashMap<Atom,HashMap<Integer, ArrayList<Atom>>> couplingMap2=new HashMap<>();
     public HashMap<Atom,HashMap<Integer,ArrayList<Atom>>> homoCouplingMap2=new HashMap<>();
@@ -36,6 +39,16 @@ public class MoleculeCouplingList {
     public MoleculeCouplingList(Molecule mol) {
         this.mol = mol;
         initBondsAndTransfers();
+        for (Entity entity : mol.getCompoundsAndResidues()) {
+            CouplingList couplingList = new CouplingList();
+            couplingList.generateCouplings(entity, 3, 2, 3, 2);
+            List<JCoupling> tocsyLinks = couplingList.getTocsyLinks();
+            for (JCoupling tocsyLink : tocsyLinks) {
+                Atom atom = tocsyLink.getAtom(0);
+                List<JCoupling> atomCouplings = tocsyCouplingMap.computeIfAbsent(atom, k -> new ArrayList<>());
+                atomCouplings.add(tocsyLink);
+            }
+        }
     }
 
     public void initBondsAndTransfers() {

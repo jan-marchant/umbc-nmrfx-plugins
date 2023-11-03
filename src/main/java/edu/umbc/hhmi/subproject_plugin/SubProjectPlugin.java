@@ -11,7 +11,7 @@ import java.util.Set;
 @AutoService(NMRFxPlugin.class)
 public class SubProjectPlugin implements NMRFxPlugin {
 
-    //public static Menu subProjMenu;
+    public static Menu subProjMenu;
 
     @Override
     public String getName() {
@@ -36,13 +36,22 @@ public class SubProjectPlugin implements NMRFxPlugin {
 
         if (entryPoint == EntryPoint.MENU_PLUGINS) {
             System.out.println("Adding SubProject setup to plugins menu");
-            //subProjMenu = new Menu("SubProject Setup");
+            subProjMenu = new Menu("SubProjects");
 
-            MenuItem subProjMenuItem = new MenuItem("Setup SubProjects");
-            subProjMenuItem.setOnAction(ProjectRelations::showProjectRelations);
+            MenuItem subProjSetupMenuItem = new MenuItem("Setup");
+            subProjSetupMenuItem.setOnAction(ProjectRelations::showProjectRelations);
 
-            //subProjMenu.getItems().addAll(setupMenuItem);
-            ((Menu) object).getItems().addAll(subProjMenuItem);
+            MenuItem subProjAssignments = new MenuItem("Get Assignments");
+            subProjAssignments.setOnAction(ProjectRelations::showSubProjAssignmentTransfer);
+
+            MenuItem subProjNoes = new MenuItem("Get NOEs");
+            subProjNoes.setOnAction(ProjectRelations::showSubProjNoeTransfer);
+
+            MenuItem subProjPeaks = new MenuItem("Get From Peaks");
+            subProjPeaks.setOnAction(ProjectRelations::showSubProjPeakTransfer);
+
+            subProjMenu.getItems().addAll(subProjSetupMenuItem, subProjAssignments, subProjNoes, subProjPeaks);
+            ((Menu) object).getItems().addAll(subProjMenu);
 
             //KeyBindings.registerGlobalKeyAction("ds", this::tweakPeaks);
         }

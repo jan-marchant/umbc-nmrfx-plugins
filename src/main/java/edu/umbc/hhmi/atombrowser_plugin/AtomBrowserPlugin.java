@@ -8,7 +8,9 @@ import org.nmrfx.analyst.gui.AnalystApp;
 import org.nmrfx.plugin.api.EntryPoint;
 import org.nmrfx.plugin.api.NMRFxPlugin;
 import org.nmrfx.processor.gui.FXMLController;
+import org.nmrfx.processor.gui.PolyChart;
 import org.nmrfx.processor.gui.SpectrumStatusBar;
+import org.nmrfx.processor.gui.spectra.KeyBindings;
 
 import java.util.Set;
 
@@ -17,11 +19,15 @@ public class AtomBrowserPlugin implements NMRFxPlugin {
     //STARTUP, MENU_FILE, MENU_PLUGINS, STATUS_BAR_TOOLS
     @Override
     public Set<EntryPoint> getSupportedEntryPoints() {
-        return Set.of(EntryPoint.STATUS_BAR_TOOLS);
+        return Set.of(EntryPoint.STARTUP, EntryPoint.STATUS_BAR_TOOLS);
     }
 
     @Override
     public void registerOnEntryPoint(EntryPoint entryPoint, Object object) {
+        if (entryPoint == EntryPoint.STARTUP) {
+            KeyBindings.registerGlobalKeyAction("pb", this::showAtomBrowser);
+            KeyBindings.registerGlobalKeyAction("ps", this::showPeakSlider);
+        }
         if (entryPoint == EntryPoint.MENU_PLUGINS) {
             System.out.println("Adding AtomBrowser to plugins menu");
 
@@ -35,6 +41,14 @@ public class AtomBrowserPlugin implements NMRFxPlugin {
             atomBrowserMenuItem.setOnAction(this::showAtomBrowser);
             ((SpectrumStatusBar) object).addToToolMenu(atomBrowserMenuItem);
         }
+    }
+
+    private void showPeakSlider(String s, PolyChart polyChart) {
+        AnalystApp.getAnalystApp().showPeakSlider();
+    }
+
+    private void showAtomBrowser(String s, PolyChart polyChart) {
+        showAtomBrowser(null);
     }
 
     public void showAtomBrowser(Event e) {

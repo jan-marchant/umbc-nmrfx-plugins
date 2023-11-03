@@ -1,5 +1,7 @@
 package edu.umbc.hhmi.acquisition_plugin;
 
+import org.nmrfx.chemistry.Atom;
+import org.nmrfx.chemistry.AtomResonance;
 import org.nmrfx.chemistry.utilities.NvUtil;
 import org.nmrfx.peaks.*;
 import org.nmrfx.processor.datasets.Dataset;
@@ -45,6 +47,21 @@ public class ManagedListSaveframeProcessor implements SaveframeProcessor {
             experimentClass = saveframe.getLabelValue("_Spectral_peak_list", "Experiment_class");
         } catch (Exception e) {
             System.out.println(listName + " is not managed");
+            PeakList original = PeakList.get(listName);
+            for (Peak peak : original.peaks()) {
+                for (PeakDim peakDim : peak.getPeakDims()) {
+                    try {
+                        AtomResonance resonance = (AtomResonance) peakDim.getResonance();
+                        Atom atom = resonance.getPossibleAtom();
+                        if (atom.getResonance() == null) {
+                            atom.setResonance(((AtomResonance) peakDim.getResonance()));
+                        } else {
+                            atom.getResonance().add(peakDim);
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
             return;
         }
 

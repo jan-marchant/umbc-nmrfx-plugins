@@ -44,6 +44,9 @@ public class LocateItem {
                 drawItem.removeAnnotation(anno);
             }
             drawItem.removeLocateItem(this);
+            if (drawItem.getChart() != null) {
+                drawItem.getChart().refresh();
+            }
         }
         annotations.clear();
     }
@@ -53,6 +56,9 @@ public class LocateItem {
             drawItem.removeAnnotation(anno);
         }
         drawItem.removeLocateItem(this);
+        if (drawItem.getChart() != null) {
+            drawItem.getChart().refresh();
+        }
         annotations.remove(drawItem);
     }
 
@@ -76,7 +82,7 @@ public class LocateItem {
             shiftColor = getShiftColor(atomBrowser.rangeDim, drawItem);
             if (shiftColor.getShift() != null) {
                 anno.setY(shiftColor.getShift());
-                anno.setTextY(shiftColor.getShift());
+                anno.setStroke(shiftColor.getColor());
             }
         }
     }
@@ -160,18 +166,24 @@ public class LocateItem {
     }
 
     public void add(DrawItem drawItem) {
+        boolean refresh = false;
         ShiftColor shiftColor = getShiftColor(atomBrowser.centerDim, drawItem);
         AnnoLineWithText annoLine;
         if (shiftColor.getShift() != null) {
             annoLine = new AnnoLineWithText(atom.getShortName(), shiftColor.getShift(), 0.99, shiftColor.getShift(), 0, shiftColor.getShift(), 1, CanvasAnnotation.POSTYPE.WORLD, CanvasAnnotation.POSTYPE.FRACTION);
             annoLine.setStroke(shiftColor.getColor());
             addAnnotation(annoLine, drawItem);
+            refresh = true;
         }
         shiftColor = getShiftColor(atomBrowser.rangeDim, drawItem);
         if (shiftColor.getShift() != null) {
             annoLine = new AnnoLineWithText(atom.getShortName(), 0.01, shiftColor.getShift(), 0, shiftColor.getShift(), 1, shiftColor.getShift(), CanvasAnnotation.POSTYPE.FRACTION, CanvasAnnotation.POSTYPE.WORLD);
             annoLine.setStroke(shiftColor.getColor());
             addAnnotation(annoLine, drawItem);
+            refresh = true;
+        }
+        if (refresh) {
+            drawItem.getChart().refresh();
         }
     }
 }

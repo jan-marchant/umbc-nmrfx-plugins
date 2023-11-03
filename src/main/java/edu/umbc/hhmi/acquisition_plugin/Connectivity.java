@@ -3,6 +3,7 @@ package edu.umbc.hhmi.acquisition_plugin;
 import org.apache.commons.lang3.StringUtils;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.search.MoleculeCouplingList;
+import org.nmrfx.structure.chemistry.JCoupling;
 import org.nmrfx.structure.chemistry.Molecule;
 
 import java.util.*;
@@ -150,7 +151,13 @@ public class Connectivity {
     public Set<Atom> getTocsyConnections(Atom atom) {
         Molecule mol= (Molecule) atom.getTopEntity().molecule;
         Set<Atom> atoms=new HashSet<>();
-
+        List<JCoupling> tocsyCouplings = MoleculeCouplingList.getMoleculeCouplingList(mol).tocsyCouplingMap.get(atom);
+        try {
+            for (JCoupling tocsyCoupling : tocsyCouplings) {
+                atoms.add(tocsyCoupling.getAtom(1));
+            }
+        } catch (Exception ignored) {}
+        /*
         for (int transfers = minTransfers; transfers<= maxTransfers; transfers++) {
             if (MoleculeCouplingList.getMoleculeCouplingList(mol).transferMap2.get(atom)!=null) {
                 for (LinkedList<Atom> list : MoleculeCouplingList.getMoleculeCouplingList(mol).transferMap2.get(atom).get(transfers)) {
@@ -160,6 +167,7 @@ public class Connectivity {
             }
         }
 
+         */
         return atoms;
     }
 

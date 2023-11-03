@@ -261,4 +261,8 @@ public class SubProject extends GUIProject {
         log.warn("Cannot save SubProject yet - sorry!");
     }
 
+    @Override
+    public String toString() {
+        return getName();
+    }
 }
