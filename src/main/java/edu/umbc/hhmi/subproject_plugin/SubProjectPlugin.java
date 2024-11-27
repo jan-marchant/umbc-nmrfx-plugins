@@ -5,6 +5,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import org.nmrfx.plugin.api.EntryPoint;
 import org.nmrfx.plugin.api.NMRFxPlugin;
+import org.nmrfx.plugin.api.PluginFunction;
 
 import java.util.Set;
 
@@ -51,7 +52,7 @@ public class SubProjectPlugin implements NMRFxPlugin {
             subProjPeaks.setOnAction(ProjectRelations::showSubProjPeakTransfer);
 
             subProjMenu.getItems().addAll(subProjSetupMenuItem, subProjAssignments, subProjNoes, subProjPeaks);
-            ((Menu) object).getItems().addAll(subProjMenu);
+            ((Menu) ((PluginFunction) object).guiObject()).getItems().addAll(subProjMenu);
 
             //KeyBindings.registerGlobalKeyAction("ds", this::tweakPeaks);
         }

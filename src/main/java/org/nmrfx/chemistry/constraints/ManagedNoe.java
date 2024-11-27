@@ -17,17 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.umbc.hhmi.acquisition_plugin;
+package org.nmrfx.chemistry.constraints;
 
+import edu.umbc.hhmi.acquisition_plugin.ManagedNoeSet;
 import org.nmrfx.chemistry.*;
-import org.nmrfx.chemistry.constraints.DistanceConstraint;
-import org.nmrfx.chemistry.constraints.DistanceStat;
-import org.nmrfx.chemistry.constraints.Flags;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakDim;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.List;
 
 enum DisTypes {
 
@@ -130,7 +129,7 @@ public class ManagedNoe extends DistanceConstraint implements Serializable {
     }
 
     public ManagedNoe(Peak p, SpatialSet sp1, SpatialSet sp2, double newScale) {
-        super(sp1, sp2);
+        super();
         SpatialSetGroup spg1t = new SpatialSetGroup(sp1);
         SpatialSetGroup spg2t = new SpatialSetGroup(sp2);
         this.spg1 = spg1t;
@@ -146,7 +145,7 @@ public class ManagedNoe extends DistanceConstraint implements Serializable {
     }
 
     public ManagedNoe(Peak p, SpatialSetGroup spg1, SpatialSetGroup spg2, double newScale) {
-        super(spg1, spg2);
+        super();
         this.spg1 = spg1;
         this.spg2 = spg2;
         if (spg1.compare(spg2) > 0) {

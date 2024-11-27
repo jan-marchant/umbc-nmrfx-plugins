@@ -29,7 +29,6 @@ import org.nmrfx.analyst.gui.AnalystApp;
 import org.nmrfx.datasets.DatasetBase;
 import org.nmrfx.peaks.PeakList;
 import org.nmrfx.processor.gui.FXMLController;
-import org.nmrfx.processor.project.Project;
 import org.nmrfx.project.ProjectBase;
 
 
@@ -309,11 +308,11 @@ public class AtomBrowserSetup {
         atomFilterTextField.setText(getAtomBrowser().atomSelector1.filterString);
         atomFilterTextField2.setText(getAtomBrowser().atomSelector2.filterString);
 
-        Menu projectMenuItem = new Menu(Project.getActive().getName());
+        Menu projectMenuItem = new Menu(ProjectBase.getActive().getName());
         MenuItem allow = new MenuItem("Allow");
         MenuItem deny = new MenuItem("Deny");
-        allow.setOnAction(e-> getAtomBrowser().addFilterItem(Project.getActive(),true));
-        deny.setOnAction(e-> getAtomBrowser().addFilterItem(Project.getActive(),false));
+        allow.setOnAction(e-> getAtomBrowser().addFilterItem(ProjectBase.getActive(),true));
+        deny.setOnAction(e-> getAtomBrowser().addFilterItem(ProjectBase.getActive(),false));
 
         projectFilter.getItems().clear();
         projectFilter.getItems().add(projectMenuItem);

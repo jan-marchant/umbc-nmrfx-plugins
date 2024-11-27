@@ -2,6 +2,7 @@ package edu.umbc.hhmi.acquisition_plugin;
 
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
+import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakList;

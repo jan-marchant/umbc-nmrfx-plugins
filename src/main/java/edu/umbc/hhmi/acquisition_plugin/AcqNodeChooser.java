@@ -23,10 +23,11 @@ import javafx.util.StringConverter;
 import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
+import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakDim;
-import org.nmrfx.project.SubProject;
+import org.nmrfx.project.ProjectBase;
 
 import java.awt.*;
 import java.util.List;
@@ -98,7 +99,7 @@ public class AcqNodeChooser {
                 //May be slow depending on number of matches within tolerance
                 ObservableList<AcqNode> comboNodes = FXCollections.observableArrayList();
                 for (AcqNode node : possibleNodes.get(expDim)) {
-                    if (node.getDeltaPPM(shift)<tol) {
+                    if (shift==null || node.getDeltaPPM(shift)<tol) {
                         comboNodes.add(node);
                     }
                 }
@@ -391,10 +392,10 @@ public class AcqNodeChooser {
                 //todo: add ppm set support
                 if (!list.noeSet.noeExists(atom1,atom2)) {
                     if (atom1.getResonance()==null) {
-                        atom1.setResonance((AtomResonance) SubProject.resFactory().build());
+                        atom1.setResonance((AtomResonance) ProjectBase.getActive().resonanceFactory().build());
                     }
                     if (atom2.getResonance()==null) {
-                        atom2.setResonance((AtomResonance) SubProject.resFactory().build());
+                        atom2.setResonance((AtomResonance) ProjectBase.getActive().resonanceFactory().build());
                     }
                     //todo: why did we need to add resonances here?
                     //Noe noe = new Noe(peak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction, atom1.getResonance(), atom2.getResonance());

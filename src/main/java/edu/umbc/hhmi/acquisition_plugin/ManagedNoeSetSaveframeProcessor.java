@@ -1,6 +1,7 @@
 package edu.umbc.hhmi.acquisition_plugin;
 
 import org.nmrfx.chemistry.*;
+import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakList;

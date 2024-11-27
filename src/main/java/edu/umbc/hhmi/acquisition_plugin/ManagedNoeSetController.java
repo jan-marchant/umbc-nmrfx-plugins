@@ -60,6 +60,7 @@ public class ManagedNoeSetController {
     Button show;
 
     ComboBox<ManagedNoeSet> noeSetCombo = new ComboBox<>();
+    Menu dup = new Menu("From NOE Set");
 
     public ManagedNoeSetController() {
         stage = new Stage(StageStyle.DECORATED);
@@ -143,20 +144,28 @@ public class ManagedNoeSetController {
 
         //MenuItem setVienna = new MenuItem("Setup Vienna");
         //MenuItem setShifts = new MenuItem("Predict shifts");
-        MenuItem gen = new MenuItem("Generate");
+        MenuItem gen = new MenuItem("Generate all");
         //setVienna.setOnAction(e -> updateDotBracket(Molecule.getActive()));
         gen.setOnAction(e -> noeSetCombo.getValue().generateNOEsByAttributes());
 
+        MenuItem auto = new MenuItem("Generate auto NOEs");
+        auto.setOnAction(e -> noeSetCombo.getValue().generateAutoNOEs());
+
+        for (ManagedNoeSet set : ManagedNoeSet.getManagedNoeSetsMap().values()) {
+            MenuItem menuItem = new MenuItem(set.getName());
+            menuItem.setOnAction(e -> noeSetCombo.getValue().copyFrom(set));
+            dup.getItems().add(menuItem);
+        }
         sub.setOnAction(ProjectRelations::showSubProjNoeTransfer);
         peaks.setOnAction(NoeSetPeakController::showController);
 
         //attr.getItems().addAll(setVienna,setShifts,gen);
-        attr.getItems().addAll(gen);
+        attr.getItems().addAll(gen, auto);
 
         MenuItem notYet = new MenuItem("Not Implemented Yet");
         struct.getItems().add(notYet);
 
-        generate.getItems().addAll(attr,struct, peaks);
+        generate.getItems().addAll(dup, attr, struct, peaks);
         if (SubProjMenu.isSubProjectPresent()) {
             generate.getItems().add(sub);
         }
@@ -221,6 +230,10 @@ public class ManagedNoeSetController {
         } else {
             ManagedNoeSet noeSet= ManagedNoeSet.addSet(name);
             noeSetCombo.getItems().add(noeSet);
+            //todo: tidy this up
+            MenuItem menuItem = new MenuItem(noeSet.getName());
+            menuItem.setOnAction(e -> noeSetCombo.getValue().copyFrom(noeSet));
+            dup.getItems().add(menuItem);
             noeSetCombo.setValue(noeSet);
         }
     }

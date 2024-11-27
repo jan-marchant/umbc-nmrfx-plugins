@@ -275,7 +275,7 @@ public class AtomBrowser implements ControllerTool {
 
         otherNucleus = new ComboBox<>();
         ObservableList<Nuclei> nucleiList=FXCollections.observableArrayList();
-        nucleiList.addAll(Nuclei.H1,Nuclei.C13,Nuclei.N15,Nuclei.F19,Nuclei.P31);
+        nucleiList.addAll(Nuclei.H1,Nuclei.C13,Nuclei.N15,Nuclei.findNuclei("F"),Nuclei.findNuclei("P"));
         otherNucleus.setItems(nucleiList);
         otherNucleus.setOnAction(e-> layoutDrawItems());
         otherNucleus.setValue(Nuclei.H1);

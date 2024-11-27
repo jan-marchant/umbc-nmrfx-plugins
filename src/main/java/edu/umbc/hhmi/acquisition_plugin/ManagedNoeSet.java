@@ -19,18 +19,19 @@
 package edu.umbc.hhmi.acquisition_plugin;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import org.apache.commons.collections4.BidiMap;
 import org.nmrfx.chemistry.*;
 import org.nmrfx.chemistry.constraints.Constraint;
 import org.nmrfx.chemistry.constraints.ConstraintSet;
+import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.chemistry.constraints.MolecularConstraints;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakList;
 import org.nmrfx.project.ProjectBase;
 import org.nmrfx.project.ProjectUtilities;
-import org.nmrfx.project.SubProject;
 import org.nmrfx.star.ParseException;
 import org.nmrfx.star.SaveframeWriter;
 import org.nmrfx.structure.chemistry.Molecule;
@@ -49,9 +50,30 @@ public class ManagedNoeSet implements ConstraintSet, Iterable<Constraint>, Savef
     private static final double MIN_DIST = 5.5;
     static HashMap<ProjectBase, HashMap<String, ManagedNoeSet>> projectNoeSetsMap= new HashMap<>();
     private final MolecularConstraints molecularConstraints;
-    private HashMap<Integer,ManagedNoe> noeMap = new HashMap<>();
+    private HashMap<Integer, ManagedNoe> noeMap = new HashMap<>();
 
     private final ObservableList<ManagedNoe> constraints = FXCollections.observableArrayList();
+
+    {
+        constraints.addListener((ListChangeListener.Change<? extends ManagedNoe> c) -> {
+            while (c.next()) {
+                if (c.getRemovedSize()>0) {
+                    reIndex();
+                }
+            }
+        });
+    }
+
+    private void reIndex() {
+        noeMap.clear();
+        int i=0;
+        for (ManagedNoe noe : constraints) {
+            noeMap.put(i,noe);
+            noe.setID(i);
+            i++;
+        }
+    }
+
     private final Map<Peak, List<ManagedNoe>> peakMap = new TreeMap<>();
     private final String name;
     public static Peak lastPeakWritten = null;
@@ -424,10 +446,10 @@ public class ManagedNoeSet implements ConstraintSet, Iterable<Constraint>, Savef
                                 if (atom1==null || atom2 == null) {continue;}
                                 if (!noeExists(atom1, atom2)) {
                                     if (atom1.getResonance() == null) {
-                                        atom1.setResonance((AtomResonance) SubProject.resFactory().build());
+                                        atom1.setResonance((AtomResonance) ProjectBase.getActive().resonanceFactory().build());
                                     }
                                     if (atom2.getResonance() == null) {
-                                        atom2.setResonance((AtomResonance) SubProject.resFactory().build());
+                                        atom2.setResonance((AtomResonance) ProjectBase.getActive().resonanceFactory().build());
                                     }
                                     //should scale be set based on dist ?
                                     ManagedNoe noe = new ManagedNoe(null, atom1.getSpatialSet(), atom2.getSpatialSet(), 1.0);
@@ -551,6 +573,25 @@ public class ManagedNoeSet implements ConstraintSet, Iterable<Constraint>, Savef
                         }
                     }
                 } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    public void copyFrom(ManagedNoeSet from) {
+        if (this != from) {
+            for (ManagedNoe noe : from.getConstraints()) {
+                if (!noeExists(noe.spg1.getAnAtom(), noe.spg2.getAnAtom())) {
+                    this.add(new ManagedNoe(null, noe.spg1,noe.spg2,1.0));
+                }
+            }
+        }
+    }
+
+    public void generateAutoNOEs() {
+        Molecule mol = (Molecule) getMolecularConstraints().molecule;
+        for (Atom atom : mol.getAtoms()) {
+            if (atom.getAtomicNumber()==1) {
+                this.add(new ManagedNoe(null, atom.getSpatialSet(),atom.getSpatialSet(),1.0));
             }
         }
     }

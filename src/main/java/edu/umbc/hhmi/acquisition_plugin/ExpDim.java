@@ -28,7 +28,12 @@ public class ExpDim {
     private Connectivity previousCon;
     private final Nuclei nucleus;
     private final HashMap<Molecule, HashMap<Atom,String>> molAtomMap=new HashMap<>();
+    //matches the ExpDim code that describes the experiment dimension. Fields are:
+    //residue(place).atom:fraction,...,residue(place).atom:fraction
+    //e.g. A(i).C2:1,G(i+1).C8
+    //means A.C2 in position i (relative to other place markers) and G.C8 in position i+1 both match for this expdim
     public final static Pattern matchPattern = Pattern.compile("^(\\*|[A-z]+)(?:\\((\\*|[A-z])\\))?\\.([^,:.]+)(?::([0-9\\.]+))?$");
+    //matches the experiment code, for reading in saved experiment definitions
     private static final Pattern codePattern = Pattern.compile("^([A-z]+)\\[(.)\\]\\((.*)\\)$");
     private static final Pattern labelPattern = Pattern.compile("^([Fr])([0-9]+)([a-z]*)?$");
     private static final HashMap<String, HashMap<String, ArrayList<String>>> resMap = new HashMap<>();

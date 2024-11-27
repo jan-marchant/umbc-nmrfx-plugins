@@ -5,6 +5,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import org.nmrfx.chemistry.Atom;
+import org.nmrfx.chemistry.constraints.ManagedNoe;
 
 import java.util.*;
 

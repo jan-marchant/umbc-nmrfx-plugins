@@ -13,6 +13,7 @@ import javafx.fxml.FXML;
 import org.controlsfx.dialog.ExceptionDialog;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
+import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.datasets.DatasetBase;
 import org.nmrfx.datasets.Nuclei;
 import org.nmrfx.peaks.ManagedList;
@@ -528,7 +529,7 @@ public class Acquisition {
             }
             //value is the result we would get for an auto level on the whole dataset.
             //n.b. currently only picking positive peaks
-            PeakPickParameters peakPickPar = (new PeakPickParameters(theDataset, "temp_for_measure")).level(value).mode("appendregion");
+            PeakPickParameters peakPickPar = (new PeakPickParameters(theDataset, "temp_for_measure")).level(value).mode(PeakPickParameters.PickMode.APPENDREGION);
             for (int i = 0; i < nDim; i++) {
                 peakPickPar = peakPickPar.limit(i, pt[i][0], pt[i][1]);
             }

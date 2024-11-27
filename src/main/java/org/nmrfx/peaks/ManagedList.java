@@ -4,6 +4,7 @@ import edu.umbc.hhmi.acquisition_plugin.*;
 import javafx.collections.SetChangeListener;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.PPMv;
+import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.datasets.Nuclei;
 import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.project.ProjectBase;
@@ -14,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
+
+import static org.nmrfx.datasets.Nuclei.*;
 
 public class ManagedList extends PeakList {
 
@@ -88,6 +91,9 @@ public class ManagedList extends PeakList {
             noeSet.associatedLists.add(this);
             acquisition.getAcqTree().addNoeSet(noeSet);
             acquisition.initDefaultPeakWidths();
+            for (Peak peak : peaks()) {
+                ((ManagedPeak) peak).setupManagedNoeListener(noeSet);
+            }
         }
     }
 
@@ -115,12 +121,10 @@ public class ManagedList extends PeakList {
                 double tol = minTol;
                 Nuclei nuc = dataset.getNucleus(dDim);
                 if (null != nuc) {
-                    tol = switch (nuc) {
-                        case H1 -> 0.05;
-                        case C13 -> 0.6;
-                        case N15 -> 0.2;
-                        default -> minTol;
-                    };
+                    tol = minTol;
+                    if (nuc == H1) {tol = 0.05;}
+                    if (nuc == C13) {tol = 0.6;}
+                    if (nuc == N15) {tol = 0.2;}
                 }
                 tol = Math.min(tol, minTol);
 

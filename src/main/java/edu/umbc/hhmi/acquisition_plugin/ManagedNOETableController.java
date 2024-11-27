@@ -20,6 +20,7 @@ import org.controlsfx.control.PropertySheet;
 import org.nmrfx.chemistry.MoleculeBase;
 import org.nmrfx.chemistry.MoleculeFactory;
 import org.nmrfx.chemistry.SpatialSetGroup;
+import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.fxutil.Fxml;
 import org.nmrfx.fxutil.StageBasedController;
 import org.nmrfx.peaks.Peak;

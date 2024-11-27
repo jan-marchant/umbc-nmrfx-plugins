@@ -100,7 +100,7 @@ public class ExperimentSetup {
 
             nucleus=new ComboBox<>();
             ObservableList<Nuclei> nucleiList=FXCollections.observableArrayList();
-            nucleiList.addAll(Nuclei.H1,Nuclei.C13,Nuclei.N15,Nuclei.F19,Nuclei.P31);
+            nucleiList.addAll(Nuclei.H1,Nuclei.C13,Nuclei.N15,Nuclei.findNuclei("F"),Nuclei.findNuclei("P"));
             nucleus.setItems(nucleiList);
             nucleus.setPromptText("Nucleus");
             nucleus.setPrefWidth(100);

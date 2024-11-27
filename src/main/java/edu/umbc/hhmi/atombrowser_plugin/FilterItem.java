@@ -11,7 +11,6 @@ import javafx.beans.property.StringProperty;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.PeakList;
 import org.nmrfx.processor.datasets.Dataset;
-import org.nmrfx.processor.project.Project;
 import org.nmrfx.project.ProjectBase;
 
 public class FilterItem {

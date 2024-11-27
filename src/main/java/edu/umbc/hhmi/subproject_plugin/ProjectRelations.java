@@ -16,8 +16,8 @@ import org.nmrfx.peaks.PeakDim;
 import org.nmrfx.peaks.PeakList;
 import org.nmrfx.project.ProjectBase;
 import org.nmrfx.project.ProjectUtilities;
-import org.nmrfx.project.SubProject;
 import org.nmrfx.star.SaveframeWriter;
+import org.nmrfx.structure.project.StructureProject;
 import org.nmrfx.utils.GUIUtils;
 
 import java.io.File;
@@ -40,7 +40,7 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
     private static SubProjectPeakController subProjPeakController;
 
     private final ProjectBase parentProject;
-    private final SubProject subProject;
+    private final ProjectBase subProject;
     public BidiMap<Entity,Entity> entityMap = new DualHashBidiMap<>();
 
     private final static HashMap<ProjectBase,ObservableList<ProjectRelations>> projectSubProjectMap = new HashMap<>();
@@ -82,7 +82,7 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
         ProjectBase.addSaveframeProcessor("assembly_subsystems", subProjSaveFrameProcessor);
     }
 
-    public ProjectRelations(ProjectBase parent, SubProject sub) throws Exception {
+    public ProjectRelations(ProjectBase parent, ProjectBase sub) throws Exception {
         parentProject = parent;
         subProject = sub;
         //if (getRecursiveSubProjectList(parentProject).contains(parentProject)) {
@@ -344,11 +344,11 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
     }
 
     static public ProjectBase addSubProject(String name, ProjectBase parentProject, Path path) {
-        SubProject subProj;
+        StructureProject subProj;
         try {
-            subProj = new SubProject(name);
+            subProj = new StructureProject(name);
             parentProject.setActive();
-            subProj.loadSubProject(path);
+            subProj.loadStructureProject(path);
             new ProjectRelations(parentProject, subProj);
         } catch (Exception e) {
             ExceptionDialog dialog = new ExceptionDialog(e);

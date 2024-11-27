@@ -6,6 +6,7 @@ import org.nmrfx.plugin.api.EntryPoint;
 import org.nmrfx.plugin.api.NMRFxPlugin;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import org.nmrfx.plugin.api.PluginFunction;
 
 import java.util.Set;
 
@@ -48,7 +49,8 @@ public class AcquisitionPlugin implements NMRFxPlugin {
             fixDatasetMenuItem.setOnAction(Acquisition::fixDataset);
 
             acqMenu.getItems().addAll(acqMenuItem,sampleMenuItem,conditionMenuItem,experimentMenuItem,noeSetupMenuItem,fixDatasetMenuItem);
-            ((Menu) object).getItems().addAll(acqMenu);
+            //what is the point of this plugin function??
+            ((Menu) ((PluginFunction) object).guiObject()).getItems().addAll(acqMenu);
 
             //KeyBindings.registerGlobalKeyAction("ds", this::tweakPeaks);
         }

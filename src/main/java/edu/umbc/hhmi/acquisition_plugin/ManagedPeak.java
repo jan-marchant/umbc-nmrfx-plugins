@@ -6,8 +6,9 @@ import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
 import org.nmrfx.chemistry.MoleculeBase;
 import org.nmrfx.chemistry.PPMv;
+import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.peaks.*;
-import org.nmrfx.project.SubProject;
+import org.nmrfx.project.ProjectBase;
 import org.nmrfx.utils.GUIUtils;
 
 import java.util.HashMap;
@@ -127,7 +128,7 @@ public class ManagedPeak extends Peak {
         setupManagedNoeListener(((ManagedList) peakList).noeSet);
     }
 
-    private void setupManagedNoeListener(ManagedNoeSet noeSet) {
+    public void setupManagedNoeListener(ManagedNoeSet noeSet) {
         if (noeSet!=null) {
             noeSet.getConstraints().addListener((ListChangeListener.Change<? extends ManagedNoe> c) -> {
                 while (c.next()) {
@@ -159,6 +160,12 @@ public class ManagedPeak extends Peak {
 
     public static ManagedPeak copyFrom(Peak originalPeak, ManagedList list) {
         ManagedPeak peak = new ManagedPeak(list,originalPeak.getNDim());
+        for (PeakDim pd : originalPeak.getPeakDims()) {
+            if (pd.getResonance() == null) {
+                //System.out.println("Error for "+peak);
+                pd.initResonance();
+            }
+        }
         originalPeak.copyTo(peak);
         for (int i = 0; i < originalPeak.peakDims.length; i++) {
             peak.peakDims[i].setResonance(originalPeak.peakDims[i].getResonance());
@@ -175,7 +182,7 @@ public class ManagedPeak extends Peak {
             resonance=atom.getResonance();
         }
         if (resonance==null) {
-            resonance = (AtomResonance) SubProject.resFactory().build();
+            resonance = (AtomResonance) ProjectBase.getActive().resonanceFactory().build();
             resonance.setAtom(atom);
             atom.setResonance(resonance);
         }

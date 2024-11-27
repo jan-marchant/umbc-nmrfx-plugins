@@ -115,7 +115,8 @@ public class Connectivity {
         Set<Atom> atoms=new HashSet<>();
         switch (type) {
             case NOE:
-                //these are added in the peaklist tree
+                //these are added in the peaklist tree, but useful to have auto peak auto added. below breaks because NOE backed list must have associated NOE
+                //atoms.add(atom);
                 break;
             case J:
                 atoms.addAll(getJConnections(atom));

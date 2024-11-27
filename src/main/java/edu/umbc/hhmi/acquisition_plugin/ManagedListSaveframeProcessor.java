@@ -5,7 +5,7 @@ import org.nmrfx.chemistry.AtomResonance;
 import org.nmrfx.chemistry.utilities.NvUtil;
 import org.nmrfx.peaks.*;
 import org.nmrfx.processor.datasets.Dataset;
-import org.nmrfx.project.SubProject;
+import org.nmrfx.project.ProjectBase;
 import org.nmrfx.star.ParseException;
 import org.nmrfx.star.Saveframe;
 import org.nmrfx.star.SaveframeProcessor;
@@ -29,7 +29,7 @@ public class ManagedListSaveframeProcessor implements SaveframeProcessor {
 
         System.out.println("process managed list");
         String listName = saveframe.getValue("_Spectral_peak_list", "Sf_framecode");
-        ResonanceFactory resFactory = SubProject.resFactory();
+        ResonanceFactory resFactory = ProjectBase.getActive().resonanceFactory();
         String id = saveframe.getLabelValue("_Spectral_peak_list", "ID");
         String sampleLabel = saveframe.getLabelValue("_Spectral_peak_list", "Sample_label");
         String sampleConditionLabel = saveframe.getOptionalValue("_Spectral_peak_list", "Sample_condition_list_label").replace("^'", "").replace("'$", "");
@@ -47,21 +47,6 @@ public class ManagedListSaveframeProcessor implements SaveframeProcessor {
             experimentClass = saveframe.getLabelValue("_Spectral_peak_list", "Experiment_class");
         } catch (Exception e) {
             System.out.println(listName + " is not managed");
-            PeakList original = PeakList.get(listName);
-            for (Peak peak : original.peaks()) {
-                for (PeakDim peakDim : peak.getPeakDims()) {
-                    try {
-                        AtomResonance resonance = (AtomResonance) peakDim.getResonance();
-                        Atom atom = resonance.getPossibleAtom();
-                        if (atom.getResonance() == null) {
-                            atom.setResonance(((AtomResonance) peakDim.getResonance()));
-                        } else {
-                            atom.getResonance().add(peakDim);
-                        }
-                    } catch (Exception ignored) {
-                    }
-                }
-            }
             return;
         }
 
@@ -119,7 +104,7 @@ public class ManagedListSaveframeProcessor implements SaveframeProcessor {
         }
 
         //fixme: what about acquisitions with more than one list associated with them?
-        //fixme: I think we just tnd up with two acquisitions, shouldn't be breaking
+        //fixme: I think we just end up with two acquisitions, shouldn't be breaking
         Acquisition acquisition = new Acquisition();
         acquisition.setDataset(Dataset.getDataset(datasetName));
         Sample sample = Sample.get(sampleName);
