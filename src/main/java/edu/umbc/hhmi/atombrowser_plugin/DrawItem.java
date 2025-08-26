@@ -1,12 +1,8 @@
 package edu.umbc.hhmi.atombrowser_plugin;
 
-import edu.umbc.hhmi.acquisition_plugin.AnnoLineWithText;
-import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ObservableList;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.robot.Robot;
 import org.nmrfx.chart.Axis;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.datasets.Nuclei;

@@ -1,6 +1,5 @@
 package edu.umbc.hhmi.atombrowser_plugin;
 
-import edu.umbc.hhmi.acquisition_plugin.AnnoLineWithText;
 import javafx.scene.paint.Color;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.peaks.PeakDim;

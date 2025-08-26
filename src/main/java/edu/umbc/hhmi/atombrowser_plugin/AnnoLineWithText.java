@@ -1,4 +1,4 @@
-package edu.umbc.hhmi.acquisition_plugin;
+package edu.umbc.hhmi.atombrowser_plugin;
 
 import javafx.scene.paint.Paint;
 import org.nmrfx.graphicsio.GraphicsContextInterface;
