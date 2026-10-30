@@ -6,6 +6,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.constraints.ManagedNoe;
+import org.nmrfx.chemistry.constraints.ManagedNoeSet;
 
 import java.util.*;
 
@@ -258,8 +259,8 @@ public class AcqTree {
                 //PeakDim peakDim1=noe.getPeakDim1();
                 //PeakDim peakDim2=noe.getPeakDim2();
                 ////fixme: this is not appropriate for SpatialSetGroups with more than one atom (i.e. ambiguous peak assignments)
-                Atom atom1=noe.spg1.getAnAtom();
-                Atom atom2=noe.spg2.getAnAtom();
+                Atom atom1=noe.getSpg1().getAnAtom();
+                Atom atom2=noe.getSpg2().getAnAtom();
                 //fixme: add check for null peakDims
                 //Atom atom1=((AtomResonance) peakDim1.getResonance()).getAtom();
                 //Atom atom2=((AtomResonance) peakDim2.getResonance()).getAtom();

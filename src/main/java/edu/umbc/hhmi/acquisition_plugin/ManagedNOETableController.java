@@ -21,7 +21,7 @@ import org.nmrfx.chemistry.MoleculeBase;
 import org.nmrfx.chemistry.MoleculeFactory;
 import org.nmrfx.chemistry.SpatialSetGroup;
 import org.nmrfx.chemistry.constraints.ManagedNoe;
-import org.nmrfx.fxutil.Fxml;
+import org.nmrfx.chemistry.constraints.ManagedNoeSet;
 import org.nmrfx.fxutil.StageBasedController;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakList;
@@ -232,21 +232,21 @@ public class ManagedNOETableController implements Initializable, StageBasedContr
             TableColumn<ManagedNoe, Integer> entityCol = new TableColumn<>("entity" + (iGroup + 1));
             entityCol.setCellValueFactory((TableColumn.CellDataFeatures<ManagedNoe, Integer> p) -> {
                 ManagedNoe noe = p.getValue();
-                SpatialSetGroup spg = iGroup == 0 ? noe.spg1 : noe.spg2;
+                SpatialSetGroup spg = iGroup == 0 ? noe.getSpg1() : noe.getSpg2();
                 Integer res = spg.getSpatialSet().atom.getTopEntity().getIDNum();
                 return new ReadOnlyObjectWrapper(res);
             });
             TableColumn<ManagedNoe, Integer> resCol = new TableColumn<>("res" + (iGroup + 1));
             resCol.setCellValueFactory((TableColumn.CellDataFeatures<ManagedNoe, Integer> p) -> {
                 ManagedNoe noe = p.getValue();
-                SpatialSetGroup spg = iGroup == 0 ? noe.spg1 : noe.spg2;
+                SpatialSetGroup spg = iGroup == 0 ? noe.getSpg1() : noe.getSpg2();
                 Integer res = spg.getSpatialSet().atom.getResidueNumber();
                 return new ReadOnlyObjectWrapper(res);
             });
             TableColumn<ManagedNoe, String> atomCol = new TableColumn<>("aname" + (iGroup + 1));
             atomCol.setCellValueFactory((TableColumn.CellDataFeatures<ManagedNoe, String> p) -> {
                 ManagedNoe noe = p.getValue();
-                SpatialSetGroup spg = iGroup == 0 ? noe.spg1 : noe.spg2;
+                SpatialSetGroup spg = iGroup == 0 ? noe.getSpg1() : noe.getSpg2();
                 String aname = spg.getSpatialSet().atom.getName();
                 return new ReadOnlyObjectWrapper(aname);
             });

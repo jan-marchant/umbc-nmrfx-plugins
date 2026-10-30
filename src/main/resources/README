@@ -1,0 +1,29 @@
+We created a plugin for NMRFx using IntelliJ IDEA via the following:
+
+
+1. Imported the Plugin Module into IntelliJ
+
+• Open the NMRFx project in IntelliJ.
+• File -> Project Structure -> Modules.
+• Import Module - point to plugin project's pom.xml
+
+2. Added plugin as dependency in main project's pom.xml
+
+    <dependencies>
+        <dependency>
+            <groupId>edu.umbc.hhmi</groupId>
+            <artifactId>umbc_nmrfx_plugin</artifactId>
+            <version>12.0.9-1</version>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    2. EDIT. We will take a different tack to avoid meddling with NMRFx source code. We have set up a run configuration
+    in IntelliJ and added the plugin path to the classpath. Need to remember to recompile the plugin before debugging.
+
+
+3. Registered the Plugin for ServiceLoader Discovery
+
+• Inside the plugin's src/main/resources/ directory, create META-INF/services/.
+• Created a plain text file named after the fully qualified name of the Plugin Interface
+• Inside this file, added a single line containing the fully qualified name of the plugin

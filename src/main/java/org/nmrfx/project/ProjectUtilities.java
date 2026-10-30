@@ -1,7 +1,7 @@
 package org.nmrfx.project;
 
 import edu.umbc.hhmi.acquisition_plugin.Condition;
-import edu.umbc.hhmi.acquisition_plugin.ManagedNoeSet;
+import org.nmrfx.chemistry.constraints.ManagedNoeSet;
 import edu.umbc.hhmi.acquisition_plugin.Sample;
 import edu.umbc.hhmi.subproject_plugin.ProjectRelations;
 import org.nmrfx.star.SaveframeWriter;

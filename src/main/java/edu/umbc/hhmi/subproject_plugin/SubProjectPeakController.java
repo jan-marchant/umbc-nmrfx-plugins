@@ -2,7 +2,7 @@ package edu.umbc.hhmi.subproject_plugin;
 
 import de.jensd.fx.glyphs.GlyphsDude;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import edu.umbc.hhmi.acquisition_plugin.ManagedNoeSet;
+import org.nmrfx.chemistry.constraints.ManagedNoeSet;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;

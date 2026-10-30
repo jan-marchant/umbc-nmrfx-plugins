@@ -7,6 +7,7 @@ import org.nmrfx.chemistry.AtomResonance;
 import org.nmrfx.chemistry.MoleculeBase;
 import org.nmrfx.chemistry.PPMv;
 import org.nmrfx.chemistry.constraints.ManagedNoe;
+import org.nmrfx.chemistry.constraints.ManagedNoeSet;
 import org.nmrfx.peaks.*;
 import org.nmrfx.project.ProjectBase;
 import org.nmrfx.utils.GUIUtils;
@@ -207,7 +208,7 @@ public class ManagedPeak extends Peak {
                     //TODO: Will this fail for relabelled peaks? Need to watch and update. Are the spatial sets set up on loading?
                     // can add an NOE without a peak for the other NOE dims.
                     //fixme: better to have a single window with all possible suggestions
-                    boolean result=GUIUtils.affirm("Delete NOE between "+noe.spg1.getAnAtom()+" and "+noe.spg2.getAnAtom()+"?");
+                    boolean result=GUIUtils.affirm("Delete NOE between "+noe.getSpg1().getAnAtom()+" and "+noe.getSpg2().getAnAtom()+"?");
                     if (result) {
                         updateStatus=true;
                         ((ManagedList) peakList).noeSet.getConstraints().remove(noe);

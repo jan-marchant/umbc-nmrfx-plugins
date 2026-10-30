@@ -1,0 +1,3 @@
+edu.umbc.hhmi.acquisition_plugin.AcquisitionPlugin
+edu.umbc.hhmi.atombrowser_plugin.AtomBrowserPlugin
+edu.umbc.hhmi.subproject_plugin.SubProjectPlugin

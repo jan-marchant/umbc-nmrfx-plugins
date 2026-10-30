@@ -22,6 +22,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
 import javafx.util.converter.DefaultStringConverter;
+import org.nmrfx.chemistry.constraints.ManagedNoeSet;
 import org.nmrfx.chemistry.constraints.NoeSet;
 import org.nmrfx.utils.GUIUtils;
 

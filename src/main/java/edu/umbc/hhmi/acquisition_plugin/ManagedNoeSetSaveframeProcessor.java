@@ -2,6 +2,7 @@ package edu.umbc.hhmi.acquisition_plugin;
 
 import org.nmrfx.chemistry.*;
 import org.nmrfx.chemistry.constraints.ManagedNoe;
+import org.nmrfx.chemistry.constraints.ManagedNoeSet;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakList;
@@ -12,7 +13,6 @@ import org.nmrfx.star.SaveframeProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +38,7 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
         if (loop == null) {
             throw new ParseException("No \"_Gen_dist_constraint\" loop");
         }
-        var compoundMap = MoleculeBase.compoundMap();
+        var compoundMap = MoleculeFactory.getActive().compoundMap();
         List<String>[] entityAssemblyIDColumns = new ArrayList[2];
         List<String>[] entityIDColumns = new ArrayList[2];
         List<String>[] compIdxIDColumns = new ArrayList[2];

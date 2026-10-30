@@ -10,16 +10,17 @@ import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import org.controlsfx.dialog.ExceptionDialog;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
 import org.nmrfx.chemistry.constraints.ManagedNoe;
+import org.nmrfx.chemistry.constraints.ManagedNoeSet;
 import org.nmrfx.datasets.DatasetBase;
 import org.nmrfx.datasets.Nuclei;
-import org.nmrfx.peaks.ManagedList;
-import org.nmrfx.peaks.Peak;
-import org.nmrfx.peaks.PeakDim;
-import org.nmrfx.peaks.PeakList;
+import org.nmrfx.peaks.*;
+import org.nmrfx.peaks.io.PeakWriter;
 import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.processor.datasets.peaks.PeakPickParameters;
 import org.nmrfx.processor.datasets.peaks.PeakPicker;
@@ -28,6 +29,8 @@ import org.nmrfx.processor.gui.PolyChartManager;
 import org.nmrfx.project.ProjectBase;
 import org.nmrfx.utils.GUIUtils;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
@@ -573,5 +576,26 @@ public class Acquisition {
                 }
             }
         }
+    }
+
+    public static void writeAllPeaklists(ActionEvent actionEvent) {
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        File file = directoryChooser.showDialog(null);
+        if (file != null) {
+            for (PeakList plist : ProjectBase.getActive().getPeakLists()) {
+                String listFileName = file.getPath()+"/"+ plist.getName()+".xpk";
+                try {
+                    FileWriter writer = new FileWriter(listFileName);
+                    PeakWriter peakWriter = new PeakWriter();
+                    peakWriter.writePeaksXPK(writer, plist);
+                    writer.flush();
+                    writer.close();
+                } catch (IOException | InvalidPeakException ioE) {
+                    ExceptionDialog dialog = new ExceptionDialog(ioE);
+                    dialog.showAndWait();
+                }
+            }
+        }
+
     }
 }

@@ -1,6 +1,6 @@
 package edu.umbc.hhmi.acquisition_plugin;
 
-import com.google.auto.service.AutoService;
+import org.nmrfx.chemistry.constraints.ManagedNoeSet;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.plugin.api.EntryPoint;
 import org.nmrfx.plugin.api.NMRFxPlugin;
@@ -10,7 +10,6 @@ import org.nmrfx.plugin.api.PluginFunction;
 
 import java.util.Set;
 
-@AutoService(NMRFxPlugin.class)
 public class AcquisitionPlugin implements NMRFxPlugin {
 //STARTUP, MENU_FILE, MENU_PLUGINS, STATUS_BAR_TOOLS
     public static Menu acqMenu;
@@ -47,8 +46,11 @@ public class AcquisitionPlugin implements NMRFxPlugin {
             noeSetupMenuItem.setOnAction(ManagedNoeSetController::showNoeSetup);
             MenuItem fixDatasetMenuItem = new MenuItem("Fix dataset");
             fixDatasetMenuItem.setOnAction(Acquisition::fixDataset);
+            MenuItem writeallPeaksMenuItem = new MenuItem("Write all peaklists");
+            writeallPeaksMenuItem.setOnAction(Acquisition::writeAllPeaklists);
 
-            acqMenu.getItems().addAll(acqMenuItem,sampleMenuItem,conditionMenuItem,experimentMenuItem,noeSetupMenuItem,fixDatasetMenuItem);
+
+            acqMenu.getItems().addAll(acqMenuItem,sampleMenuItem,conditionMenuItem,experimentMenuItem,noeSetupMenuItem,fixDatasetMenuItem,writeallPeaksMenuItem);
             //what is the point of this plugin function??
             ((Menu) ((PluginFunction) object).guiObject()).getItems().addAll(acqMenu);
 

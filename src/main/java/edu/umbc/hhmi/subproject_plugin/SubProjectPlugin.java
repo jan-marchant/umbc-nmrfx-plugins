@@ -1,6 +1,5 @@
 package edu.umbc.hhmi.subproject_plugin;
 
-import com.google.auto.service.AutoService;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import org.nmrfx.plugin.api.EntryPoint;
@@ -9,7 +8,6 @@ import org.nmrfx.plugin.api.PluginFunction;
 
 import java.util.Set;
 
-@AutoService(NMRFxPlugin.class)
 public class SubProjectPlugin implements NMRFxPlugin {
 
     public static Menu subProjMenu;

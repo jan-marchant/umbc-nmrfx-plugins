@@ -9,15 +9,15 @@ import java.util.Scanner;
 
 public class ResidueDistances {
 
-    static List<ResidueDistances> distancesList = new ArrayList<>();
+    public static List<ResidueDistances> distancesList = new ArrayList<>();
 
 
     String type;
     String res1;
     String res2;
-    HashMap<String[],double []> distances = new HashMap<>();
+    public HashMap<String[],double []> distances = new HashMap<>();
 
-    ResidueDistances(String type, String res1, String res2) {
+    public ResidueDistances(String type, String res1, String res2) {
         this.type=type;
         this.res1=res1;
         this.res2=res2;

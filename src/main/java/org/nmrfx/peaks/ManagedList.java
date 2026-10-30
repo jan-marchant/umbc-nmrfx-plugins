@@ -5,6 +5,7 @@ import javafx.collections.SetChangeListener;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.PPMv;
 import org.nmrfx.chemistry.constraints.ManagedNoe;
+import org.nmrfx.chemistry.constraints.ManagedNoeSet;
 import org.nmrfx.datasets.Nuclei;
 import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.project.ProjectBase;
@@ -254,7 +255,7 @@ public class ManagedList extends PeakList {
 
     public List<ManagedPeak> addNoeToList(ManagedNoe noe) {
         List<ManagedPeak> addedPeaks = new ArrayList<>();
-        for (AcqNode node : acquisition.getAcqTree().getNodes(noe.spg1.getAnAtom())) {
+        for (AcqNode node : acquisition.getAcqTree().getNodes(noe.getSpg1().getAnAtom())) {
             for (AcqTree.Edge edge : node.getEdges(noeSet,noe)) {
                 addedPeaks.addAll(addPeaks(edge));
             }
@@ -354,7 +355,7 @@ public class ManagedList extends PeakList {
 
         searchDims.addAll(originalList.searchDims);
         fileName = originalList.fileName;
-        scale = originalList.scale;
+        setScale(originalList.getScale());
         setDetails(originalList.details);
         sampleLabel = originalList.sampleLabel;
         sampleConditionLabel = originalList.getSampleConditionLabel();
@@ -505,7 +506,7 @@ public class ManagedList extends PeakList {
             }
             //a bit hacky to ensure peaklist read in OK if no NOEs
             if (ID==0) {
-                chan.write(String.format("%s %s %d %s %s %d %d %s %d spectral_peak_list %s\n", ".", noeSet.getType(), ManagedNoeSet.ID, noeSet.getCategory(), noeSet.getCategory() + noeSet.getName().replaceAll("\\W", ""), ID, getId(), ".", getId(), getName()));
+                chan.write(String.format("%s %s %d %s %s %d %d %s %d spectral_peak_list %s\n", ".", noeSet.getType(), noeSet.getSetId(), noeSet.getCategory(), noeSet.getCategory() + noeSet.getName().replaceAll("\\W", ""), ID, getId(), ".", getId(), getName()));
             }
             chan.write("stop_\n");
             chan.write("save_\n\n");

@@ -1,6 +1,5 @@
 package edu.umbc.hhmi.atombrowser_plugin;
 
-import com.google.auto.service.AutoService;
 import javafx.event.Event;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -14,7 +13,6 @@ import org.nmrfx.processor.gui.spectra.KeyBindings;
 
 import java.util.Set;
 
-@AutoService(NMRFxPlugin.class)
 public class AtomBrowserPlugin implements NMRFxPlugin {
     //STARTUP, MENU_FILE, MENU_PLUGINS, STATUS_BAR_TOOLS
     @Override

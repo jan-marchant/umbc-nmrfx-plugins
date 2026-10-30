@@ -15,6 +15,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
+import org.nmrfx.chemistry.constraints.ManagedNoeSet;
 import org.nmrfx.datasets.Nuclei;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.PeakList;
@@ -147,7 +148,7 @@ public class ManagedListSetup {
                 dimBox.setItems(datasetMap.get(expDim.getNucleus()));
                 dimBox.setPromptText("Dim:");
                 if (datasetMap.get(expDim.getNucleus()).size()==1) {
-                    dimBox.setValue(datasetMap.get(expDim.getNucleus()).get(0));
+                    dimBox.setValue(datasetMap.get(expDim.getNucleus()).getFirst());
                     dimBox.setDisable(true);
                 } else {
                     dimBoxesOk=false;
@@ -176,7 +177,7 @@ public class ManagedListSetup {
                                 }
                             }
                             if (blank.size()==1 && notSeen.size()==1) {
-                                blank.get(0).setValue(notSeen.get(0));
+                                blank.getFirst().setValue(notSeen.getFirst());
                             }
                             if (seen==dimBoxes.size()) {
                                 dimBoxesOk=true;
@@ -220,7 +221,7 @@ public class ManagedListSetup {
                         //labString += " using NOE set: ";
                         //noeType.getItems().setAll(Connectivity.NOETYPE.values());
                         noeSet.setMaxWidth(Double.MAX_VALUE);
-                        if (ManagedNoeSet.getManagedNoeSetsMap(acquisition.getProject()).values().size()<1) {
+                        if (ManagedNoeSet.getManagedNoeSetsMap(acquisition.getProject()).isEmpty()) {
                             ManagedNoeSet.addSet("default",acquisition.getProject());
                         }
                         noeSet.getItems().setAll(ManagedNoeSet.getManagedNoeSetsMap(acquisition.getProject()).values());

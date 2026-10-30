@@ -349,11 +349,15 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
             subProj = new StructureProject(name);
             parentProject.setActive();
             subProj.loadStructureProject(path);
+            //this is necessary because of bug in structureProject (activeProj incorrectly set).
+            //not sure if the above is necessary but let's keep it anyway.
+            parentProject.setActive();
             new ProjectRelations(parentProject, subProj);
         } catch (Exception e) {
             ExceptionDialog dialog = new ExceptionDialog(e);
             dialog.showAndWait();
             subProj=null;
+            parentProject.setActive();
         }
         return subProj;
     }

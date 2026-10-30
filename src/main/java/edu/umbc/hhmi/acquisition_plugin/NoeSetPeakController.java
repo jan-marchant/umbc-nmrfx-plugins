@@ -17,6 +17,7 @@ import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
+import org.nmrfx.chemistry.constraints.ManagedNoeSet;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakDim;
 import org.nmrfx.peaks.PeakList;
