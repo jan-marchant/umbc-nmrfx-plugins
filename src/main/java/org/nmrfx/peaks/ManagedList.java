@@ -26,7 +26,7 @@ public class ManagedList extends PeakList {
     /* Notes:
         ManagedList does not need to implement SaveFrameWriter as it extends PeakList
         and overrides PeakList.writeStar3Header
-         */
+    */
     public static void doStartup() {
         ManagedListSaveframeProcessor managedListSaveFrameProcessor = new ManagedListSaveframeProcessor();
         ProjectBase.addSaveframeProcessor("spectral_peak_list", managedListSaveFrameProcessor);
