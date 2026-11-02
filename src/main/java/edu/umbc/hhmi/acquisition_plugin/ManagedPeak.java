@@ -6,8 +6,8 @@ import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
 import org.nmrfx.chemistry.MoleculeBase;
 import org.nmrfx.chemistry.PPMv;
-import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.chemistry.constraints.ManagedNoeSet;
+import org.nmrfx.chemistry.constraints.Noe;
 import org.nmrfx.peaks.*;
 import org.nmrfx.project.ProjectBase;
 import org.nmrfx.utils.GUIUtils;
@@ -18,9 +18,9 @@ import java.util.List;
 import java.util.Set;
 
 public class ManagedPeak extends Peak {
-    private Set<ManagedNoe> noes=new HashSet<>();
+    private Set<Noe> noes=new HashSet<>();
 
-    public void addNoe (ManagedNoe noe) {
+    public void addNoe (Noe noe) {
         noes.add(noe);
     }
 
@@ -28,7 +28,7 @@ public class ManagedPeak extends Peak {
         super(nDim);
     }
 
-    public ManagedPeak(PeakList peakList, int nDim, Set<ManagedNoe> noes, HashMap<Integer, Atom> atoms) {
+    public ManagedPeak(PeakList peakList, int nDim, Set<Noe> noes, HashMap<Integer, Atom> atoms) {
         super(peakList, nDim);
         this.noes=noes;
 
@@ -48,7 +48,7 @@ public class ManagedPeak extends Peak {
             //setShiftFromAtom(atoms.get(i),getPeakDim(i));
         }
 
-        for (ManagedNoe noe : noes) {
+        for (Noe noe : noes) {
             if (noe.getPeak()==null || !PeakList.peakLists().contains(noe.getPeak().peakList)) {
                 noe.setPeak(this);
             }
@@ -61,7 +61,7 @@ public class ManagedPeak extends Peak {
 
             PeakDim foundPeakDim=null;
             AtomResonance foundResonance=null;
-            for (ManagedNoe noe : noes) {
+            for (Noe noe : noes) {
                 for (PeakDim peakDim : noe.getPeak().getPeakDims()) {
                     if (((AtomResonance) peakDim.getResonance()).getAtom()==atoms.get(i)) {
                         foundPeakDim=peakDim;
@@ -131,9 +131,9 @@ public class ManagedPeak extends Peak {
 
     public void setupManagedNoeListener(ManagedNoeSet noeSet) {
         if (noeSet!=null) {
-            noeSet.getConstraints().addListener((ListChangeListener.Change<? extends ManagedNoe> c) -> {
+            noeSet.getObservableConstraints().addListener((ListChangeListener.Change<? extends Noe> c) -> {
                 while (c.next()) {
-                    for (ManagedNoe removedNoe : c.getRemoved()) {
+                    for (Noe removedNoe : c.getRemoved()) {
                         if (noes.contains(removedNoe)) {
                             remove();
                         }
@@ -204,7 +204,7 @@ public class ManagedPeak extends Peak {
                 updateStatus=true;
             } else {
                 //popup if multiple NOE dims
-                for (ManagedNoe noe: noes) {
+                for (Noe noe: noes) {
                     //TODO: Will this fail for relabelled peaks? Need to watch and update. Are the spatial sets set up on loading?
                     // can add an NOE without a peak for the other NOE dims.
                     //fixme: better to have a single window with all possible suggestions
@@ -257,7 +257,7 @@ public class ManagedPeak extends Peak {
         });
     }
 
-    public Set<ManagedNoe> getNoes() {
+    public Set<Noe> getNoes() {
         return noes;
     }
 

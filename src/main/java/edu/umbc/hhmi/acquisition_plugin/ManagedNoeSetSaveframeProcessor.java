@@ -1,8 +1,8 @@
 package edu.umbc.hhmi.acquisition_plugin;
 
 import org.nmrfx.chemistry.*;
-import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.chemistry.constraints.ManagedNoeSet;
+import org.nmrfx.chemistry.constraints.Noe;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakList;
@@ -154,7 +154,7 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
                     weight = 1.0;
                 }
                 //NB: Resonances should be set correctly during construction
-                ManagedNoe noe = new ManagedNoe(peak, spSets[0], spSets[1], weight);
+                Noe noe = new Noe(peak, spSets[0], spSets[1], weight);
                 //Maybe only do this if peak is null?
                 noe.setResonance1(spSets[0] != null ? spSets[0].getAnAtom().getResonance() : null);
                 noe.setResonance2(spSets[1] != null ? spSets[1].getAnAtom().getResonance() : null);
@@ -209,7 +209,7 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
 
         ManagedList peakList;
         ManagedPeak peak;
-        ManagedNoe noe;
+        Noe noe;
         for (int i = 0; i < constraintIDColumn.size(); i++) {
             String peakListIDStr = peakListIDColumn.get(i);
             String peakID = peakIDColumn.get(i);

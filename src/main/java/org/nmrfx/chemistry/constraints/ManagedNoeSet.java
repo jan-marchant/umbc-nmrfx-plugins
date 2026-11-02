@@ -7,7 +7,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import org.apache.commons.collections4.BidiMap;
 import org.nmrfx.chemistry.*;
-import org.nmrfx.chemistry.io.ConstraintSTARWriter2;
+import org.nmrfx.chemistry.io.ConstraintSTARWriter;
 import org.nmrfx.peaks.InvalidPeakException;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
@@ -26,67 +26,12 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
-//not sure that this will work correctly - e.g. apparently noeLoopStrings is not used - but it should be from cSet.getLoopStrings - but maybe extending the class doesn't work like that?
-//could just ask Bruce to add weight to his loop strings (and update the ConstraintWriter to handle this)
-
 public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable<ManagedNoeSet> {
-    //added weight
-    private static final String[] noeLoopStrings = {
-            "_Gen_dist_constraint.ID",
-            "_Gen_dist_constraint.Member_ID",
-            "_Gen_dist_constraint.Member_logic_code",
-            "_Gen_dist_constraint.Assembly_atom_ID_1",
-            "_Gen_dist_constraint.Entity_assembly_ID_1",
-            "_Gen_dist_constraint.Entity_ID_1",
-            "_Gen_dist_constraint.Comp_index_ID_1",
-            "_Gen_dist_constraint.Seq_ID_1",
-            "_Gen_dist_constraint.Comp_ID_1",
-            "_Gen_dist_constraint.Atom_ID_1",
-            "_Gen_dist_constraint.Atom_type_1",
-            "_Gen_dist_constraint.Atom_isotope_number_1",
-            "_Gen_dist_constraint.Resonance_ID_1",
-            "_Gen_dist_constraint.Assembly_atom_ID_2",
-            "_Gen_dist_constraint.Entity_assembly_ID_2",
-            "_Gen_dist_constraint.Entity_ID_2",
-            "_Gen_dist_constraint.Comp_index_ID_2",
-            "_Gen_dist_constraint.Seq_ID_2",
-            "_Gen_dist_constraint.Comp_ID_2",
-            "_Gen_dist_constraint.Atom_ID_2",
-            "_Gen_dist_constraint.Atom_type_2",
-            "_Gen_dist_constraint.Atom_isotope_number_2",
-            "_Gen_dist_constraint.Resonance_ID_2",
-            "_Gen_dist_constraint.Intensity_val",
-            "_Gen_dist_constraint.Intensity_lower_val_err",
-            "_Gen_dist_constraint.Intensity_upper_val_err",
-            "_Gen_dist_constraint.Distance_val",
-            "_Gen_dist_constraint.Distance_lower_bound_val",
-            "_Gen_dist_constraint.Distance_upper_bound_val",
-            "_Gen_dist_constraint.Contribution_fractional_val",
-            "_Gen_dist_constraint.Weight",
-            "_Gen_dist_constraint.Spectral_peak_ID",
-            "_Gen_dist_constraint.Spectral_peak_list_ID",
-            "_Gen_dist_constraint.Entry_ID",
-            "_Gen_dist_constraint.Gen_dist_constraint_list_ID",};
-
-    //make observable, use ManagedNoe
-    private final ObservableList<ManagedNoe> constraints = FXCollections.observableArrayList();
-    private final Map<Peak, List<ManagedNoe>> peakMap = new TreeMap<>();
 
     @Override
     public void add(Constraint constraint) {
-        //Make managed
-        ManagedNoe noe = (ManagedNoe) constraint;
-        noe.setID(constraints.size());
-        //added
-        noeMap.put(constraints.size(),noe);
-        noe.setNoeSet(this);
-        constraints.add(noe);
-        //this sets up the peakMap
-        if (noe.getPeak() != null) {
-            List<Noe> noeList = getConstraintsForPeak(noe.getPeak());
-            noeList.add(noe);
-        }
-        this.setDirty(true);
+        super.add(constraint);
+        noeMap.put(this.getConstraints().size(),(Noe) constraint);
     }
 
     @Override
@@ -100,7 +45,7 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
     }
 
     public ManagedNoeSet(MolecularConstraints molecularConstraints, String name) {
-        super(molecularConstraints, name);
+        super(molecularConstraints, name, FXCollections.observableArrayList());
         ProjectBase.getActive().addSaveframe(this);
         ProjectUtilities.sortExtraSaveFrames();
         setId = getSaveFramesAdded()+1;
@@ -187,8 +132,9 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
 
         //using original method we would lose the ability to name our NOE sets - it uses getCategory() + setNum
         //using a copy for this reason only
+        //in equivalent NMRFx branch have adjusted so that the constraint set name is retained
         try {
-            ConstraintSTARWriter2.writeConstraintsSTAR3(chan,this,getSetId());
+            ConstraintSTARWriter.writeConstraintsSTAR3(chan,this,getSetId());
         } catch (InvalidPeakException e) {
             throw new RuntimeException(e);
         }
@@ -286,7 +232,7 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
                                         atom2.setResonance((AtomResonance) ProjectBase.getActive().resonanceFactory().build());
                                     }
                                     //should scale be set based on dist ?
-                                    ManagedNoe noe = new ManagedNoe(null, atom1.getSpatialSet(), atom2.getSpatialSet(), 1.0);
+                                    Noe noe = new Noe(null, atom1.getSpatialSet(), atom2.getSpatialSet(), 1.0);
                                     noe.setResonance1(atom1.getResonance());
                                     noe.setResonance2(atom2.getResonance());
                                     double scaleConst = 100.0/ math.pow(2.0,-6);
@@ -334,7 +280,7 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
                 if (toAtom1.getSpatialSet() != null && toAtom2.getSpatialSet() != null) {
                     if (!noeExists(toAtom1, toAtom2)) {
                         //might want to worry about the scale?
-                        ManagedNoe newNoe = new ManagedNoe(null, toAtom1.getSpatialSet(), toAtom2.getSpatialSet(), noe.getScale());
+                        Noe newNoe = new Noe(null, toAtom1.getSpatialSet(), toAtom2.getSpatialSet(), noe.getScale());
                         add(newNoe);
                         System.out.println("Added NOE from " + toAtom1.getFullName() + " to " + toAtom2.getFullName());
                     } else {
@@ -347,7 +293,7 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
         }
     }
 
-    public ManagedNoe getConstraintByID(int id) {
+    public Noe getConstraintByID(int id) {
         return noeMap.get(id);
     }
 
@@ -359,7 +305,7 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
                 if (toAtom1.getSpatialSet() != null && toAtom2.getSpatialSet() != null) {
                     if (!noeExists(toAtom1, toAtom2)) {
                         //might want to worry about the scale?
-                        ManagedNoe newNoe = new ManagedNoe(null, toAtom1.getSpatialSet(), toAtom2.getSpatialSet(), peak.getIntensity());
+                        Noe newNoe = new Noe(null, toAtom1.getSpatialSet(), toAtom2.getSpatialSet(), peak.getIntensity());
                         add(newNoe);
                         System.out.println("Added NOE from " + toAtom1.getFullName() + " to " + toAtom2.getFullName());
                     } else {
@@ -371,7 +317,7 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
         }
     }
     public void getNoesFromSubPeakList(PeakList peakList, BidiMap<Entity, Entity> map) {
-        if (map != null && map.size()>0) {
+        if (map != null && !map.isEmpty()) {
             for (Peak peak : peakList.peaks()) {
                 try {
                     Atom a1 = ((AtomResonance) peak.getPeakDim(0).getResonance()).getAtom();
@@ -399,7 +345,7 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
                     if (toAtom1.getSpatialSet() != null && toAtom2.getSpatialSet() != null) {
                         if (!noeExists(toAtom1, toAtom2)) {
                             //might want to worry about the scale?
-                            ManagedNoe newNoe = new ManagedNoe(null, toAtom1.getSpatialSet(), toAtom2.getSpatialSet(), peak.getIntensity());
+                            Noe newNoe = new Noe(null, toAtom1.getSpatialSet(), toAtom2.getSpatialSet(), peak.getIntensity());
                             add(newNoe);
                             System.out.println("Added NOE from " + toAtom1.getFullName() + " to " + toAtom2.getFullName());
                         } else {
@@ -415,7 +361,7 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
         if (this != from) {
             for (Noe noe : from.getConstraints()) {
                 if (!noeExists(noe.getSpg1().getAnAtom(), noe.getSpg2().getAnAtom())) {
-                    this.add(new ManagedNoe(null, noe.getSpg1(),noe.getSpg2(),1.0));
+                    this.add(new Noe(null, noe.getSpg1(),noe.getSpg2(),1.0));
                 }
             }
         }
@@ -425,17 +371,17 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
         Molecule mol = (Molecule) getMolecularConstraints().molecule;
         for (Atom atom : mol.getAtoms()) {
             if (atom.getAtomicNumber()==1) {
-                this.add(new ManagedNoe(null, atom.getSpatialSet(),atom.getSpatialSet(),1.0));
+                this.add(new Noe(null, atom.getSpatialSet(),atom.getSpatialSet(),1.0));
             }
         }
     }
 
     //we have an noeMap to help with reading in the saveframe - todo: check this is needed
-    private HashMap<Integer, ManagedNoe> noeMap = new HashMap<>();
+    private final HashMap<Integer, Noe> noeMap = new HashMap<>();
 
 
     {
-        constraints.addListener((ListChangeListener.Change<? extends ManagedNoe> c) -> {
+        this.getObservableConstraints().addListener((ListChangeListener.Change<? extends Noe> c) -> {
             while (c.next()) {
                 if (c.getRemovedSize()>0) {
                     reIndex();
@@ -444,11 +390,15 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
         });
     }
 
+    public ObservableList<Noe> getObservableConstraints() {
+        return (ObservableList<Noe>) super.getConstraints();
+    }
+
 
     private void reIndex() {
         noeMap.clear();
         int i=0;
-        for (ManagedNoe noe : constraints) {
+        for (Noe noe : this.getConstraints()) {
             noeMap.put(i,noe);
             noe.setID(i);
             i++;

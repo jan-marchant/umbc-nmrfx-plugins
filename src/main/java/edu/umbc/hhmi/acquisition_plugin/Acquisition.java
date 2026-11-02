@@ -11,12 +11,11 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
 import org.controlsfx.dialog.ExceptionDialog;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
-import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.chemistry.constraints.ManagedNoeSet;
+import org.nmrfx.chemistry.constraints.Noe;
 import org.nmrfx.datasets.DatasetBase;
 import org.nmrfx.datasets.Nuclei;
 import org.nmrfx.peaks.*;
@@ -360,7 +359,7 @@ public class Acquisition {
                         AcqNode node2 = acqTree.getNode(expDim.getNextExpDim(), atom2);
                         if (node1 != null && node2 != null) {
                             //Noe noe = new Noe(newPeak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction,resonance1,resonance2);
-                            ManagedNoe noe = new ManagedNoe(newPeak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction);
+                            Noe noe = new Noe(newPeak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction);
                             noe.setIntensity(newPeak.getIntensity());
                             list.setAddedNoe(noe);
                             list.noeSet.add(noe);
@@ -382,7 +381,7 @@ public class Acquisition {
     public boolean noeExists(ManagedNoeSet noeSet, AtomResonance resonance1, AtomResonance resonance2) {
         Atom atom1 = resonance1.getAtom();
         Atom atom2 = resonance2.getAtom();
-        for (ManagedNoe noe : noeSet.getConstraints()) {
+        for (Noe noe : noeSet.getConstraints()) {
             boolean seen1 = false;
             boolean seen2 = false;
             for (PeakDim testPeakDim : noe.getPeak().getPeakDims()) {

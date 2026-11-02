@@ -20,8 +20,8 @@ import org.controlsfx.control.PropertySheet;
 import org.nmrfx.chemistry.MoleculeBase;
 import org.nmrfx.chemistry.MoleculeFactory;
 import org.nmrfx.chemistry.SpatialSetGroup;
-import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.chemistry.constraints.ManagedNoeSet;
+import org.nmrfx.chemistry.constraints.Noe;
 import org.nmrfx.fxutil.StageBasedController;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakList;
@@ -50,7 +50,7 @@ public class ManagedNOETableController implements Initializable, StageBasedContr
     @FXML
     MasterDetailPane masterDetailPane;
     @FXML
-    private TableView<ManagedNoe> tableView;
+    private TableView<Noe> tableView;
     private ManagedNoeSet noeSet;
 
     MenuButton noeSetMenuItem;
@@ -205,7 +205,7 @@ public class ManagedNOETableController implements Initializable, StageBasedContr
         tableView.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
                 if (!tableView.getSelectionModel().getSelectedItems().isEmpty()) {
-                    ManagedNoe noe = tableView.getSelectionModel().getSelectedItems().get(0);
+                    Noe noe = tableView.getSelectionModel().getSelectedItems().get(0);
                     showPeakInfo(noe);
                 }
             }
@@ -215,37 +215,37 @@ public class ManagedNOETableController implements Initializable, StageBasedContr
     void updateColumns() {
         tableView.getColumns().clear();
 
-        TableColumn<ManagedNoe, Integer> idNumCol = new TableColumn<>("id");
+        TableColumn<Noe, Integer> idNumCol = new TableColumn<>("id");
         idNumCol.setCellValueFactory(new PropertyValueFactory("ID"));
         idNumCol.setEditable(false);
         idNumCol.setPrefWidth(50);
 
-        TableColumn<ManagedNoe, String> peakListCol = new TableColumn<>("PeakList");
+        TableColumn<Noe, String> peakListCol = new TableColumn<>("PeakList");
         peakListCol.setCellValueFactory(new PropertyValueFactory("PeakListName"));
 
-        TableColumn<ManagedNoe, Integer> peakNumCol = new TableColumn<>("PeakNum");
+        TableColumn<Noe, Integer> peakNumCol = new TableColumn<>("PeakNum");
         peakNumCol.setCellValueFactory(new PropertyValueFactory("PeakNum"));
         tableView.getColumns().addAll(idNumCol, peakListCol, peakNumCol);
 
         for (int i = 0; i < 2; i++) {
             final int iGroup = i;
-            TableColumn<ManagedNoe, Integer> entityCol = new TableColumn<>("entity" + (iGroup + 1));
-            entityCol.setCellValueFactory((TableColumn.CellDataFeatures<ManagedNoe, Integer> p) -> {
-                ManagedNoe noe = p.getValue();
+            TableColumn<Noe, Integer> entityCol = new TableColumn<>("entity" + (iGroup + 1));
+            entityCol.setCellValueFactory((TableColumn.CellDataFeatures<Noe, Integer> p) -> {
+                Noe noe = p.getValue();
                 SpatialSetGroup spg = iGroup == 0 ? noe.getSpg1() : noe.getSpg2();
                 Integer res = spg.getSpatialSet().atom.getTopEntity().getIDNum();
                 return new ReadOnlyObjectWrapper(res);
             });
-            TableColumn<ManagedNoe, Integer> resCol = new TableColumn<>("res" + (iGroup + 1));
-            resCol.setCellValueFactory((TableColumn.CellDataFeatures<ManagedNoe, Integer> p) -> {
-                ManagedNoe noe = p.getValue();
+            TableColumn<Noe, Integer> resCol = new TableColumn<>("res" + (iGroup + 1));
+            resCol.setCellValueFactory((TableColumn.CellDataFeatures<Noe, Integer> p) -> {
+                Noe noe = p.getValue();
                 SpatialSetGroup spg = iGroup == 0 ? noe.getSpg1() : noe.getSpg2();
                 Integer res = spg.getSpatialSet().atom.getResidueNumber();
                 return new ReadOnlyObjectWrapper(res);
             });
-            TableColumn<ManagedNoe, String> atomCol = new TableColumn<>("aname" + (iGroup + 1));
-            atomCol.setCellValueFactory((TableColumn.CellDataFeatures<ManagedNoe, String> p) -> {
-                ManagedNoe noe = p.getValue();
+            TableColumn<Noe, String> atomCol = new TableColumn<>("aname" + (iGroup + 1));
+            atomCol.setCellValueFactory((TableColumn.CellDataFeatures<Noe, String> p) -> {
+                Noe noe = p.getValue();
                 SpatialSetGroup spg = iGroup == 0 ? noe.getSpg1() : noe.getSpg2();
                 String aname = spg.getSpatialSet().atom.getName();
                 return new ReadOnlyObjectWrapper(aname);
@@ -253,31 +253,31 @@ public class ManagedNOETableController implements Initializable, StageBasedContr
             tableView.getColumns().addAll(entityCol, resCol, atomCol);
         }
 
-        TableColumn<ManagedNoe, Float> lowerCol = new TableColumn<>("Lower");
+        TableColumn<Noe, Float> lowerCol = new TableColumn<>("Lower");
         lowerCol.setCellValueFactory(new PropertyValueFactory("Lower"));
         lowerCol.setCellFactory(new ManagedNOETableController.ColumnFormatter<>(new DecimalFormat(".00")));
         lowerCol.setPrefWidth(75);
 
-        TableColumn<ManagedNoe, Float> upperCol = new TableColumn<>("Upper");
+        TableColumn<Noe, Float> upperCol = new TableColumn<>("Upper");
         upperCol.setCellValueFactory(new PropertyValueFactory("Upper"));
         upperCol.setCellFactory(new ManagedNOETableController.ColumnFormatter<>(new DecimalFormat(".00")));
         upperCol.setPrefWidth(75);
-        TableColumn<ManagedNoe, Float> ppmCol = new TableColumn<>("PPM");
+        TableColumn<Noe, Float> ppmCol = new TableColumn<>("PPM");
         ppmCol.setCellValueFactory(new PropertyValueFactory("PpmError"));
         ppmCol.setCellFactory(new ManagedNOETableController.ColumnFormatter<>(new DecimalFormat(".00")));
         ppmCol.setPrefWidth(75);
 
-        TableColumn<ManagedNoe, Float> contribCol = new TableColumn<>("Contrib");
+        TableColumn<Noe, Float> contribCol = new TableColumn<>("Contrib");
         contribCol.setCellValueFactory(new PropertyValueFactory("Contribution"));
         contribCol.setCellFactory(new ManagedNOETableController.ColumnFormatter<>(new DecimalFormat(".00")));
         contribCol.setPrefWidth(75);
 
-        TableColumn<ManagedNoe, Float> networkCol = new TableColumn<>("Network");
+        TableColumn<Noe, Float> networkCol = new TableColumn<>("Network");
         networkCol.setCellValueFactory(new PropertyValueFactory("NetworkValue"));
         networkCol.setCellFactory(new ManagedNOETableController.ColumnFormatter<>(new DecimalFormat(".00")));
         networkCol.setPrefWidth(75);
 
-        TableColumn<ManagedNoe, String> flagCol = new TableColumn<>("Flags");
+        TableColumn<Noe, String> flagCol = new TableColumn<>("Flags");
         flagCol.setCellValueFactory(new PropertyValueFactory("ActivityFlags"));
         flagCol.setPrefWidth(75);
 
@@ -295,7 +295,7 @@ public class ManagedNOETableController implements Initializable, StageBasedContr
                 stage.setTitle("Noes: ");
             } else {
 
-                ObservableList<ManagedNoe> noes = FXCollections.observableList(noeSet.getConstraints());
+                ObservableList<Noe> noes = FXCollections.observableList(noeSet.getConstraints());
                 log.info("noes {}", noes.size());
                 updateColumns();
                 tableView.setItems(noes);
@@ -310,7 +310,7 @@ public class ManagedNOETableController implements Initializable, StageBasedContr
         System.out.println("Not implemented");
     }
 
-    void showPeakInfo(ManagedNoe noe) {
+    void showPeakInfo(Noe noe) {
         Peak peak = noe.getPeak();
         if (peak != null) {
             FXMLController.showPeakAttr();

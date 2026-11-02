@@ -23,7 +23,7 @@ import javafx.util.StringConverter;
 import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.AtomResonance;
-import org.nmrfx.chemistry.constraints.ManagedNoe;
+import org.nmrfx.chemistry.constraints.Noe;
 import org.nmrfx.peaks.ManagedList;
 import org.nmrfx.peaks.Peak;
 import org.nmrfx.peaks.PeakDim;
@@ -373,7 +373,7 @@ public class AcqNodeChooser {
                 }
             }
         }
-        List<ManagedNoe> noesToAdd = new ArrayList<>();
+        List<Noe> noesToAdd = new ArrayList<>();
         for (Map.Entry<ExpDim,AcqNode> picked : pickedSet.entrySet()) {
             ExpDim expDim = picked.getKey();
             Connectivity nextCon = expDim.getNextCon();
@@ -399,14 +399,14 @@ public class AcqNodeChooser {
                     }
                     //todo: why did we need to add resonances here?
                     //Noe noe = new Noe(peak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction, atom1.getResonance(), atom2.getResonance());
-                    ManagedNoe noe = new ManagedNoe(peak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction);
+                    Noe noe = new Noe(peak, atom1.getSpatialSet(), atom2.getSpatialSet(), noeFraction);
                     //fixme: apportion intensity where multiple NOE dims
                     noe.setIntensity(peak.getIntensity());
                     noesToAdd.add(noe);
                 }
             }
         }
-        for (ManagedNoe noe: noesToAdd) {
+        for (Noe noe: noesToAdd) {
             if (list.getAddedNoe()==null) {
                 list.setAddedNoe(noe);
             }

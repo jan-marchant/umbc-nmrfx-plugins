@@ -5,8 +5,8 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import org.nmrfx.chemistry.Atom;
-import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.chemistry.constraints.ManagedNoeSet;
+import org.nmrfx.chemistry.constraints.Noe;
 
 import java.util.*;
 
@@ -17,9 +17,9 @@ public class AcqTree {
         public AcqNode node2;
         public double weight;
         public ManagedNoeSet noeSet;
-        public ManagedNoe noe;
+        public Noe noe;
 
-        public Edge(AcqNode node1, AcqNode node2, double weight, ManagedNoeSet noeSet, ManagedNoe noe) {
+        public Edge(AcqNode node1, AcqNode node2, double weight, ManagedNoeSet noeSet, Noe noe) {
             this.node1 =node1;
             this.node2=node2;
             this.weight=weight;
@@ -155,12 +155,12 @@ public class AcqTree {
     }
 
     public void initializeNoeSet(ManagedNoeSet noeSet) {
-        for (ManagedNoe noe : noeSet.getConstraints()) {
+        for (Noe noe : noeSet.getConstraints()) {
             addNoeToTree(noeSet, noe);
         }
-        noeSet.getConstraints().addListener((ListChangeListener.Change<? extends ManagedNoe> c) -> {
+        noeSet.getObservableConstraints().addListener((ListChangeListener.Change<? extends Noe> c) -> {
             while (c.next()) {
-                for (ManagedNoe addedNoe : c.getAddedSubList()) {
+                for (Noe addedNoe : c.getAddedSubList()) {
                     addNoeToTree(noeSet, addedNoe);
                 }
             }
@@ -217,7 +217,7 @@ public class AcqTree {
         addEdge(iNode,jNode,weight,null,null);
     }
 
-    public void addEdge(AcqNode iNode, AcqNode jNode, double weight, ManagedNoeSet noeSet, ManagedNoe noe) {
+    public void addEdge(AcqNode iNode, AcqNode jNode, double weight, ManagedNoeSet noeSet, Noe noe) {
         edges.add(new Edge(iNode, jNode, weight, noeSet, noe));
     }
 
@@ -252,7 +252,7 @@ public class AcqTree {
         return lastNode;
     }
 
-    public void addNoeToTree(ManagedNoeSet noeSet, ManagedNoe noe) {
+    public void addNoeToTree(ManagedNoeSet noeSet, Noe noe) {
         for (ExpDim expDim : acquisition.getExperiment().expDims) {
             if (expDim.getNextCon()!=null && (expDim.getNextCon().type==Connectivity.TYPE.NOE)) {
                 //HashMap<ExpDim,Integer> dimMap = ((ManagedList) noe.peak.getPeakList()).getDimMap();

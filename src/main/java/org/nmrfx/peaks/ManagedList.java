@@ -4,8 +4,8 @@ import edu.umbc.hhmi.acquisition_plugin.*;
 import javafx.collections.SetChangeListener;
 import org.nmrfx.chemistry.Atom;
 import org.nmrfx.chemistry.PPMv;
-import org.nmrfx.chemistry.constraints.ManagedNoe;
 import org.nmrfx.chemistry.constraints.ManagedNoeSet;
+import org.nmrfx.chemistry.constraints.Noe;
 import org.nmrfx.datasets.Nuclei;
 import org.nmrfx.processor.datasets.Dataset;
 import org.nmrfx.project.ProjectBase;
@@ -46,7 +46,7 @@ public class ManagedList extends PeakList {
     private final int rPpmSet;
     //probably don't need this type - just the noeSet which can be passed by managedListSetup
     public ManagedNoeSet noeSet=null;
-    private ManagedNoe addedNoe=null;
+    private Noe addedNoe=null;
     private Boolean listening = false;
 
     //initial creation
@@ -253,7 +253,7 @@ public class ManagedList extends PeakList {
         addPeaks(edge);
     }
 
-    public List<ManagedPeak> addNoeToList(ManagedNoe noe) {
+    public List<ManagedPeak> addNoeToList(Noe noe) {
         List<ManagedPeak> addedPeaks = new ArrayList<>();
         for (AcqNode node : acquisition.getAcqTree().getNodes(noe.getSpg1().getAnAtom())) {
             for (AcqTree.Edge edge : node.getEdges(noeSet,noe)) {
@@ -287,7 +287,7 @@ public class ManagedList extends PeakList {
     private ManagedPeak addPeakFromPath(HashMap<ExpDim, AcqTree.Edge> path) {
         //TODO: Only add peaks with ppm associated? But what if they are assigned later?
         double peakIntensity=1.0;
-        Set<ManagedNoe> noes=new HashSet<>();
+        Set<Noe> noes=new HashSet<>();
         HashMap<Integer, Atom> atoms=new HashMap<>();
         for (ExpDim expDim : acquisition.getExperiment().expDims) {
             AcqTree.Edge edge=path.get(expDim);
@@ -330,7 +330,7 @@ public class ManagedList extends PeakList {
         return dimMap;
     }
 
-    public void setAddedNoe(ManagedNoe addedNoe) {
+    public void setAddedNoe(Noe addedNoe) {
         this.addedNoe = addedNoe;
     }
 
@@ -346,7 +346,7 @@ public class ManagedList extends PeakList {
         return acquisition;
     }
 
-    public ManagedNoe getAddedNoe() {
+    public Noe getAddedNoe() {
         return addedNoe;
     }
 
@@ -496,7 +496,7 @@ public class ManagedList extends PeakList {
             int ID = 0;
             for (Peak peak : peaks()) {
                 ManagedPeak peak2 = (ManagedPeak) peak;
-                for (ManagedNoe noe : peak2.getNoes()) {
+                for (Noe noe : peak2.getNoes()) {
                     //todo: investigate NoeSet.getID() replaced with NoeSet.ID
                     if (noe != null) {
                         chan.write(String.format("%d %s %d %s %s %d %d %d %d spectral_peak_list %s\n", noe.getID(), noeSet.getType(), noeSet.getSetId(), noeSet.getCategory(), noeSet.getCategory() + noeSet.getName().replaceAll("\\W", ""), ID++, getId(), peak.getIdNum(), getId(), getName()));
