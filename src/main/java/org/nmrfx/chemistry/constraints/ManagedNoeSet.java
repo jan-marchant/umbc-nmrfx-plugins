@@ -134,7 +134,7 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
         //using a copy for this reason only
         //in equivalent NMRFx branch have adjusted so that the constraint set name is retained
         try {
-            ConstraintSTARWriter.writeConstraintsSTAR3(chan,this,getSetId());
+            ConstraintSTARWriter.writeConstraintsSTAR3(chan,this);
         } catch (InvalidPeakException e) {
             throw new RuntimeException(e);
         }

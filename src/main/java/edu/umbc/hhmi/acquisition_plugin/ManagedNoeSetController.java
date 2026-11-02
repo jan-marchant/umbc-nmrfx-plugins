@@ -34,7 +34,7 @@ import java.util.function.UnaryOperator;
 public class ManagedNoeSetController {
 
     public static ManagedNoeSetController noeSetController;
-    private ManagedNOETableController noeTableController;
+    //private ManagedNOETableController noeTableController;
 
     @FXML
     static public void showNoeSetup(ActionEvent event) {
@@ -58,7 +58,7 @@ public class ManagedNoeSetController {
     ButtonBase bButton;
     Popup popup;
     MenuButton generate;
-    Button show;
+    //Button show;
 
     ComboBox<ManagedNoeSet> noeSetCombo = new ComboBox<>();
     Menu dup = new Menu("From NOE Set");
@@ -175,12 +175,14 @@ public class ManagedNoeSetController {
         HBox hBox=new HBox(nameLabel,noeSetCombo,bButton);
         hBox.setAlignment(Pos.CENTER_LEFT);
 
-        show = new Button("Show NOEs");
-        show.setOnAction(e-> showManagedNOETable());
-        show.disableProperty().bind(noeSetCombo.getSelectionModel().selectedItemProperty().isNull());
+        //Should be able to use built in Table
+        //show = new Button("Show NOEs");
+        //show.setOnAction(e-> showManagedNOETable());
+        //show.disableProperty().bind(noeSetCombo.getSelectionModel().selectedItemProperty().isNull());
 
 
-        VBox vBox = new VBox(show,generate);
+        //VBox vBox = new VBox(show,generate);
+        VBox vBox = new VBox(generate);
         Button ok = new Button("Close");
         ok.setOnAction((event) -> stage.close());
 
@@ -194,7 +196,7 @@ public class ManagedNoeSetController {
         stage.setOnCloseRequest(e -> cancel());
     }
 
-    private void showManagedNOETable() {
+    /*private void showManagedNOETable() {
         if (noeTableController == null) {
             noeTableController = ManagedNOETableController.create();
             if (noeTableController == null) {
@@ -209,6 +211,7 @@ public class ManagedNoeSetController {
         noeTableController.updateNoeSetMenu();
 
     }
+     */
 
     public void show(double x, double y) {
         double screenWidth = Screen.getPrimary().getBounds().getWidth();
