@@ -28,20 +28,20 @@ import java.util.*;
 
 public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable<ManagedNoeSet> {
 
-    @Override
-    public void add(Constraint constraint) {
-        super.add(constraint);
-        noeMap.put(this.getConstraints().size(),(Noe) constraint);
-    }
+    private final static HashMap<ProjectBase,Integer> projectSaveFramesAdded = new HashMap<>();
+    private final static HashMap<ProjectBase,Integer> projectSaveFramesWritten = new HashMap<>();
+    static HashMap<ProjectBase, HashMap<String, ManagedNoeSet>> projectNoeSetsMap= new HashMap<>();
+
+    private final int setId;
+    //we have an noeMap to help with reading in the saveframe - todo: check this is needed
+    private final HashMap<Integer, Noe> noeMap = new HashMap<>();
+    public Set<ManagedList> associatedLists = new HashSet<>();
+
+    private static final double MIN_DIST = 5.5;
 
     @Override
     public String getCategory() {
         return "general_distance_constraints2";
-    }
-
-    public static ManagedNoeSet newSet(MolecularConstraints molecularConstraints,
-                                        String name) {
-        return new ManagedNoeSet(molecularConstraints, name);
     }
 
     public ManagedNoeSet(MolecularConstraints molecularConstraints, String name) {
@@ -52,15 +52,11 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
         projectSaveFramesAdded.put(ProjectBase.getActive(),setId);
     }
 
-    private static final double MIN_DIST = 5.5;
-    static HashMap<ProjectBase, HashMap<String, ManagedNoeSet>> projectNoeSetsMap= new HashMap<>();
-
-    public Set<ManagedList> associatedLists = new HashSet<>();
-    private final int setId;
-
-
-    private final static HashMap<ProjectBase,Integer> projectSaveFramesAdded = new HashMap<>();
-    private final static HashMap<ProjectBase,Integer> projectSaveFramesWritten = new HashMap<>();
+    @Override
+    public void add(Constraint constraint) {
+        super.add(constraint);
+        noeMap.put(this.getConstraints().size(),(Noe) constraint);
+    }
 
     static public Integer getSaveFramesAdded() {
         return getSaveFramesAdded(ProjectBase.getActive());
@@ -104,16 +100,12 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
     }
 
     public static ManagedNoeSet addSet(String name) {
-        MolecularConstraints molConstr = Molecule.getActive().getMolecularConstraints();
-        ManagedNoeSet noeSet = newSet(molConstr,name);
-        getManagedNoeSetsMap().put(name, noeSet);
-        //ACTIVE_SET = noeSet;
-        return noeSet;
+        return addSet(name,ProjectBase.getActive());
     }
 
     public static ManagedNoeSet addSet(String name, ProjectBase project) {
         MolecularConstraints molConstr = project.getActiveMolecule().getMolecularConstraints();
-        ManagedNoeSet noeSet = newSet(molConstr,name);
+        ManagedNoeSet noeSet = new ManagedNoeSet(molConstr,name);
         getManagedNoeSetsMap(project).put(name, noeSet);
         //ACTIVE_SET = noeSet;
         return noeSet;
@@ -130,9 +122,6 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
             chan.write("\n\n");
         }
 
-        //using original method we would lose the ability to name our NOE sets - it uses getCategory() + setNum
-        //using a copy for this reason only
-        //in equivalent NMRFx branch have adjusted so that the constraint set name is retained
         try {
             ConstraintSTARWriter.writeConstraintsSTAR3(chan,this);
         } catch (InvalidPeakException e) {
@@ -375,10 +364,6 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
             }
         }
     }
-
-    //we have an noeMap to help with reading in the saveframe - todo: check this is needed
-    private final HashMap<Integer, Noe> noeMap = new HashMap<>();
-
 
     {
         this.getObservableConstraints().addListener((ListChangeListener.Change<? extends Noe> c) -> {
