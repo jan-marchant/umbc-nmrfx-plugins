@@ -164,7 +164,7 @@ public class ManagedList extends PeakList {
             }
             if (addedPeaks.size() > 0) {
                 //addedNoe.setPeak(addedPeaks.get(addedPeaks.size() - 1));
-                addedNoe.setPeak(addedPeaks.get(addedPeaks.size() - 1));
+                addedNoe.peak(addedPeaks.get(addedPeaks.size() - 1));
             } else {
                 System.out.println("Error adding NOE " + addedNoe);
                 noeSet.getConstraints().remove(addedNoe);

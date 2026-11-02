@@ -222,8 +222,6 @@ public class ManagedNoeSet extends NoeSet implements SaveframeWriter, Comparable
                                     }
                                     //should scale be set based on dist ?
                                     Noe noe = new Noe(null, atom1.getSpatialSet(), atom2.getSpatialSet(), 1.0);
-                                    noe.setResonance1(atom1.getResonance());
-                                    noe.setResonance2(atom2.getResonance());
                                     double scaleConst = 100.0/ math.pow(2.0,-6);
                                     noe.setIntensity(math.pow(dist, -6)*scaleConst);
                                     add(noe);

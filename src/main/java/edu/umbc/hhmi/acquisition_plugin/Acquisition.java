@@ -365,7 +365,7 @@ public class Acquisition {
                             list.noeSet.add(noe);
                             addedPeaks.addAll(list.addNoeToList(noe));
                             if (addedPeaks.size() > 0) {
-                                noe.setPeak(addedPeaks.get(addedPeaks.size() - 1));
+                                noe.peak(addedPeaks.get(addedPeaks.size() - 1));
                             } else {
                                 //TODO: implement peakAssign box filter on peakListTree dimNodeMap - then this shouldn't be reached
                                 list.noeSet.getConstraints().remove(noe);

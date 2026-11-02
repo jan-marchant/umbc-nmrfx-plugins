@@ -155,9 +155,6 @@ public class ManagedNoeSetSaveframeProcessor implements SaveframeProcessor {
                 }
                 //NB: Resonances should be set correctly during construction
                 Noe noe = new Noe(peak, spSets[0], spSets[1], weight);
-                //Maybe only do this if peak is null?
-                noe.setResonance1(spSets[0] != null ? spSets[0].getAnAtom().getResonance() : null);
-                noe.setResonance2(spSets[1] != null ? spSets[1].getAnAtom().getResonance() : null);
 
                 double upper = 1000000.0;
                 if (upperValue.equals(".")) {

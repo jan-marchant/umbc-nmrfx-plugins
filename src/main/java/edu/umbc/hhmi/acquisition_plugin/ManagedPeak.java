@@ -50,7 +50,7 @@ public class ManagedPeak extends Peak {
 
         for (Noe noe : noes) {
             if (noe.getPeak()==null || !PeakList.peakLists().contains(noe.getPeak().peakList)) {
-                noe.setPeak(this);
+                noe.peak(this);
             }
         }
 
