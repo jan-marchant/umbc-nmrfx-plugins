@@ -175,7 +175,9 @@ public class ManagedNoeSetController {
         HBox hBox=new HBox(nameLabel,noeSetCombo,bButton);
         hBox.setAlignment(Pos.CENTER_LEFT);
 
-        //Should be able to use built in Table
+        //Should be able to use built in Table - actually can't because of peak and peaklist creation logic in general_distance_constraints reader logic
+        //todo: discuss general_distance_constraints peak logic with Bruce
+        // then can use built-in NoeSet handling and just promote to ManagedNoeSet as appropriate
         //show = new Button("Show NOEs");
         //show.setOnAction(e-> showManagedNOETable());
         //show.disableProperty().bind(noeSetCombo.getSelectionModel().selectedItemProperty().isNull());
