@@ -401,7 +401,7 @@ public class AtomBrowser implements ControllerTool {
         toggleLocateItem(atom);
 
         for (ProjectRelations projectRelation : ProjectRelations.getProjectRelations()) {
-            BidiMap<Entity, Entity> map = projectRelation.entityMap;
+            BidiMap<Entity, Entity> map = projectRelation.entityMap_main_sub;
             if (map.containsKey(atom.getEntity())) {
                 Entity otherEntity = map.get(atom.getEntity());
                 for (Atom otherAtom : otherEntity.getAtoms()) {
@@ -580,7 +580,7 @@ public class AtomBrowser implements ControllerTool {
         addDrawItems(atom, ProjectBase.getActive());
 
         for (ProjectRelations projectRelation : ProjectRelations.getProjectRelations()) {
-            BidiMap<Entity, Entity> map = projectRelation.entityMap;
+            BidiMap<Entity, Entity> map = projectRelation.entityMap_main_sub;
             if (map.containsKey(atom.getEntity())) {
                 Entity otherEntity = map.get(atom.getEntity());
                 for (Atom otherAtom : otherEntity.getAtoms()) {

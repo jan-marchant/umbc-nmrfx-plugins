@@ -8,12 +8,14 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import org.apache.commons.collections4.BidiMap;
 import org.nmrfx.chemistry.Entity;
+import org.nmrfx.chemistry.NeedlemanWunsch;
 import org.nmrfx.chemistry.Polymer;
 import org.nmrfx.chemistry.Residue;
 import org.nmrfx.structure.chemistry.SmithWaterman;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class AlignmentViewer extends TextArea {
 
@@ -49,12 +51,18 @@ public class AlignmentViewer extends TextArea {
     public void paste() {
     }
 
-    StringBuilder[] sequences = new StringBuilder[2];
-    Polymer polymer1;
-    Polymer polymer2;
+    StringBuilder[] sequences_sub_main = new StringBuilder[2];
+    Polymer subprojectPolymer;
+    Polymer mainProjectPolymer;
     int lineLength=60;
     String pipes = new String(new char[lineLength]).replace("\0", "|");
     String spaces = new String(new char[lineLength]).replace("\0", " ");
+    enum MatchType {
+        GAP,
+        MISMATCH,
+        MATCH
+    }
+    Map<MatchType,String> bgStyle = Map.of(MatchType.GAP,"\\u001B[0m", MatchType.MISMATCH,"\u001B[41m", MatchType.MATCH,"\u001B[42m");
 
     public AlignmentViewer() {
         addEventFilter(KeyEvent.ANY, event -> {
@@ -83,30 +91,47 @@ public class AlignmentViewer extends TextArea {
         setFont(Font.font("Courier New", FontWeight.NORMAL, 16));
     }
 
-    public void alignFromMap(Entity polymer1, Entity polymer2, BidiMap<Entity,Entity> map) {
-        if (!checkEntities(polymer1,polymer2)) {
+    public void alignFromMap(Entity subPolymer, Entity mainPolymer, BidiMap<Entity,Entity> map_main_sub) {
+        if (!checkEntities(subPolymer,mainPolymer)) {
             setText("");
             return;
         }
         List<List<Integer>> lists= new ArrayList<>(2);
-        List<Integer> list1=new ArrayList<>();
-        List<Integer> list2=new ArrayList<>();
+        List<Integer> subList=new ArrayList<>();
+        List<Integer> mainList=new ArrayList<>();
 
-        lists.add(list1);
-        lists.add(list2);
-
-        for (Residue residue : ((Polymer) polymer2).getResidues()) {
-            Residue aligned = (Residue) map.get(residue);
+        lists.add(subList);
+        lists.add(mainList);
+        int nextAlignedID=1;
+        for (Residue residue : ((Polymer) subPolymer).getResidues()) {
+            Residue aligned = (Residue) map_main_sub.getKey(residue);
             if (aligned == null) {
-                continue;
+                subList.add(residue.getIDNum() - 1);
+                mainList.add(null);
+            } else {
+                int alignedID = aligned.getIDNum();
+                for (int i = nextAlignedID; i < alignedID; i++) {
+                    subList.add(null);
+                    mainList.add(i - 1);
+                }
+                subList.add(residue.getIDNum() - 1);
+                mainList.add(aligned.getIDNum() - 1);
+                nextAlignedID = alignedID+1;
             }
-            list2.add(residue.getIDNum()-1);
-            list1.add(aligned.getIDNum()-1);
         }
+        for (Residue aligned2 : ((Polymer) mainPolymer).getResidues()) {
+            int alignedID = aligned2.getIDNum();
+            if (alignedID >= nextAlignedID) {
+                subList.add(null);
+                mainList.add(alignedID-1);
+                nextAlignedID = alignedID;
+            }
+        }
+
         layoutStrings(lists);
         generateText();
     }
-    public void alignSW(Entity polymer1, Entity polymer2) {
+    public void align(Entity polymer1, Entity polymer2) {
         if (!checkEntities(polymer1,polymer2)) {
             setText("");
             return;
@@ -120,12 +145,12 @@ public class AlignmentViewer extends TextArea {
                 !((Polymer) polymer1).getPolymerType().equals(((Polymer) polymer2).getPolymerType())) {
             return false;
         }
-        this.polymer1=(Polymer) polymer1;
-        this.polymer2=(Polymer) polymer2;
-        sequences[0]=new StringBuilder();
-        sequences[1]=new StringBuilder();
-        sequences[0].append(this.polymer1.getOneLetterCode());
-        sequences[1].append(this.polymer2.getOneLetterCode());
+        this.subprojectPolymer =(Polymer) polymer1;
+        this.mainProjectPolymer =(Polymer) polymer2;
+        sequences_sub_main[0]=new StringBuilder();
+        sequences_sub_main[1]=new StringBuilder();
+        sequences_sub_main[0].append(this.subprojectPolymer.getOneLetterCode());
+        sequences_sub_main[1].append(this.mainProjectPolymer.getOneLetterCode());
         return true;
     }
 
@@ -142,77 +167,120 @@ public class AlignmentViewer extends TextArea {
         layoutStrings(lists);
     }
     public void layoutStrings(List<List<Integer>> lists) {
-        int offset0=0;
-        int offset1=0;
-        for (int i=0;i<lists.get(0).size();i++) {
-            Integer current0=lists.get(0).get(i);
-            Integer current1=lists.get(1).get(i);
-            if (current0==null || current1==null) {
-                continue;
-            }
-            while (current1+offset1<current0+offset0) {
-                sequences[1].insert(offset1+current1,' ');
-                offset1++;
-            }
-            while (current0+offset0<current1+offset1) {
-                sequences[0].insert(offset0+current0,' ');
-                offset0++;
+        sequences_sub_main[0].setLength(0);
+        sequences_sub_main[1].setLength(0);
+        Polymer[] polymers = {subprojectPolymer, mainProjectPolymer};
+        for (int listIndex = 0; listIndex < 2; listIndex++) {
+            for (int i = 0; i < lists.get(listIndex).size(); i++) {
+                if (lists.get(listIndex).get(i) == null) {
+                    sequences_sub_main[listIndex].append(" ");
+                } else {
+                    sequences_sub_main[listIndex].append(polymers[listIndex].getResidue(lists.get(listIndex).get(i)).getOneLetter());
+                }
             }
         }
     }
 
 
     private void updateSeq (int index, KeyCode code, int insertPos,int offset) {
-        switch (code) {
-            case SPACE:
-                sequences[index].insert(insertPos,' ');
-                generateText();
-                if (offset%61==60) {offset+=184;}
-                positionCaret(offset+1);
-                break;
-            case DELETE:
-                if (sequences[index].charAt(insertPos)==' ') {
-                    sequences[index].deleteCharAt(insertPos);
+        if(insertPos < sequences_sub_main[index].length()) {
+            switch (code) {
+                case SPACE:
+                    sequences_sub_main[index].insert(insertPos, ' ');
                     generateText();
-                    positionCaret(offset);
-                }
-                //update caret
-                break;
-            case BACK_SPACE:
-                if (sequences[index].charAt(insertPos-1)==' ') {
-                    sequences[index].deleteCharAt(insertPos-1);
-                    generateText();
-                    if (offset%61==0 && offset!=0) {offset-=184;}
-                    positionCaret(offset-1);
-                }
-                //update caret
-                break;
+                    if (offset % (lineLength + 1) == lineLength) {
+                        offset += (lineLength * 3 + 4);
+                    }
+                    positionCaret(offset + 1);
+                    break;
+                case DELETE:
+                    if (sequences_sub_main[index].charAt(insertPos) == ' ') {
+                        sequences_sub_main[index].deleteCharAt(insertPos);
+                        generateText();
+                        positionCaret(offset);
+                    }
+                    //update caret
+                    break;
+                case BACK_SPACE:
+                    if (sequences_sub_main[index].charAt(insertPos - 1) == ' ') {
+                        sequences_sub_main[index].deleteCharAt(insertPos - 1);
+                        generateText();
+                        if (offset % (lineLength + 1) == 0 && offset != 0) {
+                            offset -= (lineLength * 3 + 4);
+                        }
+                        positionCaret(offset - 1);
+                    }
+                    //update caret
+                    break;
+            }
         }
     }
 
     public void generateText() {
         StringBuilder s = new StringBuilder();
-        int numLines = 1 + Math.max(sequences[0].length(), sequences[1].length()) / lineLength;
-        int numChars = numLines * lineLength;
-        while (sequences[0].length() < numChars) {
-            sequences[0].append(' ');
-        }
-        while (sequences[1].length() < numChars) {
-            sequences[1].append(' ');
-        }
-        for (int i = 0; i < numLines; i++) {
 
-            s.append(sequences[0], lineLength * i, lineLength * (i + 1));
+        int numLines = 1 + Math.max(sequences_sub_main[0].length(), sequences_sub_main[1].length()) / lineLength;
+        int numChars = numLines * lineLength;
+        while (sequences_sub_main[0].length() < numChars) {
+            sequences_sub_main[0].append(' ');
+        }
+        while (sequences_sub_main[1].length() < numChars) {
+            sequences_sub_main[1].append(' ');
+        }
+        MatchType currentMatch = MatchType.GAP;
+        for (int i = 0; i < numLines; i++) {
+            for (int j = 0; j < lineLength; j++) {
+                MatchType newMatch = getMatchType(sequences_sub_main[0].charAt(lineLength * i+j), sequences_sub_main[1].charAt(lineLength * i+j));
+                if (newMatch != currentMatch) {
+                    currentMatch = newMatch;
+                    //s.append(bgStyle.get(newMatch));
+                }
+                s.append(sequences_sub_main[0],lineLength * i+j,lineLength * i+j+1);
+            }
+            currentMatch = MatchType.GAP;
+            //s.append(bgStyle.get(MatchType.GAP));
             s.append("\n");
-            s.append(pipes);
+            //s.append(pipes);
+            for (int j = 0; j < lineLength; j++) {
+                MatchType match = getMatchType(sequences_sub_main[0].charAt(lineLength * i+j), sequences_sub_main[1].charAt(lineLength * i+j));
+                switch (match) {
+                    case MatchType.MATCH:
+                        s.append("|");
+                        break;
+                    case MatchType.MISMATCH:
+                        s.append("X");
+                        break;
+                    default:
+                        s.append(" ");
+                }
+            }
             s.append("\n");
-            s.append(sequences[1], lineLength * i, lineLength * (i + 1));
+            for (int j = 0; j < lineLength; j++) {
+                MatchType newMatch = getMatchType(sequences_sub_main[0].charAt(lineLength * i+j), sequences_sub_main[1].charAt(lineLength * i+j));
+                if (newMatch != currentMatch) {
+                    currentMatch = newMatch;
+                    //s.append(bgStyle.get(newMatch));
+                }
+                s.append(sequences_sub_main[1],lineLength * i+j,lineLength * i+j+1);
+            }
+            currentMatch = MatchType.GAP;
+            //s.append(bgStyle.get(MatchType.GAP));
             s.append("\n");
             s.append(spaces);
             s.append("\n");
         }
-        sequences[0] = new StringBuilder(sequences[0].toString().replaceAll("\\s+$", ""));
-        sequences[1] = new StringBuilder(sequences[1].toString().replaceAll("\\s+$", ""));
+        sequences_sub_main[0] = new StringBuilder(sequences_sub_main[0].toString().replaceAll("\\s+$", ""));
+        sequences_sub_main[1] = new StringBuilder(sequences_sub_main[1].toString().replaceAll("\\s+$", ""));
         setText(s.toString());
+    }
+
+    private MatchType getMatchType(char c, char c1) {
+        if (c1 == ' ' || c == ' ') {
+            return MatchType.GAP;
+        }
+        if (c == c1) {
+            return MatchType.MATCH;
+        }
+        return MatchType.MISMATCH;
     }
 }

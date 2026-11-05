@@ -33,15 +33,15 @@ public class SubProjectSceneController implements SubProjMenu {
     private final Stage stage;
     private AlignmentViewer alignmentViewer;
     private final GridPane grid;
-    private MenuButton menuButton;
+    private MenuButton subProjectMenuButton;
     private final ObjectProperty<ProjectBase> subProject = new SimpleObjectProperty<>();
-    ChoiceBox<Entity> combo1=new ChoiceBox<>();
-    ChoiceBox<Entity> combo2=new ChoiceBox<>();
+    ChoiceBox<Entity> subProjectEntityCombo =new ChoiceBox<>();
+    ChoiceBox<Entity> mainProjectEntityCombo =new ChoiceBox<>();
     Button linkButton=new Button("Link");
     BooleanProperty entitiesLinked =new SimpleBooleanProperty(false);
     StringProperty linkLabel = new SimpleStringProperty("Link");
-    ObservableList<Entity> list1 =FXCollections.observableArrayList();
-    ObservableList<Entity> list2 =FXCollections.observableArrayList();
+    ObservableList<Entity> subProjectEntities =FXCollections.observableArrayList();
+    ObservableList<Entity> mainProjectEntities =FXCollections.observableArrayList();
     Label label;
 
 
@@ -59,8 +59,8 @@ public class SubProjectSceneController implements SubProjMenu {
         initialize();
     }
     private void initialize() {
-        menuButton=new MenuButton();
-        menuButton.setText(ProjectRelations.getProjectRelations().size() + " project"+(ProjectRelations.getProjectRelations().size()==1?"":"s"));
+        subProjectMenuButton =new MenuButton();
+        subProjectMenuButton.setText(ProjectRelations.getProjectRelations().size() + " project"+(ProjectRelations.getProjectRelations().size()==1?"":"s"));
         //populateMenu();
         label=new Label("No active mol");
         Button removeButton = new Button("Remove");
@@ -71,21 +71,22 @@ public class SubProjectSceneController implements SubProjMenu {
         });
         Label arrow1 = GlyphsDude.createIconLabel(FontAwesomeIcon.ARROW_CIRCLE_ALT_RIGHT,"","16px", "0pt", ContentDisplay.TOP);
         Label arrow2 = GlyphsDude.createIconLabel(FontAwesomeIcon.ARROW_CIRCLE_ALT_RIGHT,"","16px", "0pt", ContentDisplay.TOP);
-        combo1.setDisable(true);
-        combo2.setDisable(true);
-        combo1.setOnAction(e-> updateEntities());
-        combo2.setOnAction(e->updateEntities());
-        linkButton.setOnAction(e-> linkEntities(combo1.getValue(),combo2.getValue()));
+        subProjectEntityCombo.setDisable(true);
+        mainProjectEntityCombo.setDisable(true);
+        subProjectEntityCombo.setOnAction(e-> updateEntities());
+        mainProjectEntityCombo.setOnAction(e->updateEntities());
+        linkButton.setOnAction(e-> linkEntities(subProjectEntityCombo.getValue(), mainProjectEntityCombo.getValue()));
         alignmentViewer = new AlignmentViewer();
-        grid.add(menuButton,0,0);
-        grid.add(arrow1,1,0);
-        grid.add(label,2,0);
-        grid.add(removeButton,3,0);
-        grid.add(combo1,0,1);
-        grid.add(arrow2,1,1);
-        grid.add(combo2,2,1);
-        grid.add(linkButton,3,1);
-        grid.add(alignmentViewer,0,2,5,1);
+        int row=1;
+        grid.add(subProjectMenuButton,0,row);
+        grid.add(arrow1,1,row);
+        grid.add(label,2,row);
+        grid.add(removeButton,3,row++);
+        grid.add(subProjectEntityCombo,0,row);
+        grid.add(arrow2,1,row);
+        grid.add(mainProjectEntityCombo,2,row);
+        grid.add(linkButton,3,row++);
+        grid.add(alignmentViewer,0,row,5,1);
         for (Node child : grid.getChildren()) {
             GridPane.setFillWidth(child, true);
             ((Control) child).setMaxWidth(Double.MAX_VALUE);
@@ -93,10 +94,10 @@ public class SubProjectSceneController implements SubProjMenu {
 
 
         removeButton.disableProperty().bind(subProjectProperty().isNull());
-        combo1.disableProperty().bind(subProjectProperty().isNull());
-        combo2.disableProperty().bind(subProjectProperty().isNull());
+        subProjectEntityCombo.disableProperty().bind(subProjectProperty().isNull());
+        mainProjectEntityCombo.disableProperty().bind(subProjectProperty().isNull());
         alignmentViewer.disableProperty().bind(entitiesLinked);
-        combo1.setConverter(new StringConverter<>() {
+        subProjectEntityCombo.setConverter(new StringConverter<>() {
             @Override
             public String toString(Entity object) {
                 if (object==null) {
@@ -110,7 +111,7 @@ public class SubProjectSceneController implements SubProjMenu {
                 return null;
             }
         });
-        combo2.setConverter(new StringConverter<>() {
+        mainProjectEntityCombo.setConverter(new StringConverter<>() {
             @Override
             public String toString(Entity object) {
                 if (object==null) {
@@ -125,30 +126,30 @@ public class SubProjectSceneController implements SubProjMenu {
             }
         });
 
-        linkButton.disableProperty().bind(Bindings.or(combo1.getSelectionModel().selectedItemProperty().isNull(),combo2.getSelectionModel().selectedItemProperty().isNull()));
+        linkButton.disableProperty().bind(Bindings.or(subProjectEntityCombo.getSelectionModel().selectedItemProperty().isNull(), mainProjectEntityCombo.getSelectionModel().selectedItemProperty().isNull()));
         linkButton.textProperty().bind(linkLabelProperty());
-        list1.add(null);
-        combo1.setItems(list1);
-        list2.add(null);
-        combo2.setItems(list2);
+        subProjectEntities.add(null);
+        subProjectEntityCombo.setItems(subProjectEntities);
+        mainProjectEntities.add(null);
+        mainProjectEntityCombo.setItems(mainProjectEntities);
 
         subProjectProperty().addListener(e->{
-            list1.clear();
-            list1.add(null);
+            subProjectEntities.clear();
+            subProjectEntities.add(null);
 
             if (subProject.get()==null) {
-                menuButton.setText(ProjectRelations.getProjectRelations().size() + " project"+(ProjectRelations.getProjectRelations().size()==1?"":"s"));
+                subProjectMenuButton.setText(ProjectRelations.getProjectRelations().size() + " project"+(ProjectRelations.getProjectRelations().size()==1?"":"s"));
             } else {
-                menuButton.setText(subProject.get().getName());
+                subProjectMenuButton.setText(subProject.get().getName());
                 if (subProject.get().getActiveMolecule()!=null) {
-                    list1.addAll(subProject.get().getActiveMolecule().getEntities());
+                    subProjectEntities.addAll(subProject.get().getActiveMolecule().getEntities());
                     if (subProject.get().getActiveMolecule().getEntities().size() == 1) {
-                        combo1.setValue(subProject.get().getActiveMolecule().getEntities().get(0));
+                        subProjectEntityCombo.setValue(subProject.get().getActiveMolecule().getEntities().get(0));
                     } else {
-                        combo1.setValue(null);
+                        subProjectEntityCombo.setValue(null);
                     }
                 } else {
-                    combo1.setValue(null);
+                    subProjectEntityCombo.setValue(null);
                 }
             }
             populateMenu();
@@ -162,21 +163,21 @@ public class SubProjectSceneController implements SubProjMenu {
         BidiMap<Entity, Entity> map = ProjectRelations.getEntityMap(subProject.get());
         if (map==null) {
             setEntitiesLinked(false);
-            alignmentViewer.alignSW(combo1.getValue(), combo2.getValue());
+            alignmentViewer.align(subProjectEntityCombo.getValue(), mainProjectEntityCombo.getValue());
             return;
         }
-        if (combo2.getValue()==null && getKeysByValue(map,combo1.getValue())!=null) {
-            combo2.setValue(getKeysByValue(map,combo1.getValue()));
+        if (mainProjectEntityCombo.getValue()==null && getKeysByValue(map, subProjectEntityCombo.getValue())!=null) {
+            mainProjectEntityCombo.setValue(getKeysByValue(map, subProjectEntityCombo.getValue()));
         }
-        if (combo1.getValue()==null && map.containsKey(combo2.getValue())) {
-            combo1.setValue(map.get(combo2.getValue()));
+        if (subProjectEntityCombo.getValue()==null && map.containsKey(mainProjectEntityCombo.getValue())) {
+            subProjectEntityCombo.setValue(map.get(mainProjectEntityCombo.getValue()));
         }
-        if (map.get(combo2.getValue())==combo1.getValue()) {
+        if (map.get(mainProjectEntityCombo.getValue()) == subProjectEntityCombo.getValue()) {
             setEntitiesLinked(true);
-            alignmentViewer.alignFromMap(combo1.getValue(), combo2.getValue(),map);
+            alignmentViewer.alignFromMap(subProjectEntityCombo.getValue(), mainProjectEntityCombo.getValue(),map);
         } else {
             setEntitiesLinked(false);
-            alignmentViewer.alignSW(combo1.getValue(), combo2.getValue());
+            alignmentViewer.align(subProjectEntityCombo.getValue(), mainProjectEntityCombo.getValue());
         }
     }
 
@@ -198,10 +199,10 @@ public class SubProjectSceneController implements SubProjMenu {
                 map.put(mainEntity, subEntity);
                 int subIndex=0;
                 int mainIndex=0;
-                for (int i=0;i<alignmentViewer.sequences[1].length()&&i<alignmentViewer.sequences[0].length();i++) {
+                for (int i = 0; i<alignmentViewer.sequences_sub_main[1].length()&&i<alignmentViewer.sequences_sub_main[0].length(); i++) {
 
-                    char subChar=alignmentViewer.sequences[0].charAt(i);
-                    char mainChar=alignmentViewer.sequences[1].charAt(i);
+                    char subChar=alignmentViewer.sequences_sub_main[0].charAt(i);
+                    char mainChar=alignmentViewer.sequences_sub_main[1].charAt(i);
                     if (subChar!=' ' && mainChar!=' ') {
                         map.put(((Polymer) mainEntity).getResidues().get(mainIndex),((Polymer) subEntity).getResidues().get(subIndex));
                     }
@@ -214,9 +215,9 @@ public class SubProjectSceneController implements SubProjMenu {
                 }
             }
         } else {
-            ProjectRelations.getEntityMap(subProject.get()).remove(combo2.getValue());
-            if (combo2.getValue() instanceof Polymer) {
-                for (Residue residue : ((Polymer) combo2.getValue()).getResidues()) {
+            ProjectRelations.getEntityMap(subProject.get()).remove(mainProjectEntityCombo.getValue());
+            if (mainProjectEntityCombo.getValue() instanceof Polymer) {
+                for (Residue residue : ((Polymer) mainProjectEntityCombo.getValue()).getResidues()) {
                     ProjectRelations.getEntityMap(subProject.get()).remove(residue);
                 }
             }
@@ -225,19 +226,19 @@ public class SubProjectSceneController implements SubProjMenu {
     }
 
     private void populateMenu() {
-        menuButton.getItems().clear();
+        subProjectMenuButton.getItems().clear();
         List<Path> seen = new ArrayList<>();
         seen.add(ProjectBase.getActive().getDirectory());
         for (Object menu : ProjectRelations.getSubProjMenus(ProjectBase.getActive(),this, seen)) {
             if (menu instanceof Menu) {
-                menuButton.getItems().add((Menu) menu);
+                subProjectMenuButton.getItems().add((Menu) menu);
             } else {
-                menuButton.getItems().add((MenuItem) menu);
+                subProjectMenuButton.getItems().add((MenuItem) menu);
             }
         }
 
         Menu subProjMenu = new Menu("Add New");
-        menuButton.getItems().add(subProjMenu);
+        subProjectMenuButton.getItems().add(subProjMenu);
         List<Path> recentProjects= PreferencesController.getRecentProjects();
 
         for (Path path : recentProjects) {
@@ -278,12 +279,12 @@ public class SubProjectSceneController implements SubProjMenu {
         populateMenu();
         //if (SubProjRelations.getSubProjRelations().size()>0) {
         label.setText(ProjectBase.getActive().getName());
-        list2.clear();
-        list2.addAll(ProjectBase.getActive().getActiveMolecule().getEntities());
+        mainProjectEntities.clear();
+        mainProjectEntities.addAll(ProjectBase.getActive().getActiveMolecule().getEntities());
         if (ProjectBase.getActive().getActiveMolecule().getEntities().size()==1) {
-            combo2.setValue(ProjectBase.getActive().getActiveMolecule().getEntities().get(0));
+            mainProjectEntityCombo.setValue(ProjectBase.getActive().getActiveMolecule().getEntities().get(0));
         } else {
-            combo2.setValue(null);
+            mainProjectEntityCombo.setValue(null);
         }
         //} else {
         //    label.setText("No active mol");
@@ -304,8 +305,8 @@ public class SubProjectSceneController implements SubProjMenu {
     }
 
     public void updateSubProjMenu(ProjectBase subProj) {
-        menuButton.setText(subProj.getName());
-        menuButton.disarm();
+        subProjectMenuButton.setText(subProj.getName());
+        subProjectMenuButton.disarm();
         setSubProject(subProj);
     }
 

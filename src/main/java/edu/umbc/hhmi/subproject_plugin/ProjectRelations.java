@@ -41,7 +41,7 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
 
     private final ProjectBase parentProject;
     private final ProjectBase subProject;
-    public BidiMap<Entity,Entity> entityMap = new DualHashBidiMap<>();
+    public BidiMap<Entity,Entity> entityMap_main_sub = new DualHashBidiMap<>();
 
     private final static HashMap<ProjectBase,ObservableList<ProjectRelations>> projectSubProjectMap = new HashMap<>();
     //To allow us to write a header
@@ -140,7 +140,7 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
 
     public static BidiMap<Entity, Entity> getEntityMap(ProjectBase parent, ProjectBase sub) {
         ProjectRelations projRel = findProjectRelations(parent, sub);
-        return (projRel == null) ? null: projRel.entityMap;
+        return (projRel == null) ? null: projRel.entityMap_main_sub;
     }
 
     @FXML
@@ -254,14 +254,14 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
         for (Entity entity : parentProject.getActiveMolecule().getEntities()) {
             if (entity instanceof Polymer) {
                 for (Residue residue : ((Polymer) entity).getResidues()) {
-                    if (entityMap.containsKey(residue)) {
-                        chan.write(String.format("%d %s %s\n", getSaveFramesWritten(), residue.toString(), entityMap.get(residue).toString()));
+                    if (entityMap_main_sub.containsKey(residue)) {
+                        chan.write(String.format("%d %s %s\n", getSaveFramesWritten(), residue.toString(), entityMap_main_sub.get(residue).toString()));
                         seen.add(residue);
                     }
                 }
             }
         }
-        for (Map.Entry<Entity,Entity> entry : entityMap.entrySet()) {
+        for (Map.Entry<Entity,Entity> entry : entityMap_main_sub.entrySet()) {
             if (!seen.contains(entry.getKey())) {
                 chan.write(String.format("%d %s %s\n", getSaveFramesWritten(), entry.getKey().toString(), entry.getValue().toString()));
             }
@@ -321,7 +321,7 @@ public class ProjectRelations implements SaveframeWriter, Comparable<ProjectRela
         ProjectRelations projectRelations = ProjectRelations.findProjectRelations(subProj);
         if (projectRelations!=null) {
             for (int i = 0; i < activeEntities.size(); i++) {
-                projectRelations.entityMap.put(getEntitiesAndResidues(ProjectBase.getActive().getActiveMolecule(), activeEntities.get(i)), getEntitiesAndResidues(subProj.getActiveMolecule(), subEntities.get(i)));
+                projectRelations.entityMap_main_sub.put(getEntitiesAndResidues(ProjectBase.getActive().getActiveMolecule(), activeEntities.get(i)), getEntitiesAndResidues(subProj.getActiveMolecule(), subEntities.get(i)));
             }
         }
     }
