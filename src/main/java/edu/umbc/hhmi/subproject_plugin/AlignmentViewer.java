@@ -155,9 +155,8 @@ public class AlignmentViewer extends TextArea {
     }
 
     public void alignEntities() {
-        //todo: what is the -20 argument?
-        //SmithWaterman aligner = new SmithWaterman(polymer1.getOneLetterCode(), polymer2.getOneLetterCode(),-20);
-        SmithWaterman aligner = new SmithWaterman(polymer1.getOneLetterCode(), polymer2.getOneLetterCode());
+        //SmithWaterman aligner = new SmithWaterman(subprojectPolymer.getOneLetterCode(), mainProjectPolymer.getOneLetterCode());
+        NeedlemanWunsch aligner = new NeedlemanWunsch(subprojectPolymer.getOneLetterCode(), mainProjectPolymer.getOneLetterCode(),1,-7,-3,-1);
         aligner.buildMatrix();
         //aligner.dumpH();
         aligner.processMatrix();
